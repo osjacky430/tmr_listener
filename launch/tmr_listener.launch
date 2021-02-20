@@ -1,0 +1,6 @@
+<launch>
+    <arg name="ip"/>
+    <node pkg="tm_robot_listener" type="tm_robot_listener_node" name="tm_robot_listener" output="screen" args="--ip $(arg ip)">
+        <rosparam param="listener_handles">["tm_error_handler::TMErrorHandler"]</rosparam>
+    </node>
+</launch>

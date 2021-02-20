@@ -1,0 +1,142 @@
+#ifndef TMR_MT_HELPER__
+#define TMR_MT_HELPER__
+
+#include <array>
+#include <boost/mpl/bool.hpp>
+#include <type_traits>
+
+#include "tmr_fwd.hpp"
+
+namespace tmr_mt_helper {
+
+/**
+ * @brief Helper functor to determine if one type is specialization of the template type
+ *
+ * @tparam Test To test
+ * @tparam Ref  Template type
+ *
+ * @note  The following way is far better than the current one. However, it fail to compile for GCC version prior
+ *        than 5.3, which can't be used since it is the default version for Ubuntu 16.04,.
+ *
+ *        template <template <typename...> class T, typename U>
+ *        static inline constexpr auto is_specialization_of = false;
+ *
+ *        template <template <typename...> class T, typename... Ts>
+ *        static inline constexpr auto is_specialization_of<T, T<Ts...>> = true;
+ */
+template <typename Test, template <typename...> class Ref>
+struct is_specialization_of : std::false_type {};
+
+template <template <typename...> class Ref, typename... Args>
+struct is_specialization_of<Ref<Args...>, Ref> : std::true_type {};
+
+/**
+ * @brief
+ *
+ * @tparam T
+ */
+template <typename T>
+struct is_std_array : public std::false_type {};
+
+template <typename T, std::size_t N>
+struct is_std_array<std::array<T, N>> : std::true_type {};
+
+/**
+ * @brief Helper functor to do operator && with template parameter pack by recursive
+ *
+ * @tparam head
+ * @tparam tail
+ */
+template <bool head, bool... tail>
+struct variadic_and {
+  static constexpr bool value = head && variadic_and<tail...>::value;
+};
+
+template <bool head>
+struct variadic_and<head> {
+  static constexpr bool value = head;
+};
+
+/**
+ * @brief
+ *
+ * @tparam T
+ */
+template <typename... T>
+struct is_type_unique;
+
+template <>
+struct is_type_unique<> : std::true_type {};
+
+template <typename T>
+struct is_type_unique<T> : std::true_type {};
+
+template <typename F, typename S, typename... T>
+struct is_type_unique<F, S, T...> {
+  static constexpr bool value = is_type_unique<T...>::value and not std::is_same<F, S>::value;
+};
+
+}  // namespace tmr_mt_helper
+
+namespace tm_robot_listener {
+namespace detail {
+
+template <typename T>
+static constexpr bool is_named_var = tmr_mt_helper::is_specialization_of<T, Variable>::value;
+
+template <typename T>
+static constexpr bool is_expression = tmr_mt_helper::is_specialization_of<T, Expression>::value;
+
+/**
+ * @brief Since the argument passed can be r-valued or l-valued, to identify its true underlying type, this helper
+ *        class is used.
+ *
+ * @tparam T
+ * @tparam T2
+ */
+template <typename T, typename T2 = void>
+struct RealType;
+
+template <typename T>
+struct RealType<T, std::enable_if_t<is_named_var<T> or is_expression<T>>> {
+  using type = typename T::underlying_t;
+};
+
+template <typename T>
+struct RealType<T, std::enable_if_t<!(is_named_var<T> or is_expression<T>)>> {
+  using type = T;
+};
+
+}  // namespace detail
+}  // namespace tm_robot_listener
+
+namespace tm_robot_listener {
+namespace motion_function {
+namespace detail {
+
+/**
+ * @brief
+ *
+ * @tparam HeaderTag
+ * @tparam CommandTag
+ */
+template <typename HeaderTag, typename CommandTag>
+struct is_cmd_operable {
+  constexpr is_cmd_operable(Command<CommandTag> const&) {
+    static_assert(std::is_same<HeaderTag, CommandTag>::value, "Command is not usable for this header");
+  }
+};
+
+template <>
+struct is_cmd_operable<TMSCTTag, TMSCTTag> {
+  template <typename CommandTag>
+  constexpr is_cmd_operable(Command<CommandTag> const&) {
+    static_assert(not std::is_same<CommandTag, CommandTag>::value, "ID must come before any TMSCT command");
+  }
+};
+
+}  // namespace detail
+}  // namespace motion_function
+}  // namespace tm_robot_listener
+
+#endif
