@@ -1,6 +1,6 @@
 # TM Robot Listener
 
-A package that handles TM robot listen node, this package provides the connection and message generation/parsing. The application is left for the end user to implement, making it simple, flexible and robust.
+A package that handles TM robot listen node, this package takes care of the TCP connection and message generation/parsing. The application is left for the end user to implement, making it simple, flexible and robust.
 
 ## Table of Contents
 
@@ -39,7 +39,7 @@ These instructions will get you a copy of the package up and running on your mac
 1. clone the repo to desire directory:
 
 ```sh
-git clone
+git clone https://git-codecommit.us-east-2.amazonaws.com/v1/repos/tm_robot_listener
 ```
 
 2. build the package:
@@ -87,11 +87,11 @@ PLUGINLIB_EXPORT_CLASS(MyTMListenerHandleNamespace::MyTMListenerHandle, tm_robot
 
 For the rest of the setup, [see pluginlib tutorial (pretty outdated IMO)](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin). `tm_robot_listener::ListenerHandle` provides several functions that can/must be overriden:
 
-#### 1. motion_function::BaseHeaderProductPtr generate_cmd (bool const t_prev_response)
+#### 1. motion_function::BaseHeaderProductPtr generate_cmd (MessageStatus const t_prev_response)
 
 This function is the only way for the handler to talk to the TM robot, and therefore it must be overriden by the user. `t_prev_response` indicates whether TM robot responded to the message sent previously. Most of the time, we would like to generate command only after TM robot responded to our previous message. The responded message will be passed to the handler via [`response_msg`](<#3.-response_msg-(...)>).
 
-```c++
+```cpp
 struct YourHandler final : public tm_robot_listener::ListenerHandle {
   protected:
     motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus const t_prev_response) override {
@@ -107,9 +107,9 @@ struct YourHandler final : public tm_robot_listener::ListenerHandle {
 
 #### 2. tm_robot_listener::Decision start_task (std::vector\<std::string> const& t_data)
 
-`start_task` takes data sent from TM robot on entering the listen node, and checks whether the listen node entered is the one it wants to handle. The messages passed are user-defined (see [reference](#Reference)), meaning there are various ways to do so. However, bear in mind that current tm_robot_listener only choose one handler when listen node is entered, the order of the plugin is decided by the ros param `listener_handles`:
+`start_task` takes data sent from TM robot on entering the listen node, and checks whether the listen node entered is the one it wants to handle. The messages passed are user-defined (see [tm expression editor and listen node](#Reference)), meaning there are various ways to do so. However, bear in mind that current tm_robot_listener only choose **one handler** when listen node is entered, the order of the plugin is decided by the ros param `listener_handles`:
 
-```c++
+```cpp
 // The simplest way of implementation
 struct YourHandler final : public tm_robot_listener::ListenerHandle {
   protected:
@@ -206,6 +206,7 @@ Notice the option `-v`, **this is needed** since tm_robot_listener will determin
 
 ### TODO
 
+- Better ROS interface
 - Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
 - consider function accepting types that can be implicitly converted to the desired type
 - Implement some services
