@@ -4,7 +4,7 @@
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "tm_robot_listener");
-  ros::NodeHandle nh{"/tm_robot_manager/tm_robot_listener"};
+  ros::NodeHandle nh{"/tm_robot_listener"};  // /tm_robot_manager
 
   using namespace boost::program_options;
   options_description listener_opt{"Listener node options"};

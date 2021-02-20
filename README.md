@@ -11,6 +11,7 @@ A package that handles TM robot listen node, this package takes care of the TCP 
   - [Instal and run](#Instal-and-run)
 - [Creating your own listener handle](#Creating-your-own-listener-handle)
 - [Generate tm external script language](#Generate-tm-external-script-language)
+- [Verify your handler works](#Verifiy-your-handler-works)
 - [Using listen service](#Using-Listen-Service)
 - [TODO](#TODO)
 - [Contact](#contact)
@@ -165,11 +166,9 @@ auto const cmd = TMSCT << ID{"Whatever_you_like"} << QueueTag(1, 1) << End();
 // this generates "TMSCT,XX,Whatever_you_like,QueueTag(1,1),*XX", XX means handled by tm_robot_listener
 ```
 
-Instead of typing: `"$TMSCT,XX,Whatever_you_like,QueueTag(1,1),XX\r\n"`. A typo, e.g., `TMSCT` to `TMSTA`, or `QueueTag(1,1)` to `QueuTag(1,1)`, or wrong length, or checksum error, you name it (while reading this line, you might not notice that a `*` is misseed in checksum, gotcha!), may ruin one's day.
+Instead of typing: `"$TMSCT,XX,Whatever_you_like,QueueTag(1,1),XX\r\n"`. A typo, e.g., `TMSCT` to `TMSTA`, or `QueueTag(1,1)` to `QueuTag(1,1)`, or wrong length, or checksum error, you name it (while reading this line, you might not notice that a `*` is missing in the checksum part, gotcha!), may ruin one's day.
 
-The generation of external script message is composed of three parts: `Header`, `Command`, and `End` signal.
-
-See reference manual for all the `Header` and its corresponding `Command`. For the last part, end signal, `End()` and `ScriptExit()` is used, command cannot be appended after `End()` and `ScriptExit()`:
+The generation of external script message is composed of three parts: `Header`, `Command`, and `End` signal. See reference manual for all the `Header` and its corresponding `Command`. For the last part, end signal, `End()` and `ScriptExit()` is used, command cannot be appended after `End()` and `ScriptExit()`:
 
 ```cpp
 TMSCT << ID{"1"} << QueueTag(1, 1) << End() << QueueTag(1, 1); // compile error (no known conversion)
@@ -189,6 +188,39 @@ TMSTA << QueueTagDone(1) << ScriptExit(); // compile error: Script exit can only
 ```
 
 For more detail, see `src/test/CMakeLists.txt`. It contains a couple of examples of correct and wrong syntax.
+
+### Verify your handler works
+
+To verify whether your handler works or not, first, make sure tm_robot_listener is aware of your plugin:
+
+```sh
+rospack plugins --attrib=plugin tm_robot_listener # this command should list your plugin if you configure it correctly
+```
+
+Secondly, add the handler to the tmr_listener.launch: (@todo: think of a better way to add plugin):
+
+```xml
+<launch>
+    <arg name="ip"/>
+    <node pkg="tm_robot_listener" type="tm_robot_listener_node" name="tm_robot_listener" output="screen" args="--ip $(arg ip)">
+        <rosparam param="listener_handles">["tm_error_handler::TMErrorHandler", ...]</rosparam>
+    </node>
+</launch>
+```
+
+Lastly, to make sure your handler generate the message at the right time, launch tmr_listener using local ip: (@todo: need more convinient way!)
+
+```sh
+roslaunch tm_robot_listener tmr_listener.launch ip:=127.0.0.1
+```
+
+The command above create a socket at `127.0.0.1:5890`, where `5890` is the port of the TM listen node. Next, we are going to create a fake endpoint to simulate TM robot, open another window and enter the following command:
+
+```
+nc  -lC 5890  # l: listen, C: carriage return and line feed at the end of the messages
+```
+
+This will establish the connection between netcat and tmr_listener, the only thing left is to simulate TM robot and generate TM messages. (@todo: I will improve this in the future)
 
 ### Using Listen Service
 
@@ -224,6 +256,7 @@ Jacky Tseng (master branch) - jacky.tseng@gyro.com.tw
 2. [pluginlib tutorial](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin)
 3. [the performance benefits of final classes](https://devblogs.microsoft.com/cppblog/the-performance-benefits-of-final-classes/)
 4. [Professional CMake - A practical guide, P122. ~ P126.](https://crascit.com/professional-cmake/)
+5. [boost asio for tcp socket programming](https://www.boost.org/doc/libs/1_58_0/doc/html/boost_asio.html)
 
 ### Notes
 
