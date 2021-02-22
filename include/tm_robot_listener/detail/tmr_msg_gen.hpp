@@ -30,6 +30,12 @@ inline std::string calculate_checksum(std::string const& t_data) noexcept {
  *       makes no sense to me, the purpose of doing so is to make the interface cleaner.
  */
 struct BaseHeaderProduct {
+  BaseHeaderProduct()                                    = default;
+  BaseHeaderProduct(BaseHeaderProduct const& /*unused*/) = default;
+  BaseHeaderProduct(BaseHeaderProduct&& /*unused*/)      = default;
+  BaseHeaderProduct& operator=(const BaseHeaderProduct& /*unused*/) = default;
+  BaseHeaderProduct& operator=(BaseHeaderProduct&&) /*unused*/ = default;
+
   virtual bool empty() const noexcept           = 0;
   virtual std::string to_str() const noexcept   = 0;
   virtual bool has_script_exit() const noexcept = 0;
@@ -43,7 +49,7 @@ struct BaseHeaderProduct {
  * @tparam Tag
  */
 template <typename Tag>
-class HeaderProduct : public BaseHeaderProduct {
+class HeaderProduct final : public BaseHeaderProduct {
  private:
   friend class HeaderProductBuilder<Tag>;
 
@@ -59,7 +65,7 @@ class HeaderProduct : public BaseHeaderProduct {
    * @return true   Command list is empty
    * @return false  Command list is not empty
    */
-  bool empty() const noexcept { return this->list.empty(); }
+  bool empty() const noexcept override { return this->list.empty(); }
 
   /**
    * @brief This function converts appended commands to string to send to TM listen node server
@@ -70,7 +76,7 @@ class HeaderProduct : public BaseHeaderProduct {
    * @note bad argument for motion function will not return ERROR for TMSCT
    * @note Error > Warning for TMSCT, even warning and error happened at the same time, TMSCT only returns ERROR line
    */
-  std::string to_str() const noexcept {
+  std::string to_str() const noexcept override {
     auto const data_str = detail::assemble_to_msg<Tag>{}(this->list);
     auto const length   = data_str.size();
     auto const result   = (boost::format("%s,%d,%s,") % Tag::HEADER() % length % data_str).str();
@@ -93,7 +99,7 @@ class HeaderProduct : public BaseHeaderProduct {
  * @tparam
  */
 template <>
-struct HeaderProduct<void> : public BaseHeaderProduct {
+struct HeaderProduct<void> final : public BaseHeaderProduct {
   bool empty() const noexcept override { return true; }
   std::string to_str() const noexcept override { return ""; }
   bool has_script_exit() const noexcept override { return false; }

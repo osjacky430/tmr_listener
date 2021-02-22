@@ -15,29 +15,6 @@
 
 namespace tm_robot_listener {
 
-/**
- * @brief Typedef for TM type system, see Expression-Editor-and-Listen-Node_1.76_Rev1.00_TW.pdf
- */
-using Int16  = motion_function::detail::FundamentalType<std::int16_t>;
-using Int32  = motion_function::detail::FundamentalType<std::int32_t>;
-using Int    = Int32;
-using Bool   = motion_function::detail::FundamentalType<bool>;
-using Float  = motion_function::detail::FundamentalType<float>;
-using String = motion_function::detail::FundamentalType<std::string>;
-using Byte   = motion_function::detail::FundamentalType<std::uint8_t>;
-using Double = motion_function::detail::FundamentalType<double>;
-
-template <typename T, std::size_t N>
-using Array = motion_function::detail::FundamentalType<std::array<T, N>>;
-
-// clang-format off
-template <std::size_t N> using BoolArray = Array<bool, N>; 
-template <std::size_t N> using IntArray = Array<int, N>;
-template <std::size_t N> using FloatArray = Array<float, N>;
-template <std::size_t N> using DoubleArray = Array<double, N>;
-template <std::size_t N> using ByteArray = Array<std::uint8_t, N>;
-// clang-format on
-
 enum class ErrorCode { NoError, BadArgument, BadCheckSum, BadHeader, InvalidData, NotInListenNode = 0xF1 };
 
 struct TMSTAResponse {
@@ -47,8 +24,8 @@ struct TMSTAResponse {
 
 struct TMSCTResponse {
   std::string id_;
-  bool script_result_;
-  std::vector<int> abnormal_line_;
+  bool script_result_ = false;
+  std::vector<int> abnormal_line_{};
 };
 
 struct CPERRResponse {
@@ -160,16 +137,17 @@ struct Header {
  *
  * @code{.cpp}
  *
- *          class SomeListenNodeEventHandler : public ListenerHandle {
+ *          class SomeListenNodeEventHandler final : public ListenerHandle {
  *           protected:
- *            motion_function::BaseHeaderProductPtr generate_cmd(bool const t_prev_response) override {
+ *            motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus const t_prev_response) override {
  *              using namespace motion_function;
- *              if (t_prev_response) {  // TM robot responded to the command you send previously
+ *              if (t_prev_response == MessageStatus::Responded) {
+ *                // TM robot responded to the command you sent previously
  *                // do something...
  *              }
  *
  *              // TM robot hasn't responded yet
- *              return empty_command_list();  // this line inform TMRobotListener to do other action (@todo implement)
+ *              return empty_command_list();  // this line inform TMRobotListener to do other action
  *            }
  *          };
  *
@@ -178,10 +156,10 @@ struct Header {
 inline auto empty_command_list() noexcept { return boost::make_shared<HeaderProduct<void>>(); }
 
 // clang-format off
-#define TMR_MOTION_FUNC(name, ret_type, ...)  detail::TMSTCFuncSet<ret_type, __VA_ARGS__> const name { #name } 
-#define TMR_SUBCMD(name, subcmd, ...)         detail::TMSTAFuncSet<__VA_ARGS__> const name { #subcmd }
-#define SIGNATURE(...)                        detail::Function<__VA_ARGS__>
+#define TMR_MOTION_FUNC(name, ret_type, ...)  constexpr detail::TMSTCFuncSet<ret_type, __VA_ARGS__> name { #name } 
+#define TMR_SUBCMD(name, subcmd, ...)         constexpr detail::TMSTAFuncSet<__VA_ARGS__> name { #subcmd }
 #define TMR_HEADER(name)                      constexpr Header<detail::name##Tag> name {}
+#define SIGNATURE(...)                        detail::Function<__VA_ARGS__>
 #define RETURN_TYPE(type)                     type
 #define TMR_VOID
 // clang-format on
@@ -196,47 +174,48 @@ TMR_HEADER(CPERR);
 /**
  * @brief Motion function FunctionSet instances
  */
-TMR_MOTION_FUNC(QueueTag, RETURN_TYPE(bool), SIGNATURE(Int), SIGNATURE(Int, Int));
-TMR_MOTION_FUNC(WaitQueueTag, RETURN_TYPE(int), SIGNATURE(Int), SIGNATURE(Int, Int));
+TMR_MOTION_FUNC(QueueTag, RETURN_TYPE(bool), SIGNATURE(int), SIGNATURE(int, int));
+TMR_MOTION_FUNC(WaitQueueTag, RETURN_TYPE(int), SIGNATURE(int), SIGNATURE(int, int));
 TMR_MOTION_FUNC(StopAndClearBuffer, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
 TMR_MOTION_FUNC(Pause, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
 TMR_MOTION_FUNC(Resume, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
-TMR_MOTION_FUNC(PTP, RETURN_TYPE(bool), SIGNATURE(String, FloatArray<6>, Int, Int, Int, Bool),
-                SIGNATURE(String, FloatArray<6>, Int, Int, Int, Bool, IntArray<3>),
-                SIGNATURE(String, Float, Float, Float, Float, Float, Float, Int, Int, Int, Bool),
-                SIGNATURE(String, Float, Float, Float, Float, Float, Float, Int, Int, Int, Bool, Int, Int, Int));
-TMR_MOTION_FUNC(Line, RETURN_TYPE(bool), SIGNATURE(String, FloatArray<6>, Int, Int, Int, Bool),
-                SIGNATURE(String, Float, Float, Float, Float, Float, Float, Int, Int, Int, Bool));
-TMR_MOTION_FUNC(Circle, RETURN_TYPE(bool), SIGNATURE(String, FloatArray<6>, FloatArray<6>, Int, Int, Int, Bool),
-                SIGNATURE(String, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float,
-                          Int, Int, Int, Bool));
-TMR_MOTION_FUNC(PLine, RETURN_TYPE(bool), SIGNATURE(String, FloatArray<6>, Int, Int, Int),
-                SIGNATURE(String, Float, Float, Float, Float, Float, Float, Int, Int, Int));
-TMR_MOTION_FUNC(Move_PTP, RETURN_TYPE(bool), SIGNATURE(String, FloatArray<6>, Int, Int, Int, Bool),
-                SIGNATURE(String, Float, Float, Float, Float, Float, Float, Int, Int, Int, Bool));
-TMR_MOTION_FUNC(Move_Line, RETURN_TYPE(bool), SIGNATURE(String, FloatArray<6>, Int, Int, Int, Bool),
-                SIGNATURE(String, Float, Float, Float, Float, Float, Float, Int, Int, Int, Bool));
-TMR_MOTION_FUNC(Move_PLine, RETURN_TYPE(bool), SIGNATURE(String, FloatArray<6>, Int, Int, Int),
-                SIGNATURE(String, Float, Float, Float, Float, Float, Float, Int, Int, Int));
-TMR_MOTION_FUNC(ChangeBase, RETURN_TYPE(bool), SIGNATURE(String), SIGNATURE(FloatArray<6>),
-                SIGNATURE(Float, Float, Float, Float, Float, Float));
-TMR_MOTION_FUNC(ChangeTCP, RETURN_TYPE(bool), SIGNATURE(String), SIGNATURE(FloatArray<6>),
-                SIGNATURE(FloatArray<6>, Float), SIGNATURE(FloatArray<6>, Float, FloatArray<9>),
-                SIGNATURE(Float, Float, Float, Float, Float, Float),
-                SIGNATURE(Float, Float, Float, Float, Float, Float, Float),
-                SIGNATURE(Float, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float,
-                          Float, Float, Float));
-TMR_MOTION_FUNC(ChangeLoad, RETURN_TYPE(bool), SIGNATURE(Float));
+TMR_MOTION_FUNC(PTP, RETURN_TYPE(bool), SIGNATURE(std::string, std::array<float, 6>, int, int, int, bool),
+                SIGNATURE(std::string, std::array<float, 6>, int, int, int, bool, std::array<int, 3>),
+                SIGNATURE(std::string, float, float, float, float, float, float, int, int, int, bool),
+                SIGNATURE(std::string, float, float, float, float, float, float, int, int, int, bool, int, int, int));
+TMR_MOTION_FUNC(Line, RETURN_TYPE(bool), SIGNATURE(std::string, std::array<float, 6>, int, int, int, bool),
+                SIGNATURE(std::string, float, float, float, float, float, float, int, int, int, bool));
+TMR_MOTION_FUNC(Circle, RETURN_TYPE(bool),
+                SIGNATURE(std::string, std::array<float, 6>, std::array<float, 6>, int, int, int, bool),
+                SIGNATURE(std::string, float, float, float, float, float, float, float, float, float, float, float,
+                          float, int, int, int, bool));
+TMR_MOTION_FUNC(PLine, RETURN_TYPE(bool), SIGNATURE(std::string, std::array<float, 6>, int, int, int),
+                SIGNATURE(std::string, float, float, float, float, float, float, int, int, int));
+TMR_MOTION_FUNC(Move_PTP, RETURN_TYPE(bool), SIGNATURE(std::string, std::array<float, 6>, int, int, int, bool),
+                SIGNATURE(std::string, float, float, float, float, float, float, int, int, int, bool));
+TMR_MOTION_FUNC(Move_Line, RETURN_TYPE(bool), SIGNATURE(std::string, std::array<float, 6>, int, int, int, bool),
+                SIGNATURE(std::string, float, float, float, float, float, float, int, int, int, bool));
+TMR_MOTION_FUNC(Move_PLine, RETURN_TYPE(bool), SIGNATURE(std::string, std::array<float, 6>, int, int, int),
+                SIGNATURE(std::string, float, float, float, float, float, float, int, int, int));
+TMR_MOTION_FUNC(ChangeBase, RETURN_TYPE(bool), SIGNATURE(std::string), SIGNATURE(std::array<float, 6>),
+                SIGNATURE(float, float, float, float, float, float));
+TMR_MOTION_FUNC(ChangeTCP, RETURN_TYPE(bool), SIGNATURE(std::string), SIGNATURE(std::array<float, 6>),
+                SIGNATURE(std::array<float, 6>, float), SIGNATURE(std::array<float, 6>, float, std::array<float, 9>),
+                SIGNATURE(float, float, float, float, float, float),
+                SIGNATURE(float, float, float, float, float, float, float),
+                SIGNATURE(float, float, float, float, float, float, float, float, float, float, float, float, float,
+                          float, float, float));
+TMR_MOTION_FUNC(ChangeLoad, RETURN_TYPE(bool), SIGNATURE(float));
 
-TMR_MOTION_FUNC(PVTEnter, RETURN_TYPE(bool), SIGNATURE(Int), SIGNATURE(TMR_VOID));
+TMR_MOTION_FUNC(PVTEnter, RETURN_TYPE(bool), SIGNATURE(int), SIGNATURE(TMR_VOID));
 TMR_MOTION_FUNC(PVTExit, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
-TMR_MOTION_FUNC(PVTPoint, RETURN_TYPE(bool), SIGNATURE(FloatArray<6>, FloatArray<6>, Float),
-                SIGNATURE(Float, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float, Float));
+TMR_MOTION_FUNC(PVTPoint, RETURN_TYPE(bool), SIGNATURE(std::array<float, 6>, std::array<float, 6>, float),
+                SIGNATURE(float, float, float, float, float, float, float, float, float, float, float, float, float));
 TMR_MOTION_FUNC(PVTPause, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
 TMR_MOTION_FUNC(PVTResume, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
 
 TMR_SUBCMD(InExtScriptCtlMode, 00, SIGNATURE(TMR_VOID));
-TMR_SUBCMD(QueueTagDone, 01, SIGNATURE(Int));
+TMR_SUBCMD(QueueTagDone, 01, SIGNATURE(int));
 
 }  // namespace motion_function
 }  // namespace tm_robot_listener

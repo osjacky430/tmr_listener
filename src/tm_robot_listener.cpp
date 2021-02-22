@@ -25,8 +25,6 @@ inline auto strip_crlf(std::string const &t_input) noexcept {
 
 namespace tm_robot_listener {
 
-constexpr std::chrono::milliseconds TMRobotListener::HEARTBEAT_INTERVAL;  // before c++17
-
 void TMRobotListener::check_ros_heartbeat(boost::system::error_code const &t_err) noexcept {
   using namespace boost::asio::placeholders;
 
@@ -34,7 +32,7 @@ void TMRobotListener::check_ros_heartbeat(boost::system::error_code const &t_err
     ROS_ERROR_STREAM_COND_NAMED(ros::ok(), "tm_socket_ros_heartbeat_timer", "Timer Error: " << t_err.message());
     this->stop();
   } else {
-    this->ros_heartbeat_timer_.expires_from_now(HEARTBEAT_INTERVAL);
+    this->ros_heartbeat_timer_.expires_from_now(HEARTBEAT_INTERVAL());
     this->ros_heartbeat_timer_.async_wait(boost::bind(&TMRobotListener::check_ros_heartbeat, this, error));
   }
 }
@@ -179,7 +177,7 @@ void TMRobotListener::listener_node() {
   using namespace boost::asio::placeholders;
 
   this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotListener::handle_connection, this, error));
-  this->ros_heartbeat_timer_.expires_from_now(HEARTBEAT_INTERVAL);
+  this->ros_heartbeat_timer_.expires_from_now(HEARTBEAT_INTERVAL());
   this->ros_heartbeat_timer_.async_wait(boost::bind(&TMRobotListener::check_ros_heartbeat, this, error));
 
   try {

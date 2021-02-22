@@ -70,6 +70,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # OR this (not recommended, ROS tutorial is not a good reference for writing CMakelist)
 # In general, prefer to avoid the directory property commands, see reference (4)
 add_compile_options(-std=c++14)
+
+# and remember to find these packages
+find_package(catkin REQUIRED COMPONENTS roscpp pluginlib tm_robot_listener)
 ```
 
 To create your own listener handle, inherit `tm_robot_listener::ListenerHandle` in `tmr_listener_handle.hpp`:

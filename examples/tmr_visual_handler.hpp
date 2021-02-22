@@ -37,6 +37,8 @@ class TMErrorHandler final : public tm_robot_listener::ListenerHandle {
                        << declare(targetP2, std::array<float, 6>{90, -35, 125, 0, 90, 0})
                        << PTP("JPP"s, targetP2, 100, 200, 100, true) << QueueTag(2, 1) << End();
         case HandlerState::Waiting:
+          // return TMSCT << ID{"1"} << Pause() << End();
+          // return TMSTA << QueueTagDone(1) << End();
           return empty_command_list();
         case HandlerState::Finish:
         case HandlerState::Error:
@@ -68,10 +70,7 @@ class TMErrorHandler final : public tm_robot_listener::ListenerHandle {
   }
 
   tm_robot_listener::Decision start_task(std::vector<std::string> const& t_name) override {
-    if (t_name[0] == "VisionFailEnterListener_Experiment") {
-      this->state_ = HandlerState::ChangePayload;
-      return tm_robot_listener::Decision::Accept;
-    } else if (t_name[0] == "UltrasonicFail") {
+    if (t_name[0] == "VisionFail" or t_name[0] == "UltrasonicFail") {
       this->state_ = HandlerState::ChangePayload;
       return tm_robot_listener::Decision::Accept;
     }

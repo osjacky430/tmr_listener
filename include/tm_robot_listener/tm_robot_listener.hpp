@@ -19,12 +19,12 @@ class TMRobotListener {
  private:
   class ScriptExitHandler final : public ListenerHandle {
    protected:
-    motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus const t_prev_response) override {
+    motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus /*unused*/) override {
       using namespace motion_function;
       return TMSCT << ID{"TMRobotListener_DefaultHandler"} << ScriptExit();
     }
 
-    Decision start_task(std::vector<std::string> const &t_data) override { return Decision::Ignore; }
+    Decision start_task(std::vector<std::string> const & /*unused*/) override { return Decision::Ignore; }
   };
 
   using TMTaskHandler        = boost::shared_ptr<ListenerHandle>;
@@ -60,7 +60,7 @@ class TMRobotListener {
    * @param t_byte_to_extract Number of byte to extract
    * @return extracted data
    */
-  static std::string extract_buffer_data(boost::asio::streambuf &t_buffer, size_t const t_byte_to_extract) noexcept;
+  static std::string extract_buffer_data(boost::asio::streambuf &t_buffer, size_t t_byte_to_extract) noexcept;
 
   /**
    * @brief This function handles the read process of TCP connection, once entered listen node, it will initiate the
@@ -69,7 +69,7 @@ class TMRobotListener {
    * @param t_err system error happened during read process
    * @param t_byte_transfered Number of byte read from TM robot
    */
-  void handle_read(boost::system::error_code const &t_err, size_t const t_byte_transfered) noexcept;
+  void handle_read(boost::system::error_code const &t_err, size_t t_byte_transfered) noexcept;
 
   /**
    * @brief This function handles the write process of TCP connection, it will continue writing once triggered, until
@@ -78,7 +78,7 @@ class TMRobotListener {
    * @param t_err system error happened during write process
    * @param t_byte_writtened Number of byte written to TM robot
    */
-  void handle_write(boost::system::error_code const &t_err, size_t const t_byte_writtened) noexcept;
+  void handle_write(boost::system::error_code const &t_err, size_t t_byte_writtened) noexcept;
 
   /**
    * @brief Thread function that initializes and runs the IO services
@@ -117,11 +117,11 @@ class TMRobotListener {
   pluginlib::ClassLoader<ListenerHandle> class_loader_{"tm_robot_listener", "tm_robot_listener::ListenerHandle"};
 
   TMTaskHandler default_task_handler_{boost::make_shared<ScriptExitHandler>()};
-  TMTaskHandlerArray_t task_handlers_;
-  TMTaskHandler current_task_handler_;
+  TMTaskHandlerArray_t task_handlers_{};
+  TMTaskHandler current_task_handler_{};
 
  public:
-  static constexpr auto HEARTBEAT_INTERVAL = std::chrono::milliseconds(100);
+  static constexpr auto HEARTBEAT_INTERVAL() { return std::chrono::milliseconds(100); }
   static constexpr auto DEFAULT_IP_ADDRESS = "192.168.1.2";
   static constexpr auto LISTENER_PORT      = 5890;
 

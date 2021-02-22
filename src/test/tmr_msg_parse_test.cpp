@@ -9,9 +9,11 @@ class MsgParseTester final : public tm_robot_listener::ListenerHandle {
   tm_robot_listener::CPERRResponse cperr_resp_;
 
  protected:
-  bool start_task(std::vector<std::string> const& t_data) override { return true; }
+  tm_robot_listener::Decision start_task(std::vector<std::string> const& /*unused*/) override {
+    return tm_robot_listener::Decision::Accept;
+  }
 
-  tm_robot_listener::motion_function::BaseHeaderProductPtr generate_cmd(bool const) override {
+  tm_robot_listener::motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus const /*unused*/) override {
     return tm_robot_listener::motion_function::BaseHeaderProductPtr{};
   }
 

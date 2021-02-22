@@ -17,7 +17,7 @@ template <typename Tag>
 struct Command {
   std::string name;
 
-  explicit Command(std::string const& t_name) : name(t_name) {}
+  explicit Command(std::string t_name) : name(std::move(t_name)) {}
 
   std::string get_cmd() const noexcept { return this->name; }
 };

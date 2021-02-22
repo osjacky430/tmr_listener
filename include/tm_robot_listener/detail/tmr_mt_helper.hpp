@@ -122,7 +122,7 @@ namespace detail {
  */
 template <typename HeaderTag, typename CommandTag>
 struct is_cmd_operable {
-  constexpr is_cmd_operable(Command<CommandTag> const&) {
+  constexpr explicit is_cmd_operable(Command<CommandTag> const& /*unused*/) {
     static_assert(std::is_same<HeaderTag, CommandTag>::value, "Command is not usable for this header");
   }
 };
@@ -130,7 +130,7 @@ struct is_cmd_operable {
 template <>
 struct is_cmd_operable<TMSCTTag, TMSCTTag> {
   template <typename CommandTag>
-  constexpr is_cmd_operable(Command<CommandTag> const&) {
+  constexpr explicit is_cmd_operable(Command<CommandTag> const& /*unused*/) {
     static_assert(not std::is_same<CommandTag, CommandTag>::value, "ID must come before any TMSCT command");
   }
 };

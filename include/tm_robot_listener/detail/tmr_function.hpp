@@ -30,7 +30,8 @@ class Function {
    * @return string of the function call itself
    */
   template <typename PrintPolicy>
-  auto operator()(PrintPolicy const& t_printer, std::string const& t_name, ArgTypes const&... t_args) const noexcept {
+  auto operator()(PrintPolicy const& t_printer, std::string const& t_name,
+                  FundamentalType<ArgTypes> const&... t_args) const noexcept {
     return t_printer(t_name, boost::algorithm::join(std::vector<std::string>{t_args.to_str()...}, ","));
   }
 };
@@ -50,13 +51,18 @@ class FunctionSet {
                 "template param must be specialization of type Function");
   static_assert(tmr_mt_helper::is_type_unique<Functions...>::value, "Function signatures should be unique.");
 
-  std::string const name;
+  char const* const name_;
+  std::size_t const size_;
 
  public:
   using FunctorContainer = boost::fusion::vector<Functions...>;
   using EndType          = typename boost::fusion::result_of::end<FunctorContainer>::type;
 
-  explicit FunctionSet(std::string const& t_name) noexcept : name{t_name} {}
+  template <std::size_t N>
+  explicit constexpr FunctionSet(char const (&t_name)[N]) noexcept
+    : name_(static_cast<char const* const>(t_name)), size_{N} {
+    static_assert(N != 0, "invalid name");
+  }
 
   /**
    * @brief operator() for best syntax resemblance
@@ -72,13 +78,13 @@ class FunctionSet {
   template <typename... Args>
   auto operator()(Args const&... t_arguments) const {
     using namespace boost::fusion::result_of;
-    using TargetFunctor = Function<FundamentalType<typename tm_robot_listener::detail::RealType<Args>::type>...>;
+    using TargetFunctor = Function<typename tm_robot_listener::detail::RealType<Args>::type...>;
     using FindResult    = typename find<FunctorContainer, TargetFunctor>::type;
 
-    static_assert(not std::is_same<FindResult, EndType>::value, "");
+    static_assert(not std::is_same<FindResult, EndType>::value, "Function signature not match");
 
     TargetFunctor const function_call;
-    return Command<Tag>{function_call(PrintPolicy{}, this->name, t_arguments...)};
+    return Command<Tag>{function_call(PrintPolicy{}, std::string{this->name_}, t_arguments...)};
   }
 };
 

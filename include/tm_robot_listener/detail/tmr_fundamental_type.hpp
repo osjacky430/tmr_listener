@@ -31,7 +31,9 @@ namespace detail {
  *              Variable<int> v{"v"};
  *              some_func(v);           // must pass
  *
- *              some_func(Variable<int>{"V", 2.0})  // special case, not sure how to deal with it atm
+ *              some_func(Variable<int>{"V"})  // special case, not sure how to deal with it atm
+ *
+ *        That said, the constructor should not be marked explicit cause implicit conversion is intended.
  */
 template <typename T>
 class FundamentalType {
@@ -40,9 +42,9 @@ class FundamentalType {
   using underlying_t = T;
 
   constexpr FundamentalType() = default;
-  constexpr FundamentalType(operating_t const& t_val) : val_(t_val) {}
-  constexpr FundamentalType(T const& t_val) : val_(t_val) {}
-  constexpr FundamentalType(Variable<T> const& t_val) : val_(t_val) {}
+  constexpr FundamentalType(operating_t const& t_val) : val_(t_val) {}  // NOLINT
+  constexpr FundamentalType(T const& t_val) : val_(t_val) {}            // NOLINT
+  constexpr FundamentalType(Variable<T> const& t_val) : val_(t_val) {}  // NOLINT
 
   std::string to_str() const noexcept {
     if (auto const val = boost::get<Variable<T>>(&this->val_)) {
@@ -77,16 +79,20 @@ using TypeMap = boost::fusion::map<TypeNamePair<int>, TypeNamePair<double>, Type
                                    TypeNamePair<std::string>, TypeNamePair<std::uint8_t>, TypeNamePair<std::int16_t>,
                                    TypeNamePair<std::int32_t>>;
 
-static auto const TYPE_STRING_MAP = TypeMap{
-  boost::fusion::make_pair<int>("int"),
-  boost::fusion::make_pair<double>("double"),
-  boost::fusion::make_pair<bool>("bool"),
-  boost::fusion::make_pair<float>("float"),
-  boost::fusion::make_pair<std::string>("string"),
-  boost::fusion::make_pair<std::uint8_t>("byte"),
-  boost::fusion::make_pair<std::int16_t>("int16"),
-  boost::fusion::make_pair<std::int32_t>("int32"),
-};
+inline decltype(auto) get_type_decl_str() noexcept {
+  static auto const TYPE_STRING_MAP = TypeMap{
+    boost::fusion::make_pair<int>("int"),
+    boost::fusion::make_pair<double>("double"),
+    boost::fusion::make_pair<bool>("bool"),
+    boost::fusion::make_pair<float>("float"),
+    boost::fusion::make_pair<std::string>("string"),
+    boost::fusion::make_pair<std::uint8_t>("byte"),
+    boost::fusion::make_pair<std::int16_t>("int16"),
+    boost::fusion::make_pair<std::int32_t>("int32"),
+  };
+
+  return TYPE_STRING_MAP;
+}
 
 }  // namespace detail
 }  // namespace motion_function

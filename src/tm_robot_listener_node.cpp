@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
   variables_map opt_map;
   store(parse_command_line(argc, argv, listener_opt), opt_map);
 
-  if (opt_map.count("help")) {
+  if (opt_map.count("help") != 0) {
     std::cout << listener_opt << '\n';
     return 0;
   }

@@ -30,11 +30,11 @@ class ListenerHandle {
    * @param t_prev_response Did TM robot responded to previous message
    * @return motion_function::BaseHeaderProductPtr
    */
-  virtual motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus const t_prev_response) = 0;
+  virtual motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus t_prev_response) = 0;
 
-  virtual void response_msg(TMSTAResponse const&) {}
-  virtual void response_msg(TMSCTResponse const&) {}
-  virtual void response_msg(CPERRResponse const&) {}
+  virtual void response_msg(TMSTAResponse const& /*unused*/) {}
+  virtual void response_msg(TMSCTResponse const& /*unused*/) {}
+  virtual void response_msg(CPERRResponse const& /*unused*/) {}
   virtual void response_msg() {}
 
   /**
@@ -77,6 +77,12 @@ class ListenerHandle {
    * @return HeaderProductPtr
    */
   motion_function::BaseHeaderProductPtr generate_request() noexcept;
+
+  ListenerHandle()                                 = default;
+  ListenerHandle(ListenerHandle const& /*unused*/) = default;
+  ListenerHandle(ListenerHandle&& /*unused*/)      = default;
+  ListenerHandle& operator=(const ListenerHandle& /*unused*/) = default;
+  ListenerHandle& operator=(ListenerHandle&&) /*unused*/ = default;
 
   virtual ~ListenerHandle() = default;
 };

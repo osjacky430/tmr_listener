@@ -10,13 +10,13 @@
 namespace boost {
 
 template <>
-inline std::string lexical_cast<std::string, bool>(bool const& t_bool) {
-  return t_bool ? "true" : "false";
+inline std::string lexical_cast<std::string, bool>(bool const& arg) {
+  return arg ? "true" : "false";
 }
 
 template <>
-inline std::string lexical_cast<std::string, std::string>(std::string const& t_str) {
-  return '\"' + t_str + '\"';
+inline std::string lexical_cast<std::string, std::string>(std::string const& arg) {
+  return '\"' + arg + '\"';
 }
 
 }  // namespace boost

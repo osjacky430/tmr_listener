@@ -15,6 +15,9 @@
 
 namespace tm_robot_listener {
 
+template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std_array<T>::value, bool> = true>
+auto declare(Variable<T> const& t_var, T const& t_val);
+
 /**
  * @brief The class represents the concept of expression, for more explanation on expression, see
  *        [here](https://en.cppreference.com/w/cpp/language/expressions). Expression is a sequence of operators and
@@ -51,14 +54,14 @@ TM_DEFINE_OPERATORS(Expression);
  * @tparam T  Underlying type of the variable
  */
 template <typename T>
-class Variable {
+class Variable {  // NOLINT
  private:
   std::string const name_;  // @note this variable is marked as const as I didn't make the construction and variable
                             // private, make it at least unmodifiable
  public:
   using underlying_t = T;
 
-  explicit Variable(std::string const& t_name) noexcept : name_(t_name) {}
+  explicit Variable(std::string t_name) noexcept : name_(std::move(t_name)) {}
 
   auto operator()() const noexcept { return this->name_; }
 
@@ -70,12 +73,12 @@ class Variable {
    * @return Assignment expression
    */
   template <typename U>
-  auto operator=(U const& t_input) const noexcept {
+  auto operator=(U const& t_input) const noexcept {  // NOLINT
     static_assert(std::is_convertible<typename detail::RealType<U>::type, T>::value,
                   "No known conversion from input type to Variable underlying type");
-    using stringifier = std::conditional_t<detail::is_expression<U> or detail::is_named_var<U>,
+    using stringifier= std::conditional_t<detail::is_expression<U> or detail::is_named_var<U>,
                                            detail::statement_to_string, value_to_string<U>>;
-    return Expression<T>{'(' + this->name + '=' + stringifier{}(t_input) + ')'};
+    return Expression<T>{'(' + this->name_ + '=' + stringifier{}(t_input) + ')'};
   }
 
   /**
@@ -84,8 +87,8 @@ class Variable {
    * @param t_input input variable
    * @return Assignement expression
    */
-  auto operator=(Variable<T> const& t_input) const noexcept {
-    return Expression<T>{'(' + this->name + '=' + t_input() + ')'};
+  auto operator=(Variable<T> const& t_input) const noexcept {  // NOLINT
+    return Expression<T>{'(' + this->name_ + '=' + t_input() + ')'};
   }
 };
 
@@ -127,7 +130,7 @@ inline auto declare(Variable<T> const& t_var, T const& t_val) {
 
   using namespace boost::fusion;
   auto const formatted = boost::format("%s[] %s=%s") %
-                         at_key<typename T::value_type>(motion_function::detail::TYPE_STRING_MAP) % t_var() %
+                         at_key<typename T::value_type>(motion_function::detail::get_type_decl_str()) % t_var() %
                          value_to_string<T>{}(t_val);
   return Expression<T>{formatted.str()};
 }
@@ -150,7 +153,7 @@ inline auto declare(Variable<T> const& t_var, T const& t_val) {
   }
 
   using namespace boost::fusion;
-  auto const formatted = boost::format("%s %s=%s") % at_key<T>(motion_function::detail::TYPE_STRING_MAP) % t_var() %
+  auto const formatted = boost::format("%s %s=%s") % at_key<T>(motion_function::detail::get_type_decl_str()) % t_var() %
                          value_to_string<T>{}(t_val);
   return Expression<T>{formatted.str()};
 }
