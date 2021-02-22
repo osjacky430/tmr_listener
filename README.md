@@ -242,6 +242,7 @@ Notice the option `-v`, **this is needed** since tm_robot_listener will determin
 ### TODO
 
 - Better ROS interface
+- Inject tm logic to boost asio instead of heavy coupling
 - Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
 - consider function accepting types that can be implicitly converted to the desired type
 - Implement some services

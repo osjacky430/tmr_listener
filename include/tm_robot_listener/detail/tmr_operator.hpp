@@ -1,5 +1,5 @@
-#ifndef TMR_OPERATOR_HPP__
-#define TMR_OPERATOR_HPP__
+#ifndef TMR_OPERATOR_HPP_
+#define TMR_OPERATOR_HPP_
 
 #include "tmr_fwd.hpp"
 

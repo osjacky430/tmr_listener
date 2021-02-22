@@ -1,5 +1,5 @@
-#ifndef TMR_FUNDAMENTAL_TYPE_HPP__
-#define TMR_FUNDAMENTAL_TYPE_HPP__
+#ifndef TMR_FUNDAMENTAL_TYPE_HPP_
+#define TMR_FUNDAMENTAL_TYPE_HPP_
 
 #include <boost/fusion/container/map.hpp>
 #include <boost/variant.hpp>

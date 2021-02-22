@@ -1,5 +1,5 @@
-#ifndef TMR_FWD_HPP__
-#define TMR_FWD_HPP__
+#ifndef TMR_FWD_HPP_
+#define TMR_FWD_HPP_
 
 namespace tm_robot_listener {
 

@@ -1,5 +1,5 @@
-#ifndef TMR_MT_HELPER__
-#define TMR_MT_HELPER__
+#ifndef TMR_MT_HELPER_HPP_
+#define TMR_MT_HELPER_HPP_
 
 #include <array>
 #include <boost/mpl/bool.hpp>

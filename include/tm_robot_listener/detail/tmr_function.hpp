@@ -1,5 +1,5 @@
-#ifndef TMR_MOTION_FUNCTION_IMPL__
-#define TMR_MOTION_FUNCTION_IMPL__
+#ifndef TMR_MOTION_FUNCTION_IMPL_HPP_
+#define TMR_MOTION_FUNCTION_IMPL_HPP_
 
 #include <boost/fusion/container/vector.hpp>
 #include <boost/fusion/include/find.hpp>

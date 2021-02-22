@@ -1,5 +1,5 @@
-#ifndef TMR_STRINGIFIER_HPP__
-#define TMR_STRINGIFIER_HPP__
+#ifndef TMR_STRINGIFIER_HPP_
+#define TMR_STRINGIFIER_HPP_
 
 #include <array>
 #include <boost/algorithm/string.hpp>

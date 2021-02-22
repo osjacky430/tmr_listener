@@ -1,5 +1,5 @@
-#ifndef TMR_COMMAND_HPP__
-#define TMR_COMMAND_HPP__
+#ifndef TMR_COMMAND_HPP_
+#define TMR_COMMAND_HPP_
 
 #include <string>
 

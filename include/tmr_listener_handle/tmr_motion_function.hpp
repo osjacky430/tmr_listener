@@ -1,5 +1,5 @@
-#ifndef TMR_MOTION_FUNCTION_HPP__
-#define TMR_MOTION_FUNCTION_HPP__
+#ifndef TMR_MOTION_FUNCTION_HPP_
+#define TMR_MOTION_FUNCTION_HPP_
 
 #include <boost/format.hpp>
 #include <boost/fusion/include/at_key.hpp>

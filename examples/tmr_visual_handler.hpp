@@ -1,5 +1,5 @@
-#ifndef TM_ERROR_HANDLER_HPP__
-#define TM_ERROR_HANDLER_HPP__
+#ifndef TM_ERROR_HANDLER_HPP_
+#define TM_ERROR_HANDLER_HPP_
 
 #include "tmr_listener_handle/tmr_listener_handle.hpp"
 

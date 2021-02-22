@@ -1,5 +1,5 @@
-#ifndef TM_ROBOT_LISTENER_HPP__
-#define TM_ROBOT_LISTENER_HPP__
+#ifndef TM_ROBOT_LISTENER_HPP_
+#define TM_ROBOT_LISTENER_HPP_
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>

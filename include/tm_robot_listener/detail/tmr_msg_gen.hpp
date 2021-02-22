@@ -1,5 +1,5 @@
-#ifndef TMR_MSG_GEN_HPP__
-#define TMR_MSG_GEN_HPP__
+#ifndef TMR_MSG_GEN_HPP_
+#define TMR_MSG_GEN_HPP_
 
 #include <boost/format.hpp>
 #include <boost/fusion/include/at_key.hpp>

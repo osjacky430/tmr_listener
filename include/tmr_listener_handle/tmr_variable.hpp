@@ -1,5 +1,5 @@
-#ifndef TMR_VARIABLE_HPP__
-#define TMR_VARIABLE_HPP__
+#ifndef TMR_VARIABLE_HPP_
+#define TMR_VARIABLE_HPP_
 
 #include "tm_robot_listener/detail/tmr_fundamental_type.hpp"
 #include "tm_robot_listener/detail/tmr_fwd.hpp"
