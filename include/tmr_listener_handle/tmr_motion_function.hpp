@@ -19,17 +19,17 @@ enum class ErrorCode { NoError, BadArgument, BadCheckSum, BadHeader, InvalidData
 
 struct TMSTAResponse {
   int subcmd_;
-  std::vector<std::string> data_;
+  std::vector<std::string> data_{};
 };
 
 struct TMSCTResponse {
-  std::string id_;
+  std::string id_{""};
   bool script_result_ = false;
   std::vector<int> abnormal_line_{};
 };
 
 struct CPERRResponse {
-  ErrorCode err_;
+  ErrorCode err_ = ErrorCode::NoError;
 };
 
 namespace motion_function {
@@ -60,8 +60,8 @@ using BaseHeaderProductPtr = boost::shared_ptr<BaseHeaderProduct>;
  *          functions, tm_robot_listener creates a FunctionSet instance for each of them. By doing so, we can avoid
  *          syntax error or typo.
  *
- *          With tm_robot_listener, user can generate listen node command easily, by fluent interface (see example (1)
- *          below). Instead of typing: "$TMSCT,XX,1,QueueTag(1,1),*XX\r\n". A typo, e.g., TMSCT to TMSTA, or
+ *          With tm_robot_listener, user can generate listen node command easily by fluent interface (see example (1)
+ *          below). Instead of typing: "$TMSCT,XX,1,QueueTag(1,1),*XX\r\n", a typo, e.g., TMSCT to TMSTA, or
  *          QueueTag(1,1) to QueuTag(1,1), or wrong length, or checksum error, you name it, may ruin one's day.
  *
  *          The generation of external script message is composed of three parts: Header, Command, and End signal. For
@@ -127,6 +127,22 @@ struct Header {
   friend bool operator!=(std::string const& t_lhs, Header const& /*unused*/) noexcept { return Tag::HEADER() != t_lhs; }
 };
 
+// clang-format off
+#define TMR_MOTION_FUNC(name, ret_type, ...)  constexpr detail::TMSTCFuncSet<ret_type, __VA_ARGS__> name { #name } 
+#define TMR_SUBCMD(name, subcmd, ...)         constexpr detail::TMSTAFuncSet<__VA_ARGS__> name { #subcmd }
+#define TMR_HEADER(name)                      constexpr Header<detail::name##Tag> name {}
+#define SIGNATURE(...)                        detail::Function<__VA_ARGS__>
+#define RETURN_TYPE(type)                     type
+#define TMR_VOID
+// clang-format on
+
+/**
+ * @brief TMSCT and TMSTA Header instances
+ */
+TMR_HEADER(TMSCT);
+TMR_HEADER(TMSTA);
+TMR_HEADER(CPERR);
+
 /**
  * @brief return empty commmand list
  *
@@ -155,21 +171,9 @@ struct Header {
  */
 inline auto empty_command_list() noexcept { return boost::make_shared<HeaderProduct<void>>(); }
 
-// clang-format off
-#define TMR_MOTION_FUNC(name, ret_type, ...)  constexpr detail::TMSTCFuncSet<ret_type, __VA_ARGS__> name { #name } 
-#define TMR_SUBCMD(name, subcmd, ...)         constexpr detail::TMSTAFuncSet<__VA_ARGS__> name { #subcmd }
-#define TMR_HEADER(name)                      constexpr Header<detail::name##Tag> name {}
-#define SIGNATURE(...)                        detail::Function<__VA_ARGS__>
-#define RETURN_TYPE(type)                     type
-#define TMR_VOID
-// clang-format on
-
-/**
- * @brief TMSCT and TMSTA Header instances
- */
-TMR_HEADER(TMSCT);
-TMR_HEADER(TMSTA);
-TMR_HEADER(CPERR);
+inline auto dummy_command_list(std::string t_dummy_cmd_id) noexcept {
+  return TMSCT << ID{std::move(t_dummy_cmd_id)} << End();
+}
 
 /**
  * @brief Motion function FunctionSet instances

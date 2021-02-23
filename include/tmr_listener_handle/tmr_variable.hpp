@@ -15,9 +15,6 @@
 
 namespace tm_robot_listener {
 
-template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std_array<T>::value, bool> = true>
-auto declare(Variable<T> const& t_var, T const& t_val);
-
 /**
  * @brief The class represents the concept of expression, for more explanation on expression, see
  *        [here](https://en.cppreference.com/w/cpp/language/expressions). Expression is a sequence of operators and

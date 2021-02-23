@@ -145,7 +145,7 @@ void TMRobotListener::handle_read(boost::system::error_code const &t_err, size_t
   }
 }
 
-void TMRobotListener::handle_write(boost::system::error_code const &t_err, size_t const t_byte_writtened) noexcept {
+void TMRobotListener::handle_write(boost::system::error_code const &t_err, size_t const /*t_byte_writtened*/) noexcept {
   using namespace boost::asio::placeholders;
 
   if (not ros::ok()) {

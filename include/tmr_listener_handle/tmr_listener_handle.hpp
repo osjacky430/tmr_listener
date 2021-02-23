@@ -41,8 +41,8 @@ class ListenerHandle {
    * @brief This function informs tm_robot_listener whether current handle is going to take on the task, this is left
    *        for end user to implement
    *
-   * @param t_data  message sent from TM when entered listener node, this argument contains only the data  section,
-   *                i.e., no header, length, and checksum. (@todo implement)
+   * @param t_data  message sent from TM when entered listener node, this argument contains only the data section, see
+   *                TM expression editor and listen node manual, TMSCT section.
    *
    * @return Decision::Accept   informs listener to use current handler to send message to TM
    * @return Decision::Ignore   informs listener not to use current handler
@@ -74,14 +74,15 @@ class ListenerHandle {
   /**
    * @brief This function generates request to send to TM robot, it calls ListenerHandle::generate_cmd internally
    *
-   * @return HeaderProductPtr
+   * @return BaseHeaderProductPtr
    */
   motion_function::BaseHeaderProductPtr generate_request() noexcept;
 
   ListenerHandle()                                 = default;
   ListenerHandle(ListenerHandle const& /*unused*/) = default;
   ListenerHandle(ListenerHandle&& /*unused*/)      = default;
-  ListenerHandle& operator=(const ListenerHandle& /*unused*/) = default;
+
+  ListenerHandle& operator=(ListenerHandle const& /*unused*/) = default;
   ListenerHandle& operator=(ListenerHandle&&) /*unused*/ = default;
 
   virtual ~ListenerHandle() = default;

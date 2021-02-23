@@ -83,7 +83,7 @@ class FunctionSet {
 
     static_assert(not std::is_same<FindResult, EndType>::value, "Function signature not match");
 
-    TargetFunctor const function_call;
+    constexpr TargetFunctor function_call;
     return Command<Tag>{function_call(PrintPolicy{}, std::string{this->name_}, t_arguments...)};
   }
 };
