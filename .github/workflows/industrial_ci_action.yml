@@ -1,0 +1,25 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  industrial_ci:
+    runs-on: ${{ matrix.os }}
+    env:
+      CCACHE_DIR: /github/home/.ccache
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-16.04]
+        include:
+          - os: ubuntu-16.04
+            env: { ROS_DISTRO: kinetic, ROS_REPO: main }
+          - os: ubuntu-18.04
+            env: { ROS_DISTRO: melodic, ROS_REPO: main }
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
+      - uses: "ros-industrial/industrial_ci@master"
+        env: ${{ matrix.env }}

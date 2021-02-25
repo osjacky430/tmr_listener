@@ -170,11 +170,10 @@ catkin_package(
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+# need to make sure this is done right, come back to this later
+install(DIRECTORY include/tm_robot_listener include/tmr_listener_handle
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
