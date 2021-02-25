@@ -28,7 +28,7 @@ namespace tm_robot_listener {
 void TMRobotListener::check_ros_heartbeat(boost::system::error_code const &t_err) noexcept {
   using namespace boost::asio::placeholders;
 
-  if (not ros::ok() or t_err) {
+  if (not ros::ok() or t_err) {  // NOLINT boost pre c++11 safe bool idiom
     ROS_ERROR_STREAM_COND_NAMED(ros::ok(), "tm_socket_ros_heartbeat_timer", "Timer Error: " << t_err.message());
     this->stop();
   } else {
@@ -95,7 +95,7 @@ void TMRobotListener::handle_read(boost::system::error_code const &t_err, size_t
     return;
   }
 
-  if (not t_err) {
+  if (not t_err) {  // NOLINT, boost pre c++11 safe bool idiom
     if (t_byte_transfered > 0) {
       auto const result        = this->extract_buffer_data(this->input_buffer_, t_byte_transfered);
       auto const parsed_result = ::get_tokenized_result(result);
@@ -152,7 +152,7 @@ void TMRobotListener::handle_write(boost::system::error_code const &t_err, size_
     return;
   }
 
-  if (not t_err) {
+  if (not t_err) {  // NOLINT, boost pre c++11 safe bool idiom
     if (this->current_task_handler_) {
       auto const cmd       = this->current_task_handler_->generate_request();
       this->output_buffer_ = cmd->to_str();

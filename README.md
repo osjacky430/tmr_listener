@@ -247,6 +247,8 @@ Notice the option `-v`, **this is needed** since tm_robot_listener will determin
 - consider function accepting types that can be implicitly converted to the desired type
 - Implement some services
 - TM functions, and project variables
+- MUST disable user construct Expression from string, only internally usable
+- Reply if tm message not yet respond is bugged since the response is not queued, fix it in the future
 - More Unit test
   - Connection
 
@@ -265,3 +267,4 @@ Jacky Tseng (master branch) - jacky.tseng@gyro.com.tw
 ### Notes
 
 - [Memory leak issue due to plugin lib](https://github.com/ros/class_loader/issues/131)
+- Expression template may be used in this case, however, I'm not familiar with the framework such as Proto, Pheonix, etc.

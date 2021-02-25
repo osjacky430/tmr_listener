@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
   }
 
   auto const ip = opt_map["ip"].as<std::string>();
+  ROS_INFO_STREAM("Prepare connection: " << ip);
 
   tm_robot_listener::TMRobotListener listener_node{ip};
   listener_node.start();

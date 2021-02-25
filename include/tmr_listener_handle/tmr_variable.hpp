@@ -24,6 +24,7 @@ namespace tm_robot_listener {
  * @tparam T  Result type of the expression evaluation
  *
  * @todo make the constructor private, and only friend Variable
+ * @note  Consider making it constexpr constructible
  *
  * @code{.cpp}
  *
@@ -49,6 +50,8 @@ TM_DEFINE_OPERATORS(Expression);
  *        to tm_expression_editor_and_listen_node_reference_manual_en
  *
  * @tparam T  Underlying type of the variable
+ *
+ * @note  Consider making it constexpr constructible
  */
 template <typename T>
 class Variable {  // NOLINT
@@ -58,7 +61,8 @@ class Variable {  // NOLINT
  public:
   using underlying_t = T;
 
-  explicit Variable(std::string t_name) noexcept : name_(std::move(t_name)) {}
+  Variable() = delete;  // nobody should default construct a Variable instance, doing so is meaningless
+  explicit Variable(std::string t_name) noexcept : name_(std::move(t_name)) {}  // copy and move idiom
 
   auto operator()() const noexcept { return this->name_; }
 
@@ -68,13 +72,18 @@ class Variable {  // NOLINT
    * @tparam Input type, must be convertible to the underlying type of the Variable
    * @param t_input Input value, needs to be lexical castable
    * @return Assignment expression
+   *
+   * @note const is dropped here, even though this function can also be called by const object, we would like to mimic
+   *       TM variable as much as possible, i.e., const Variable not modifiable
    */
   template <typename U>
-  auto operator=(U const& t_input) const noexcept {  // NOLINT
+  [[gnu::warn_unused_result]] auto operator=(U const& t_input) noexcept {  // NOLINT
     static_assert(std::is_convertible<typename detail::RealType<U>::type, T>::value,
                   "No known conversion from input type to Variable underlying type");
-    using stringifier= std::conditional_t<detail::is_expression<U> or detail::is_named_var<U>,
+    // clang-format off
+    using stringifier = std::conditional_t<detail::is_expression<U> or detail::is_named_var<U>,
                                            detail::statement_to_string, value_to_string<U>>;
+    // clang-format on
     return Expression<T>{'(' + this->name_ + '=' + stringifier{}(t_input) + ')'};
   }
 
@@ -83,8 +92,14 @@ class Variable {  // NOLINT
    *
    * @param t_input input variable
    * @return Assignement expression
+   *
+   * @note const is dropped here, even though this function can also be called by const object, we would like to mimic
+   *       TM variable as much as possible, i.e., const Variable not modifiable
+   *
+   * @note overloading operator= here implies that Variable can only set its name during declaration, since
+   *       assignment didn't do what it "normally" should do.
    */
-  auto operator=(Variable<T> const& t_input) const noexcept {  // NOLINT
+  [[gnu::warn_unused_result]] auto operator=(Variable<T> const& t_input) noexcept {  // NOLINT
     return Expression<T>{'(' + this->name_ + '=' + t_input() + ')'};
   }
 };
@@ -92,7 +107,7 @@ class Variable {  // NOLINT
 TM_DEFINE_OPERATORS(Variable);
 
 template <typename S, typename T, typename U, typename V>
-inline auto ternary_expr(T const& t_expr, U const& t_left, V const& t_right) noexcept {
+[[gnu::warn_unused_result]] inline auto ternary_expr(T const& t_expr, U const& t_left, V const& t_right) noexcept {
   constexpr auto expr_require      = (detail::is_named_var<T> or detail::is_expression<T>);
   constexpr auto expr_type_require = std::is_same<typename T::underlying_t, bool>::value;
   static_assert(expr_require and expr_type_require, "ternary operator require a boolean statement");
@@ -119,7 +134,7 @@ inline auto ternary_expr(T const& t_expr, U const& t_left, V const& t_right) noe
  * @return Expression of initialization
  */
 template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_array<T>::value, bool> = true>
-inline auto declare(Variable<T> const& t_var, T const& t_val) {
+[[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, T const& t_val) {
   // static_assert(); U must be one of the following: T, or underlying type of U that is convertible to T
   if (not boost::xpressive::regex_match(t_var(), detail::var_name_pattern())) {
     throw std::invalid_argument{"bad variable name: " + t_var()};
@@ -143,7 +158,7 @@ inline auto declare(Variable<T> const& t_var, T const& t_val) {
  * @todo Add case for Variable and Expression
  */
 template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std_array<T>::value, bool> = true>
-inline auto declare(Variable<T> const& t_var, T const& t_val) {
+[[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, T const& t_val) {
   // static_assert();
   if (not boost::xpressive::regex_match(t_var(), detail::var_name_pattern())) {
     throw std::invalid_argument{"bad variable name: " + t_var()};
@@ -152,6 +167,30 @@ inline auto declare(Variable<T> const& t_var, T const& t_val) {
   using namespace boost::fusion;
   auto const formatted = boost::format("%s %s=%s") % at_key<T>(motion_function::detail::get_type_decl_str()) % t_var() %
                          value_to_string<T>{}(t_val);
+  return Expression<T>{formatted.str()};
+}
+
+/**
+ * @brief This function creates Variable declaration expression, non-array version
+ *
+ * @tparam T  underlying type of the variable
+ * @param t_var Variable to be declared
+ * @param t_val Initial value of the variable
+ * @return Expression of initialization
+ *
+ * @todo Add case for Variable and Expression
+ */
+template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_array<T>::value, bool> = true>
+[[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, Variable<T> const& t_val) {
+  // static_assert();
+  if (not boost::xpressive::regex_match(t_var(), detail::var_name_pattern())) {
+    throw std::invalid_argument{"bad variable name: " + t_var()};
+  }
+
+  using namespace boost::fusion;
+  auto const formatted = boost::format("%s[] %s=%s") %
+                         at_key<typename T::value_type>(motion_function::detail::get_type_decl_str()) % t_var() %
+                         t_val();
   return Expression<T>{formatted.str()};
 }
 

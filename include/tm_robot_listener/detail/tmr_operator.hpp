@@ -16,19 +16,19 @@
 #define TM_UNARY_OP_COMBINE_POSTFIX_0(VAL, tok) (#tok + VAL())
 #define TM_UNARY_OP_COMBINE_POSTFIX_1(VAL, tok) (VAL() + #tok)
 
-#define TM_DEFINE_UNARY_OPERATOR(CLASS, tok, POST)                                                        \
-  template <typename T>                                                                                   \
-  auto operator tok(CLASS<T> const& t_e TM_UNARY_OP_IS_POSTFIX_##POST) noexcept {                         \
-    auto const op_ret_type = []() {                                                                       \
-      T a{};                                                                                              \
-      return TM_UNARY_OP_APPLY_POSTFIX_##POST(a, tok);                                                    \
-    };                                                                                                    \
-    return Expression<decltype(op_ret_type())>{'(' + TM_UNARY_OP_COMBINE_POSTFIX_##POST(t_e, tok) + ')'}; \
+#define TM_DEFINE_UNARY_OPERATOR(CLASS, tok, POST)                                                            \
+  template <typename T>                                                                                       \
+  [[gnu::warn_unused_result]] auto operator tok(CLASS<T> const& t_e TM_UNARY_OP_IS_POSTFIX_##POST) noexcept { \
+    auto const op_ret_type = []() {                                                                           \
+      T a{};                                                                                                  \
+      return TM_UNARY_OP_APPLY_POSTFIX_##POST(a, tok);                                                        \
+    };                                                                                                        \
+    return Expression<decltype(op_ret_type())>{'(' + TM_UNARY_OP_COMBINE_POSTFIX_##POST(t_e, tok) + ')'};     \
   }
 
 #define TM_DEFINE_BINARY_OPERATOR(CLASS, tok)                                                         \
   template <typename T, typename U>                                                                   \
-  auto operator tok(CLASS<T> const& t_e, U const& t_u) noexcept {                                     \
+  [[gnu::warn_unused_result]] auto operator tok(CLASS<T> const& t_e, U const& t_u) noexcept {         \
     using stringifier = std::conditional_t<detail::is_expression<U> or detail::is_named_var<U>,       \
                                            detail::statement_to_string, value_to_string<U>>;          \
                                                                                                       \
@@ -42,7 +42,7 @@
                                                                                                       \
   template <typename T, typename U,                                                                   \
             std::enable_if_t<!(detail::is_expression<U> or detail::is_named_var<U>), bool> = true>    \
-  auto operator tok(U const& t_u, CLASS<T> const& t_e) noexcept {                                     \
+  [[gnu::warn_unused_result]] auto operator tok(U const& t_u, CLASS<T> const& t_e) noexcept {         \
     auto const op_ret_type = []() {                                                                   \
       T a{};                                                                                          \
       U b{};                                                                                          \

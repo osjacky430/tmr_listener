@@ -15,7 +15,7 @@ namespace tm_robot_listener {
  */
 template <typename Tag>
 struct Command {
-  std::string name;
+  std::string const name;
 
   explicit Command(std::string t_name) : name(std::move(t_name)) {}
 

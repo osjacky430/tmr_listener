@@ -5,6 +5,7 @@
 #include <boost/fusion/include/find.hpp>
 
 #include "tmr_command.hpp"
+#include "tmr_constexpr_string.hpp"
 #include "tmr_fundamental_type.hpp"
 #include "tmr_fwd.hpp"
 #include "tmr_mt_helper.hpp"
@@ -46,23 +47,15 @@ class Function {
  * @tparam Functions  Function signatures
  */
 template <typename Tag, typename PrintPolicy, typename RetType, typename... Functions>
-class FunctionSet {
+struct FunctionSet {
   static_assert(tmr_mt_helper::variadic_and<tmr_mt_helper::is_specialization_of<Functions, Function>::value...>::value,
                 "template param must be specialization of type Function");
   static_assert(tmr_mt_helper::is_type_unique<Functions...>::value, "Function signatures should be unique.");
 
-  char const* const name_;
-  std::size_t const size_;
-
- public:
   using FunctorContainer = boost::fusion::vector<Functions...>;
   using EndType          = typename boost::fusion::result_of::end<FunctorContainer>::type;
 
-  template <std::size_t N>
-  explicit constexpr FunctionSet(char const (&t_name)[N]) noexcept
-    : name_(static_cast<char const* const>(t_name)), size_{N} {
-    static_assert(N != 0, "invalid name");
-  }
+  tm_robot_listener::detail::ConstString name_;
 
   /**
    * @brief operator() for best syntax resemblance
@@ -84,7 +77,7 @@ class FunctionSet {
     static_assert(not std::is_same<FindResult, EndType>::value, "Function signature not match");
 
     constexpr TargetFunctor function_call;
-    return Command<Tag>{function_call(PrintPolicy{}, std::string{this->name_}, t_arguments...)};
+    return Command<Tag>{function_call(PrintPolicy{}, this->name_.to_std_str(), t_arguments...)};
   }
 };
 
