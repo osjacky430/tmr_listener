@@ -1,6 +1,6 @@
-![master](https://img.shields.io/github/workflow/status/osjacky430/tm_robot_listener/CI.svg)
-
 # TM Robot Listener
+
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/osjacky430/tm_robot_listener/CI)
 
 A package that handles TM robot listen node, this package takes care of the TCP connection and message generation/parsing. The application is left for the end user to implement, making it simple, flexible and robust.
 
@@ -22,7 +22,7 @@ A package that handles TM robot listen node, this package takes care of the TCP 
 
 ## About the Project
 
-TM robot provides listen node in TMFlow where user can control the robot arm via sending TM external script when entering the node. This package provides user not only the connection between TM robot, but also message generation/parsing. By providing your own handler, this package will take care of the rest of the stuffs,.
+TM robot provides listen node in TMFlow where user can control the robot arm via sending TM external script when entering. This package provides user not only the connection between TM robot, but also message generation/parsing. The only thing left to be done is to implement the handler, which is left for you to do it.
 
 ### Built with
 

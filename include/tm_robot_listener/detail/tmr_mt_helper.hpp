@@ -76,6 +76,11 @@ struct is_type_unique<F, S, T...> {
   static constexpr bool value = is_type_unique<T...>::value and not std::is_same<F, S>::value;
 };
 
+template <bool Cond, typename T>
+struct const_if {
+  using type = std::conditional_t<Cond, std::add_const_t<T>, T>;
+};
+
 }  // namespace tmr_mt_helper
 
 namespace tm_robot_listener {

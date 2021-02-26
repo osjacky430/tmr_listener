@@ -3,6 +3,7 @@ project(tm_robot_listener)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(StaticAnalyzers)
+include(Sanitizers)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -172,8 +173,7 @@ catkin_package(
 ## Mark cpp header files for installation
 # need to make sure this is done right, come back to this later
 install(DIRECTORY include/tm_robot_listener include/tmr_listener_handle
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..
-)
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

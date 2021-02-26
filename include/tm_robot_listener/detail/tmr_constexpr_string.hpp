@@ -3,7 +3,7 @@
 
 namespace tm_robot_listener {
 namespace detail {
-//
+
 struct ConstString {
   char const* const name_;
   std::size_t const size_;
@@ -23,8 +23,22 @@ struct ConstString {
       return false;
     }
 
-    for (int i = 0; i < N; ++i) {
+    for (std::size_t i = 0; i < N; ++i) {
       if (this->name_[i] != t_name[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  constexpr bool operator==(ConstString const& t_str) const noexcept {
+    if (this->size_ != t_str.size_) {
+      return false;
+    }
+
+    for (std::size_t i = 0; i < this->size_; ++i) {
+      if (t_str.name_[i] != this->name_[i]) {
         return false;
       }
     }
