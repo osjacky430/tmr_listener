@@ -28,11 +28,17 @@ function (enable_sanitizers project_name)
       endif ()
     endif ()
 
-    list(
-      JOIN
-      SANITIZERS
-      ","
-      LIST_OF_SANITIZERS)
+    string(
+      REPLACE ";"
+              ","
+              LIST_OF_SANITIZERS
+              "${SANITIZERS}")
+    # This required cmake version greater than 3.12
+    # list(
+    #   JOIN
+    #   SANITIZERS
+    #   ","
+    #   LIST_OF_SANITIZERS)
 
     if (LIST_OF_SANITIZERS)
       if (NOT
