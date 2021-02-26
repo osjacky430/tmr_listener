@@ -5,6 +5,7 @@
 #include <boost/variant.hpp>
 #include <string>
 
+#include "tmr_constexpr_string.hpp"
 #include "tmr_fwd.hpp"
 #include "tmr_stringifier.hpp"
 
@@ -73,25 +74,33 @@ namespace detail {
  * @tparam Type
  */
 template <typename Type>
-using TypeNamePair = boost::fusion::pair<Type, std::string>;
+using TypeNamePair = boost::fusion::pair<Type, tm_robot_listener::detail::ConstString>;
 
 using TypeMap = boost::fusion::map<TypeNamePair<int>, TypeNamePair<double>, TypeNamePair<bool>, TypeNamePair<float>,
                                    TypeNamePair<std::string>, TypeNamePair<std::uint8_t>, TypeNamePair<std::int16_t>,
                                    TypeNamePair<std::int32_t>>;
 
-inline decltype(auto) get_type_decl_str() noexcept {
-  static auto const TYPE_STRING_MAP = TypeMap{
-    boost::fusion::make_pair<int>("int"),
-    boost::fusion::make_pair<double>("double"),
-    boost::fusion::make_pair<bool>("bool"),
-    boost::fusion::make_pair<float>("float"),
-    boost::fusion::make_pair<std::string>("string"),
-    boost::fusion::make_pair<std::uint8_t>("byte"),
-    boost::fusion::make_pair<std::int16_t>("int16"),
-    boost::fusion::make_pair<std::int32_t>("int32"),
-  };
+/**
+ * @brief Get the type decl str object
+ *
+ * @return ConstString
+ * @note  This is meant to be called at compile time, do not call it at run time. It is run time inefficient
+ */
+template <typename T>
+inline auto constexpr get_type_decl_str() noexcept {
+  constexpr auto INT_DECL      = TypeNamePair<int>{"int"};
+  constexpr auto DOUBLE_DECL   = TypeNamePair<double>{"double"};
+  constexpr auto BOOL_DECL     = TypeNamePair<bool>{"bool"};
+  constexpr auto FLOAT_DECL    = TypeNamePair<float>{"float"};
+  constexpr auto STRING_DECL   = TypeNamePair<std::string>{"string"};
+  constexpr auto BYTE_DECL     = TypeNamePair<std::uint8_t>{"byte"};
+  constexpr auto HALFWORD_DECL = TypeNamePair<std::int16_t>{"int16"};
+  constexpr auto WORD_DECL     = TypeNamePair<std::int32_t>{"int32"};
 
-  return TYPE_STRING_MAP;
+  constexpr auto type_map = TypeMap{
+    INT_DECL, DOUBLE_DECL, BOOL_DECL, FLOAT_DECL, STRING_DECL, BYTE_DECL, HALFWORD_DECL, WORD_DECL,
+  };
+  return boost::fusion::at_key<T>(type_map);
 }
 
 }  // namespace detail

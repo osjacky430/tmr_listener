@@ -141,9 +141,8 @@ template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_arr
   }
 
   using namespace boost::fusion;
-  auto const formatted = boost::format("%s[] %s=%s") %
-                         at_key<typename T::value_type>(motion_function::detail::get_type_decl_str()) % t_var() %
-                         value_to_string<T>{}(t_val);
+  constexpr auto type_decl = motion_function::detail::get_type_decl_str<typename T::value_type>();
+  auto const formatted = boost::format("%s[] %s=%s") % type_decl.to_std_str() % t_var() % value_to_string<T>{}(t_val);
   return Expression<T>{formatted.str()};
 }
 
@@ -165,8 +164,8 @@ template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std
   }
 
   using namespace boost::fusion;
-  auto const formatted = boost::format("%s %s=%s") % at_key<T>(motion_function::detail::get_type_decl_str()) % t_var() %
-                         value_to_string<T>{}(t_val);
+  constexpr auto type_decl = motion_function::detail::get_type_decl_str<T>();
+  auto const formatted     = boost::format("%s %s=%s") % type_decl.to_std_str() % t_var() % value_to_string<T>{}(t_val);
   return Expression<T>{formatted.str()};
 }
 
@@ -187,10 +186,8 @@ template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_arr
     throw std::invalid_argument{"bad variable name: " + t_var()};
   }
 
-  using namespace boost::fusion;
-  auto const formatted = boost::format("%s[] %s=%s") %
-                         at_key<typename T::value_type>(motion_function::detail::get_type_decl_str()) % t_var() %
-                         t_val();
+  constexpr auto type_decl = motion_function::detail::get_type_decl_str<typename T::value_type>();
+  auto const formatted     = boost::format("%s[] %s=%s") % type_decl.to_std_str() % t_var() % t_val();
   return Expression<T>{formatted.str()};
 }
 
