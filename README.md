@@ -1,3 +1,5 @@
+![master](https://img.shields.io/github/workflow/status/osjacky430/tm_robot_listener/CI.svg)
+
 # TM Robot Listener
 
 A package that handles TM robot listen node, this package takes care of the TCP connection and message generation/parsing. The application is left for the end user to implement, making it simple, flexible and robust.
@@ -52,7 +54,7 @@ catkin build tm_robot_listener
 3. run tm_robot_listener:
 
 ```sh
-roslaunch tm_robot_listener tmr_listener.launch ip:=<your ip>
+roslaunch tm_robot_listener tmr_listener.launch
 ```
 
 ### Creating your own listener handle
@@ -234,6 +236,7 @@ Under construction...
 To run unit test, copy paste the following line to the terminal:
 
 ```sh
+catkin run_tests tm_robot_listener
 catkin build -v tm_robot_listener --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test
 ```
 

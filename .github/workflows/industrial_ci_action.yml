@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   industrial_ci:
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     env:
       CCACHE_DIR: /github/home/.ccache
     strategy:
@@ -23,3 +24,5 @@ jobs:
           key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
       - uses: "ros-industrial/industrial_ci@master"
         env: ${{ matrix.env }}
+      - name: run unit test
+        run: catkin build -v tm_robot_listener --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test
