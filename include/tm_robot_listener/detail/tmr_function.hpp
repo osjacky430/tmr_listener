@@ -142,24 +142,16 @@ struct SubCmdCallPrinter {
  * @tparam T
  */
 template <typename T>
-struct assemble_to_msg {
-  auto operator()(std::vector<std::string> const& t_input) const noexcept {
-    using namespace boost::algorithm;
-
-    return join(t_input, ",");
-  }
-};
+inline auto assemble_to_msg(std::vector<std::string> const& t_input) noexcept {
+  return boost::algorithm::join(t_input, ",");
+}
 
 template <>
-struct assemble_to_msg<TMSCTTag> {
-  auto operator()(std::vector<std::string> const& t_input) const noexcept {
-    using namespace boost::algorithm;
-
-    auto const id   = t_input.front();
-    auto const data = std::vector<std::string>{std::next(t_input.begin()), t_input.end()};
-    return id + ',' + join(data, "\r\n");
-  }
-};
+inline auto assemble_to_msg<TMSCTTag>(std::vector<std::string> const& t_input) noexcept {
+  auto const id   = t_input.front();
+  auto const data = std::vector<std::string>{std::next(t_input.begin()), t_input.end()};
+  return id + ',' + boost::algorithm::join(data, "\r\n");
+}
 
 }  // namespace detail
 }  // namespace motion_function

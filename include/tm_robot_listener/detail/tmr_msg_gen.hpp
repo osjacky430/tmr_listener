@@ -19,7 +19,7 @@ namespace motion_function {
  *
  * @note  The input string should contain "$"
  */
-inline std::string calculate_checksum(std::string const& t_data) noexcept {
+inline auto calculate_checksum(std::string const& t_data) noexcept {
   return (boost::format("%02X") % std::accumulate(std::next(t_data.begin()), t_data.end(), 0, std::bit_xor<>{})).str();
 }
 
@@ -77,7 +77,7 @@ class HeaderProduct final : public BaseHeaderProduct {
    * @note Error > Warning for TMSCT, even warning and error happened at the same time, TMSCT only returns ERROR line
    */
   std::string to_str() const noexcept override {
-    auto const data_str = detail::assemble_to_msg<Tag>{}(this->list);
+    auto const data_str = detail::assemble_to_msg<Tag>(this->list);
     auto const length   = data_str.size();
     auto const result   = (boost::format("%s,%d,%s,") % Tag::HEADER() % length % data_str).str();
 
@@ -114,7 +114,6 @@ template <typename Tag>
 class HeaderProductBuilder {
  private:
   HeaderProduct<Tag> result_;
-  std::unordered_set<std::string> var_list_;
 
   friend class Header<Tag>;
   HeaderProductBuilder() = default;

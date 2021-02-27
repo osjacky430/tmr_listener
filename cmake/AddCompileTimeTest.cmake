@@ -18,7 +18,7 @@ function (_create_test)
   include(CTest)
   add_test(
     NAME ${_TEST_NAME}
-    COMMAND ${CMAKE_COMMAND} --build . --target ${_TARGET_NAME} --config $<CONFIGURATION> --verbose
+    COMMAND ${CMAKE_COMMAND} --build . --target ${_TARGET_NAME} --config $<CONFIGURATION>
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
   if (NOT ${_SHOULD_PASS})
