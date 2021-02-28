@@ -9,12 +9,10 @@ struct ConstString {
   std::size_t const size_;
 
   template <std::size_t N>
-  constexpr ConstString(char const (&t_name)[N]) noexcept : name_{static_cast<char const* const>(t_name)}, size_{N} {
+  constexpr ConstString(char const (&t_name)[N]) noexcept  // NOLINT, implicit conversion is intended, for syntax sugar
+    : name_{static_cast<char const* const>(t_name)}, size_{N} {
     static_assert(N > 0, "Cannot construct empty string");
   }
-
-  // non constexpr version
-  ConstString(std::string const t_str) : name_{t_str.data()}, size_{t_str.length() + 1} {};
 
   std::string to_std_str() const noexcept { return std::string{this->name_}; }
 

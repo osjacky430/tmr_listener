@@ -22,6 +22,8 @@ class MsgParseTester final : public tm_robot_listener::ListenerHandle {
   void response_msg(tm_robot_listener::TMSTAResponse const& t_resp) override { this->tmsta_resp_ = t_resp; }
 
   void response_msg(tm_robot_listener::CPERRResponse const& t_resp) override { this->cperr_resp_ = t_resp; }
+
+  using tm_robot_listener::ListenerHandle::response_msg;
 };
 
 TEST(MsgParseTest, ContentMatch) {

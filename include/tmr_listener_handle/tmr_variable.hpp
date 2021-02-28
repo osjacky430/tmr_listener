@@ -43,7 +43,7 @@ struct Expression {
   auto operator()() const noexcept { return this->value; }
 };
 
-TM_DEFINE_OPERATORS(Expression);
+TM_DEFINE_OPERATORS(Expression)
 
 /**
  * @brief The class represents the concept of named variable in TM external script language, for more information, refer
@@ -63,6 +63,7 @@ class Variable {  // NOLINT
 
   Variable() = delete;  // nobody should default construct a Variable instance, doing so is meaningless
   explicit Variable(std::string t_name) noexcept : name_(std::move(t_name)) {}  // copy and move idiom
+  // explicit constexpr Variable() noexcept : {}
 
   auto operator()() const noexcept { return this->name_; }
 
@@ -102,9 +103,17 @@ class Variable {  // NOLINT
   [[gnu::warn_unused_result]] auto operator=(Variable<T> const& t_input) noexcept {  // NOLINT
     return Expression<T>{'(' + this->name_ + '=' + t_input() + ')'};
   }
+
+  [[gnu::warn_unused_result]] auto operator[](std::size_t const t_index) const noexcept {
+    auto const op_ret_type = [=]() {
+      T t{};
+      return t[t_index];
+    };
+    return Variable<decltype(op_ret_type())>{this->name_ + '[' + lexical_cast_string<int>(t_index) + "]"};
+  }
 };
 
-TM_DEFINE_OPERATORS(Variable);
+TM_DEFINE_OPERATORS(Variable)
 
 template <typename S, typename T, typename U, typename V>
 [[gnu::warn_unused_result]] inline auto ternary_expr(T const& t_expr, U const& t_left, V const& t_right) noexcept {

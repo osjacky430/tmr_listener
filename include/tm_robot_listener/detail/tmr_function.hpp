@@ -57,7 +57,7 @@ struct FunctionSet {
 
   tm_robot_listener::detail::ConstString name_;
 
-  constexpr FunctionSet(tm_robot_listener::detail::ConstString const t_str) noexcept : name_{t_str} {}
+  explicit constexpr FunctionSet(tm_robot_listener::detail::ConstString const t_str) noexcept : name_{t_str} {}
 
   /**
    * @brief operator() for best syntax resemblance

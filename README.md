@@ -133,7 +133,7 @@ struct YourHandler final : public tm_robot_listener::ListenerHandle {
 
 #### 3. response_msg (...)
 
-The overload set `response_msg` allows user to response to certain message from header, override the header that you need, the rest of the header will be ignored.
+The overload set `response_msg` allows user to response to certain message from header, override the header that you need, the rest of the header will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden.
 
 ```cpp
 // this example overrides TMSCTResponse and the one with no argument
@@ -142,6 +142,8 @@ struct YourHandler final : public tm_robot_listener::ListenerHandle {
     motion_function::BaseHeaderProductPtr next_cmd_;
     int msg_count_ = 0;
   protected:
+    using tm_robot_listener::ListenerHandle::response_mgs;
+
     // Exit script if error happened
     void response_msg(tm_robot_listener::TMSCTResponse const& t_resp) override {
       if (not t_resp.script_result_) {
@@ -160,7 +162,7 @@ struct YourHandler final : public tm_robot_listener::ListenerHandle {
 
 ### Generate tm external script language
 
-TM external message is complicated for end user to generate, and can easily screw things up. Therefore, tm_robot_listener provides some handy ways to generate the message. `tm_robot_listener` creates two global `Header` instances, i.e., `TMSCT`, and `TMSTA`. Also, for all motion functions, tm_robot_listener creates a `FunctionSet` instance for each of them. See reference manual for all motion functions in listen mode. By doing so, we can avoid syntax error or typo, since the interface acts like you are writing c++ code, typo simply indicates compile error.
+TM external message is complicated for end user to generate, and can easily screw things up. Therefore, tm_robot_listener provides some handy ways to generate the message. `tm_robot_listener` creates two global `Header` instances, i.e., `TMSCT`, and `TMSTA`. Also, for all motion functions and their corresponding overload functions, tm_robot_listener creates a `FunctionSet` instance for them. By doing so, we can avoid syntax error or typo, since the interface acts like you are writing c++ code, typo simply indicates compile error.
 
 With tm_robot_listener, user can generate listen node command relatively easy, by fluent interface:
 
