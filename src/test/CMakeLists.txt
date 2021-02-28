@@ -42,6 +42,8 @@ test_ext_script_syntax(TEST_CASE "TMSTA_ONLY_1_CMD_PER_SCRIPT"
 
 # cmake-format: on
 
+# stupid catkin_add_gtest function, catkin just sucks really hard, I must disable warning as error
+# since I have no control over adding gtest dependency, at least I do it myself
 catkin_add_gtest(tmr_msg_gen tmr_msg_gen_test.cpp)
 target_include_directories(tmr_msg_gen PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
