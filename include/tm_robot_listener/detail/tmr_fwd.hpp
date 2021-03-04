@@ -12,6 +12,10 @@ struct Variable;
 template <typename T>
 struct Command;
 
+struct TMSCTResponse;
+struct TMSTAResponse;
+struct CPERRResponse;
+
 }  // namespace tm_robot_listener
 
 namespace tm_robot_listener {

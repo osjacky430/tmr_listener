@@ -93,7 +93,7 @@ template <typename T>
 static constexpr bool is_expression = tmr_mt_helper::is_specialization_of<T, Expression>::value;
 
 /**
- * @brief Since the argument passed can be r-valued or l-valued, to identify its true underlying type, this helper
+ * @brief Since the argument passed can be r-valued or named variable, to identify its true underlying type, this helper
  *        class is used.
  *
  * @tparam T

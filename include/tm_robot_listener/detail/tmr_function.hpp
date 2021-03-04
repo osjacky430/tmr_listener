@@ -87,6 +87,7 @@ struct FunctionSet {
  * @brief Utility class for Header usage classification
  */
 struct TMSCTTag {
+  using ResponseType = TMSCTResponse;
   static constexpr auto HEADER() { return "$TMSCT"; }
 };
 
@@ -94,6 +95,7 @@ struct TMSCTTag {
  * @brief Utility class for Header usage classification
  */
 struct TMSTATag {
+  using ResponseType = TMSTAResponse;
   static constexpr auto HEADER() { return "$TMSTA"; }
 };
 
@@ -101,6 +103,7 @@ struct TMSTATag {
  * @brief Utility class for Header usage classification
  */
 struct CPERRTag {
+  using ResponseType = CPERRResponse;
   static constexpr auto HEADER() { return "$CPERR"; }
 };
 

@@ -1,7 +1,8 @@
 <launch>
-    <arg name="mock_tmr" default="false"/>
-    <arg name="ip" default="127.0.0.1"/>
-    <arg name="ip_arg" value="$(eval '--ip ' + arg('ip') if arg('mock_tmr') else '')"/>
+    <arg name="mock_tmr" default="false" doc="enable this to create tm robot server mock"/>
+    <arg name="ip" default="" doc="set this arg to your desire ip"/>
+
+    <arg name="ip_arg" value="$(eval '--ip 127.0.0.1' if arg('mock_tmr') else '--ip ' + arg('ip'))"/>
     <node pkg="tm_robot_listener" type="tm_robot_listener_node" name="tm_robot_listener" output="screen" args="$(arg ip_arg)">
         <rosparam param="listener_handles">["tm_error_handler::TMErrorHandler"]</rosparam>
     </node>

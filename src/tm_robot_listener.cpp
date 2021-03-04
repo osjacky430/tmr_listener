@@ -50,7 +50,7 @@ void TMRobotListener::handle_connection(boost::system::error_code const &t_err) 
     return;
   }
 
-  if (t_err) {
+  if (t_err) {  // NOLINT boost pre c++11 safe bool idiom
     ROS_ERROR_STREAM_THROTTLE_NAMED(1.0, "tm_socket_connection",
                                     "Connection error, reason: " << t_err.message() << ", retrying...");
 
@@ -102,7 +102,7 @@ void TMRobotListener::handle_read(boost::system::error_code const &t_err, size_t
       ROS_INFO_STREAM("Received: " << ::strip_crlf(result));
 
       auto const id     = *boost::next(parsed_result.begin(), ID_INDEX);
-      auto const header = *parsed_result.begin();
+      auto const header = parsed_result.front();
       if (not this->current_task_handler_) {
         if (header == motion_function::TMSCT and id == TMR_INIT_MSG_ID) {
           // assign current handler to the one that satisfies the condition (match message)

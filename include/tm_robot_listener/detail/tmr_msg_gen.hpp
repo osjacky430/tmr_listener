@@ -3,10 +3,13 @@
 
 #include <boost/format.hpp>
 #include <boost/fusion/include/at_key.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <numeric>
 #include <string>
-#include <unordered_set>
+
+#include "tmr_function.hpp"
+#include "tmr_fwd.hpp"
 
 namespace tm_robot_listener {
 namespace motion_function {

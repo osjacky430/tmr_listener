@@ -70,8 +70,7 @@ function (set_project_warnings project_name)
     endif ()
 
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.1)
-      set(GCC_WARNINGS ${GCC_WARNINGS} -Wduplicated-branches # warn if if / else branches have duplicated code
-      )
+      set(GCC_WARNINGS ${GCC_WARNINGS} -Wduplicated-branches) # warn if if / else branches have duplicated code
     endif ()
 
     set(PROJECT_WARNINGS ${GCC_WARNINGS})

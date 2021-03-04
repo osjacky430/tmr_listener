@@ -1,13 +1,16 @@
 #ifndef TMR_MOTION_FUNCTION_HPP_
 #define TMR_MOTION_FUNCTION_HPP_
 
+#include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
-#include <boost/fusion/include/at_key.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/tokenizer.hpp>
 #include <functional>
 #include <string>
-#include <unordered_set>
 #include <vector>
+
+#include <iostream>
 
 #include "tm_robot_listener/detail/tmr_function.hpp"
 #include "tm_robot_listener/detail/tmr_msg_gen.hpp"
@@ -16,6 +19,13 @@
 namespace tm_robot_listener {
 
 enum class ErrorCode { NoError, BadArgument, BadCheckSum, BadHeader, InvalidData, NotInListenNode = 0xF1 };
+
+struct Packet {
+  std::string header;
+  std::size_t length;
+  std::vector<std::string> data;
+  std::string checksum;
+};
 
 struct TMSTAResponse {
   int subcmd_;
@@ -30,6 +40,28 @@ struct TMSCTResponse {
 
 struct CPERRResponse {
   ErrorCode err_ = ErrorCode::NoError;
+};
+
+class MessageParser {
+ private:
+  static auto tokenize_comma_input(std::string const& t_line) noexcept {
+    static auto const pattern = boost::regex{R"((?!<(?:\(|\[)[^)\]]+)(?:,|(?:\r\n))(?![^(\[]+(?:\)|\])))"};
+    auto const input_line     = t_line.size() > 2 ? std::string{t_line.begin(), t_line.end() - 2} : t_line;
+    std::vector<std::string> ret_val;
+    boost::algorithm::split_regex(ret_val, input_line, pattern);
+    return ret_val;
+  }
+
+  static auto to_packet(std::string const& t_raw_input) noexcept {
+    auto const tok_res = tokenize_comma_input(t_raw_input);
+    return Packet{tok_res.front(), boost::lexical_cast<std::size_t, std::string>(tok_res[1]),
+                  std::vector<std::string>{tok_res.begin() + 2, boost::prior(tok_res.end(), 1)}, tok_res.back()};
+  }
+
+ public:
+  explicit MessageParser(std::string const& t_crlf_input) noexcept : result_packet{to_packet(t_crlf_input)} {}
+
+  Packet result_packet;
 };
 
 namespace motion_function {

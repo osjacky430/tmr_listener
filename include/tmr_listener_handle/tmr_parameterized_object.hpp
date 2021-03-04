@@ -1,3 +1,11 @@
+/**
+ * @file tmr_parameterized_object.hpp
+ * @author Jacky Tseing (jacky.tseng@gmail.com)
+ * @brief
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
 #ifndef TMR_PARAMETERIZED_OBJECT_HPP_
 #define TMR_PARAMETERIZED_OBJECT_HPP_
 
@@ -13,18 +21,26 @@
 
 namespace tm_robot_listener {
 
+/**
+ * @brief Base class of Attribute
+ */
 struct AttributeOwner {
-  std::string name_;
+  std::string name_; /*!< Name of the attribute owner */
 };
 
+/**
+ * @brief This class represent parameterized object concept in TM expression editor
+ *
+ * @tparam MappingRule  Glue between Item and Attribute
+ */
 template <typename MappingRule>
 struct Item {
   detail::ConstString item_name_;
 
-  constexpr Item(detail::ConstString const t_str) noexcept : item_name_{t_str} {}
+  constexpr explicit Item(detail::ConstString const t_str) noexcept : item_name_{t_str} {}
 
   /**
-   * @brief
+   * @brief Operator[] to simulate the call syntax of parameterized object
    *
    * @param t_idx
    * @return auto
@@ -32,7 +48,7 @@ struct Item {
    * @note  this factory prevents user from using Attribute with function "declare" (since this can only be
    *        r-value), which is a good thing.
    *
-   * @note use fundamental type instead of index type
+   * @todo  use fundamental type instead of index type
    */
   template <typename T>
   auto operator[](T const& t_idx) const noexcept {
@@ -41,6 +57,13 @@ struct Item {
   }
 };
 
+/**
+ * @brief Default mapping rule, i.e. index by name (type std::string), Item using this mapping rule will not do any
+ *        input check since it has no idea whether the name exists in TMFlow or not
+ *
+ * @tparam Attribute  Attribute type the mapping rule maps to
+ * @todo maybe check the input is valid name or not
+ */
 template <typename Attribute>
 struct DefaultMapping {
   template <typename T>
@@ -90,6 +113,13 @@ constexpr struct NOTOOLTag { static constexpr auto TCP_NAME = "NOTOOL"; } NOTOOL
  */
 constexpr struct HandCameraTag { static constexpr auto TCP_NAME = "HandCamera"; } HandCamera;
 
+/**
+ * @brief A helper struct to identify if the input tag is tcp tool
+ *
+ * @details In order to register your own TCP model, create a is_tcp_tool specialization with your own type
+ *
+ * @tparam T
+ */
 template <typename T>
 struct is_tcp_tool : std::false_type {};
 
@@ -128,6 +158,27 @@ struct TCPMapping {
   }
 };
 
+/**
+ * @brief Parameterized object TCP
+ *
+ * @code{.cpp}
+ *
+ *    struct MyTCP {
+ *      static constexpr auto TCP_NAME="MyTCP";
+ *    };
+ *
+ *    // register your own tcp tool
+ *    template <>
+ *    struct is_tcp_tool<MyTCP> : std::true_type {};
+ *
+ *    TCP[MyTCP].Value = std::array<float, 6>{0, -10, 0, 0, 0, 0};  -- (1)
+ *
+ *    Variable<float> var_mass;
+ *    var_mass = TCP[MyTCP].Mass;                                   -- (2)
+ *    TCP[MyTCP].Mass = 2.4;                                        -- (3)
+ *
+ * @endcode
+ */
 constexpr auto TCP = Item<TCPMapping>{"TCP"};
 
 struct VPointAttribute : public AttributeOwner {
@@ -182,7 +233,7 @@ struct IOAttribute : AttributeOwner {
 };
 
 template <>
-struct IOAttribute<SafetyTag> : public AttributeOwner {
+struct IOAttribute<SafetyTag> : AttributeOwner {
   explicit IOAttribute(std::string const& t_str) noexcept : AttributeOwner{t_str} {}
 
   R_ATTRIBUTE(SI, std::array<std::uint8_t, 5>);
@@ -197,6 +248,21 @@ struct IOMapping {
   }
 };
 
+/**
+ * @brief Parameterized object IO
+ *
+ * @code{.cpp}
+ *
+ *  Variable<std::array<float, 1>> var_ai;
+ *  var_ai = IO[ControlBox].AI                    -- (1)
+ *
+ *  Variable<std::uint8_t> si0;
+ *  si0 = IO[Safety].SI[0];                       -- (2)
+ *
+ *  IO[ControlBox].DO[2] = 1                      -- (3)
+ *  IO[ControlBox].AO[0] = 3.3                    -- (4)
+ * @endcode
+ */
 constexpr auto IO = Item<IOMapping>{"IO"};
 
 struct RobotAttribute : AttributeOwner {

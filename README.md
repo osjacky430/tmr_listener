@@ -22,7 +22,7 @@ A package that handles TM robot listen node, this package takes care of the TCP 
 
 ## About the Project
 
-TM robot provides listen node in TMFlow where user can control the robot arm via sending TM external script when entering. This package provides user not only the connection between TM robot, but also message generation/parsing. The only thing left to be done is to implement the handler, which is left for you to do it.
+TM robot provides listen node in TMFlow where user can control the robot arm via sending TM external script when entering. This package provides user not only the connection between TM robot, but also message generation/parsing. The only thing left to be done is to implement the handler, which is your responsibility.
 
 ### Built with
 
@@ -42,7 +42,8 @@ These instructions will get you a copy of the package up and running on your mac
 1. clone the repo to desire directory:
 
 ```sh
-git clone https://git-codecommit.us-east-2.amazonaws.com/v1/repos/tm_robot_listener
+git clone https://git-codecommit.us-east-2.amazonaws.com/v1/repos/tm_robot_listener # for gyrobot developer
+git clone https://github.com/osjacky430/tm_robot_listener # for github user
 ```
 
 2. build the package:
@@ -56,6 +57,11 @@ catkin build tm_robot_listener
 ```sh
 roslaunch tm_robot_listener tmr_listener.launch
 ```
+
+- Required Arguments:
+  - ip: set this arg to your desire ip
+- Optional Arguments:
+  - mock_tmr (default "false"): enable this to create tm robot server mock at local host
 
 ### Creating your own listener handle
 
@@ -235,7 +241,7 @@ Under construction...
 
 ### Unit Test
 
-To run unit test, copy paste the following line to the terminal:
+To run unit test, copy paste the following lines to the terminal:
 
 ```sh
 catkin run_tests tm_robot_listener
@@ -251,6 +257,8 @@ Notice the option `-v`, **this is needed** since tm_robot_listener will determin
 - Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
 - consider function accepting types that can be implicitly converted to the desired type
 - Implement some services
+  - load plugin dynamically
+  - listener services
 - TM functions, and project variables
 - MUST disable user construct Expression from string, only internally usable
 - Reply if tm message not yet respond is bugged since the response is not queued, fix it in the future
