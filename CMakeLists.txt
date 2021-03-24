@@ -173,7 +173,7 @@ catkin_package(
 
 ## Mark cpp header files for installation
 # need to make sure this is done right, come back to this later
-install(DIRECTORY include/tmr_listener include/tmr_listener_handle
+install(DIRECTORY include/tmr_listener include/tmr_utility include/tmr_ext_script
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
