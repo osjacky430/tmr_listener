@@ -3,7 +3,9 @@
 
 #include <string>
 
-namespace tm_robot_listener {
+#include "tmr_fwd.hpp"
+
+namespace tmr_listener {
 
 /**
  * @brief This class serves as a strong type of string
@@ -14,14 +16,17 @@ namespace tm_robot_listener {
  * @todo  We need to use friend class so only certain class have access to it
  */
 template <typename Tag>
-struct Command {
-  std::string const name;
+class Command {
+  template <typename FunctionSetTag, typename PrintPolicy, typename RetType, typename... Functions>
+  friend class tmr_listener::detail::FunctionSet;
 
+  std::string const name;
   explicit Command(std::string t_name) : name(std::move(t_name)) {}
 
+ public:
   std::string get_cmd() const noexcept { return this->name; }
 };
 
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

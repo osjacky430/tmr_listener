@@ -5,16 +5,16 @@
 #include <iostream>
 #include <string>
 
-#include "tmr_listener_handle/tmr_motion_function.hpp"
+#include "tmr_ext_script/tmr_motion_function.hpp"
 
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 enum class Decision { Accept, Ignore };
 
 /**
  * @brief This function is the main interface exposed to the user, end user implement listen node task handler by
  *        inheriting this class. For detail description, see ["Creating your own listener handle" part in top level
- *        README.md](tm_robot_listener/README.md)
+ *        README.md](tmr_listener/README.md)
  */
 class ListenerHandle {
  public:
@@ -30,7 +30,7 @@ class ListenerHandle {
    * @param t_prev_response Did TM robot responded to previous message
    * @return motion_function::BaseHeaderProductPtr
    */
-  virtual motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus t_prev_response) = 0;
+  virtual BaseHeaderProductPtr generate_cmd(MessageStatus t_prev_response) = 0;
 
   virtual void response_msg(TMSTAResponse const& /*unused*/) {}
   virtual void response_msg(TMSCTResponse const& /*unused*/) {}
@@ -38,7 +38,7 @@ class ListenerHandle {
   virtual void response_msg() {}
 
   /**
-   * @brief This function informs tm_robot_listener whether current handle is going to take on the task, this is left
+   * @brief This function informs tmr_listener whether current handle is going to take on the task, this is left
    *        for end user to implement
    *
    * @param t_data  message sent from TM when entered listener node, this argument contains only the data section, see
@@ -76,7 +76,7 @@ class ListenerHandle {
    *
    * @return BaseHeaderProductPtr
    */
-  motion_function::BaseHeaderProductPtr generate_request() noexcept;
+  BaseHeaderProductPtr generate_request() noexcept;
 
   ListenerHandle()                                 = default;
   ListenerHandle(ListenerHandle const& /*unused*/) = default;
@@ -88,6 +88,6 @@ class ListenerHandle {
   virtual ~ListenerHandle() = default;
 };
 
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

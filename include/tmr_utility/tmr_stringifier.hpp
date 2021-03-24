@@ -21,7 +21,7 @@ inline std::string lexical_cast<std::string, std::string>(std::string const& arg
 
 }  // namespace boost
 
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 template <typename T>
 static constexpr auto lexical_cast_string = boost::lexical_cast<std::string, T>;
@@ -41,6 +41,6 @@ struct value_to_string<std::array<T, N>> {
   }
 };
 
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

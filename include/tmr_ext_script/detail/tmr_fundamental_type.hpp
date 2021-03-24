@@ -5,12 +5,11 @@
 #include <boost/variant.hpp>
 #include <string>
 
-#include "tmr_constexpr_string.hpp"
 #include "tmr_fwd.hpp"
-#include "tmr_stringifier.hpp"
+#include "tmr_utility/tmr_constexpr_string.hpp"
+#include "tmr_utility/tmr_stringifier.hpp"
 
-namespace tm_robot_listener {
-namespace motion_function {
+namespace tmr_listener {
 namespace detail {
 /**
  * @brief A light wrapper to represent named variable and literal constant in tm external script language
@@ -61,11 +60,9 @@ class FundamentalType {
 };
 
 }  // namespace detail
-}  // namespace motion_function
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
-namespace tm_robot_listener {
-namespace motion_function {
+namespace tmr_listener {
 namespace detail {
 
 /**
@@ -74,7 +71,7 @@ namespace detail {
  * @tparam Type
  */
 template <typename Type>
-using TypeNamePair = boost::fusion::pair<Type, tm_robot_listener::detail::ConstString>;
+using TypeNamePair = boost::fusion::pair<Type, tmr_listener::detail::ConstString>;
 
 using TypeMap = boost::fusion::map<TypeNamePair<int>, TypeNamePair<double>, TypeNamePair<bool>, TypeNamePair<float>,
                                    TypeNamePair<std::string>, TypeNamePair<std::uint8_t>, TypeNamePair<std::int16_t>,
@@ -104,7 +101,6 @@ inline auto constexpr get_type_decl_str() noexcept {
 }
 
 }  // namespace detail
-}  // namespace motion_function
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

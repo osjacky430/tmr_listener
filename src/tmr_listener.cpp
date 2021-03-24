@@ -7,7 +7,7 @@
 #include <functional>
 #include <numeric>
 
-#include "tm_robot_listener/tm_robot_listener.hpp"
+#include "tmr_listener/tmr_listener.hpp"
 
 namespace {
 
@@ -23,7 +23,7 @@ inline auto strip_crlf(std::string const &t_input) noexcept {
 
 }  // namespace
 
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 void TMRobotListener::check_ros_heartbeat(boost::system::error_code const &t_err) noexcept {
   using namespace boost::asio::placeholders;
@@ -104,7 +104,7 @@ void TMRobotListener::handle_read(boost::system::error_code const &t_err, size_t
       auto const id     = *boost::next(parsed_result.begin(), ID_INDEX);
       auto const header = parsed_result.front();
       if (not this->current_task_handler_) {
-        if (header == motion_function::TMSCT and id == TMR_INIT_MSG_ID) {
+        if (header == TMSCT and id == TMR_INIT_MSG_ID) {
           // assign current handler to the one that satisfies the condition (match message)
           auto const data = std::vector<std::string>{boost::next(parsed_result.begin(), SCRIPT_START_INDEX),
                                                      boost::prior(parsed_result.end(), 1)};
@@ -214,4 +214,4 @@ void TMRobotListener::reconnect() noexcept {
   this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotListener::handle_connection, this, error));
 }
 
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener

@@ -1,6 +1,6 @@
 # TM Robot Listener
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/osjacky430/tm_robot_listener/CI)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/osjacky430/tmr_listener/CI)
 
 A package that handles TM robot listen node, this package takes care of the TCP connection and message generation/parsing. The application is left for the end user to implement, making it simple, flexible and robust.
 
@@ -42,20 +42,20 @@ These instructions will get you a copy of the package up and running on your mac
 1. clone the repo to desire directory:
 
 ```sh
-git clone https://git-codecommit.us-east-2.amazonaws.com/v1/repos/tm_robot_listener # for gyrobot developer
-git clone https://github.com/osjacky430/tm_robot_listener # for github user
+git clone https://git-codecommit.us-east-2.amazonaws.com/v1/repos/tmr_listener # for gyrobot developer
+git clone https://github.com/osjacky430/tmr_listener # for github user
 ```
 
 2. build the package:
 
 ```sh
-catkin build tm_robot_listener
+catkin build tmr_listener
 ```
 
-3. run tm_robot_listener:
+3. run tmr_listener:
 
 ```sh
-roslaunch tm_robot_listener tmr_listener.launch
+roslaunch tmr_listener tmr_listener.launch
 ```
 
 - Required Arguments:
@@ -80,33 +80,33 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-std=c++14)
 
 # and remember to find these packages
-find_package(catkin REQUIRED COMPONENTS roscpp pluginlib tm_robot_listener)
+find_package(catkin REQUIRED COMPONENTS roscpp pluginlib tmr_listener)
 ```
 
-To create your own listener handle, inherit `tm_robot_listener::ListenerHandle` in `tmr_listener_handle.hpp`:
+To create your own listener handle, inherit `tmr_listener::ListenerHandle` in `tmr_listener_handle.hpp`:
 
 ```cpp
 
 // in MyTMListenerHandle.hpp:
-class MyTMListenerHandle final : tm_robot_listener::ListenerHandle {  // final keyword for devirtualization, see #3 in reference section
+class MyTMListenerHandle final : tmr_listener::ListenerHandle {  // final keyword for devirtualization, see #3 in reference section
   // the rest of the implementation, will be explained in the ensuing section
 };
 
 // in MyTMListenerHandle.cpp:
-PLUGINLIB_EXPORT_CLASS(MyTMListenerHandleNamespace::MyTMListenerHandle, tm_robot_listener::ListenerHandle)
+PLUGINLIB_EXPORT_CLASS(MyTMListenerHandleNamespace::MyTMListenerHandle, tmr_listener::ListenerHandle)
 
 ```
 
-For the rest of the setup, [see pluginlib tutorial (pretty outdated IMO)](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin). `tm_robot_listener::ListenerHandle` provides several functions that can/must be overriden:
+For the rest of the setup, [see pluginlib tutorial (pretty outdated IMO)](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin). `tmr_listener::ListenerHandle` provides several functions that can/must be overriden:
 
 #### 1. motion_function::BaseHeaderProductPtr generate_cmd (MessageStatus const t_prev_response)
 
 This function is the only way for the handler to talk to the TM robot, and therefore it must be overriden by the user. `t_prev_response` indicates whether TM robot responded to the message sent previously. Most of the time, we would like to generate command only after TM robot responded to our previous message. The responded message will be passed to the handler via [`response_msg`](<#3.-response_msg-(...)>).
 
 ```cpp
-struct YourHandler final : public tm_robot_listener::ListenerHandle {
+struct YourHandler final : public tmr_listener::ListenerHandle {
   protected:
-    motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus const t_prev_response) override {
+    BaseHeaderProductPtr generate_cmd(MessageStatus const t_prev_response) override {
       if (t_prev_response == MessageStatus::Responded) {
         // generate command
       }
@@ -117,47 +117,47 @@ struct YourHandler final : public tm_robot_listener::ListenerHandle {
 
 ```
 
-#### 2. tm_robot_listener::Decision start_task (std::vector\<std::string> const& t_data)
+#### 2. tmr_listener::Decision start_task (std::vector\<std::string> const& t_data)
 
-`start_task` takes data sent from TM robot on entering the listen node, and checks whether the listen node entered is the one it wants to handle. The messages passed are user-defined (see [tm expression editor and listen node](#Reference)), meaning there are various ways to do so. However, bear in mind that current tm_robot_listener only choose **one handler** when listen node is entered, the order of the plugin is decided by the ros param `listener_handles`:
+`start_task` takes data sent from TM robot on entering the listen node, and checks whether the listen node entered is the one it wants to handle. The messages passed are user-defined (see [tm expression editor and listen node](#Reference)), meaning there are various ways to do so. However, bear in mind that current tmr_listener only choose **one handler** when listen node is entered, the order of the plugin is decided by the ros param `listener_handles`:
 
 ```cpp
 // The simplest way of implementation
-struct YourHandler final : public tm_robot_listener::ListenerHandle {
+struct YourHandler final : public tmr_listener::ListenerHandle {
   protected:
-    tm_robot_listener::Decision start_task(std::vector<std::string> const& t_data) override {
+    tmr_listener::Decision start_task(std::vector<std::string> const& t_data) override {
       auto const start_handle = t_data[0] == "Listen1";
       if (start_handle) {
         // do some initialization
-        return tm_robot_listener::Decision::Accept;  // start handling if the message sent is "Listen1"
+        return tmr_listener::Decision::Accept;  // start handling if the message sent is "Listen1"
       }
 
-      return tm_robot_listener::Decision::Ignore;
+      return tmr_listener::Decision::Ignore;
     }
 };
 ```
 
 #### 3. response_msg (...)
 
-The overload set `response_msg` allows user to response to certain message from header, override the header that you need, the rest of the header will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden.
+The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need, the rest of the header will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden.
 
 ```cpp
 // this example overrides TMSCTResponse and the one with no argument
-struct YourHandler final : public tm_robot_listener::ListenerHandle {
+struct YourHandler final : public tmr_listener::ListenerHandle {
   private:
-    motion_function::BaseHeaderProductPtr next_cmd_;
+    BaseHeaderProductPtr next_cmd_;
     int msg_count_ = 0;
   protected:
-    using tm_robot_listener::ListenerHandle::response_mgs;
+    using tmr_listener::ListenerHandle::response_mgs;
 
     // Exit script if error happened
-    void response_msg(tm_robot_listener::TMSCTResponse const& t_resp) override {
+    void response_msg(tmr_listener::TMSCTResponse const& t_resp) override {
       if (not t_resp.script_result_) {
         this->next_cmd_ = TMSCT << ID{"1"} << ScriptExit();
       }
     }
 
-    // Count how many messages TM responded, response_msg with no argument will be called everytime TM robot respond,
+    // Count how many messages TM responded, response_msg with no argument will be called everytime TM robot responded,
     // no matter what header it is
     void response_msg() override {
       ++this->msg_count_;
@@ -168,15 +168,16 @@ struct YourHandler final : public tm_robot_listener::ListenerHandle {
 
 ### Generate tm external script language
 
-TM external message is complicated for end user to generate, and can easily screw things up. Therefore, tm_robot_listener provides some handy ways to generate the message. `tm_robot_listener` creates two global `Header` instances, i.e., `TMSCT`, and `TMSTA`. Also, for all motion functions and their corresponding overload functions, tm_robot_listener creates a `FunctionSet` instance for them. By doing so, we can avoid syntax error or typo, since the interface acts like you are writing c++ code, typo simply indicates compile error.
+TM external message is complicated for end user to generate, and can easily screw things up. Therefore, tmr_listener provides some handy ways to generate them. `tmr_listener` creates two global `Header` instances, i.e., `TMSCT`, and `TMSTA`. Also, for all motion functions and their corresponding overload functions, tmr_listener creates a `FunctionSet` instance for them. By doing so, we can avoid syntax error or typo, since the interface acts as if you are writing c++ code, typo simply indicates compile error.
 
-With tm_robot_listener, user can generate listen node command relatively easy, by fluent interface:
+With tmr_listener, user can generate listen node command relatively easy, by fluent interface:
 
 ```cpp
-using namespace tm_robot_listener::motion_function;
+using namespace tmr_listener; // for TMSCT and ID, End
+using namespace tmr_listener::motion_function; // for QueueTag
 
 auto const cmd = TMSCT << ID{"Whatever_you_like"} << QueueTag(1, 1) << End();
-// this generates "TMSCT,XX,Whatever_you_like,QueueTag(1,1),*XX", XX means handled by tm_robot_listener
+// this generates "TMSCT,XX,Whatever_you_like,QueueTag(1,1),*XX", XX means handled by tmr_listener
 ```
 
 Instead of typing: `"$TMSCT,XX,Whatever_you_like,QueueTag(1,1),XX\r\n"`. A typo, e.g., `TMSCT` to `TMSTA`, or `QueueTag(1,1)` to `QueuTag(1,1)`, or wrong length, or checksum error, you name it (while reading this line, you might not notice that a `*` is missing in the checksum part, gotcha!), may ruin one's day.
@@ -204,10 +205,10 @@ For more detail, see `src/test/CMakeLists.txt`. It contains a couple of examples
 
 ### Verify your handler works
 
-To verify whether your handler works or not, first, make sure tm_robot_listener is aware of your plugin:
+To verify whether your handler works or not, first, make sure tmr_listener is aware of your plugin:
 
 ```sh
-rospack plugins --attrib=plugin tm_robot_listener # this command should list your plugin if you configure it correctly
+rospack plugins --attrib=plugin tmr_listener # this command should list your plugin if you configure it correctly
 ```
 
 Secondly, add the handler to the tmr_listener.launch: (@todo: think of a better way to add plugin):
@@ -215,7 +216,7 @@ Secondly, add the handler to the tmr_listener.launch: (@todo: think of a better 
 ```xml
 <launch>
     <arg name="ip"/>
-    <node pkg="tm_robot_listener" type="tm_robot_listener_node" name="tm_robot_listener" output="screen" args="--ip $(arg ip)">
+    <node pkg="tmr_listener" type="tmr_listener_node" name="tmr_listener" output="screen" args="--ip $(arg ip)">
         <rosparam param="listener_handles">["tm_error_handler::TMErrorHandler", ...]</rosparam>
     </node>
 </launch>
@@ -224,7 +225,7 @@ Secondly, add the handler to the tmr_listener.launch: (@todo: think of a better 
 Lastly, to make sure your handler generate the message at the right time, launch tmr_listener using local ip: (@todo: need more convinient way!)
 
 ```sh
-roslaunch tm_robot_listener tmr_listener.launch ip:=127.0.0.1
+roslaunch tmr_listener tmr_listener.launch ip:=127.0.0.1
 ```
 
 The command above create a socket at `127.0.0.1:5890`, where `5890` is the port of the TM listen node. Next, we are going to create a fake endpoint to simulate TM robot, open another window and enter the following command:
@@ -244,11 +245,11 @@ Under construction...
 To run unit test, copy paste the following lines to the terminal:
 
 ```sh
-catkin run_tests tm_robot_listener
-catkin build -v tm_robot_listener --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test
+catkin run_tests tmr_listener
+catkin build -v tmr_listener --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test
 ```
 
-Notice the option `-v`, **this is needed** since tm_robot_listener will determine whether the test is success by verbose output (for normal unit test, this is not needed, but because we are testing code that can't even compile, the only thing we can depend on is the result output by the compiler).
+Notice the option `-v`, **this is needed** since tmr_listener will determine whether the test is success by verbose output (for normal unit test, this is not needed, but because we are testing code that can't even compile, the only thing we can depend on is the result output by the compiler).
 
 ### TODO
 
@@ -263,7 +264,8 @@ Notice the option `-v`, **this is needed** since tm_robot_listener will determin
 - MUST disable user construct Expression from string, only internally usable
 - Reply if tm message not yet respond is bugged since the response is not queued, fix it in the future
 - More Unit test
-  - Connection
+- Thread safety
+- Exception safety
 
 ### Contact
 

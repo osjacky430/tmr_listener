@@ -14,12 +14,12 @@
 #include <string>
 #include <type_traits>
 
-#include "tm_robot_listener/detail/tmr_constexpr_string.hpp"
-#include "tm_robot_listener/detail/tmr_mt_helper.hpp"
-#include "tm_robot_listener/detail/tmr_stringifier.hpp"
+#include "tmr_utility/tmr_constexpr_string.hpp"
+#include "tmr_utility/tmr_mt_helper.hpp"
+#include "tmr_utility/tmr_stringifier.hpp"
 #include "tmr_variable.hpp"
 
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 /**
  * @brief Base class of Attribute
@@ -315,6 +315,6 @@ struct FTAttribute : AttributeOwner {
 
 constexpr auto FT = Item<DefaultMapping<FTAttribute>>{"FT"};
 
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif
