@@ -42,6 +42,13 @@ auto read_buffer_regex() noexcept {
 
 namespace tmr_server {
 
+const std::array<std::string, 2> TMRTCPServer::question_ = {
+  "No question currently",
+  "[out] Is there any following error in the packet received? (Enter 0 if there is no error)\n"
+  "[out] [1] Packet Error (CPERR)\t[2] Checksum Error   (CPERR)\t[3] Header Error (CPERR)\n"
+  "[out] [4] Data Error   (CPERR)\t[5] Invalid Script   (TMSCT)\n",
+};
+
 void TMRTCPServer::start_accept() {
   using namespace boost::asio::placeholders;
   auto new_connection = TMRConnection::create(this->acceptor_.get_io_service());

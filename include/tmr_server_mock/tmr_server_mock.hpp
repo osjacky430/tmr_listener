@@ -207,12 +207,7 @@ struct TMRTCPServer {
 
  private:
   enum class QuestionStatus { NoQuestion, ErrorType, TMSCTErrorLine } question_status_;
-  std::array<std::string, 2> question_ = {
-    "No question currently",
-    "[out] Is there any following error in the packet received? (Enter 0 if there is no error)\n"
-    "[out] [1] Packet Error (CPERR)\t[2] Checksum Error   (CPERR)\t[3] Header Error (CPERR)\n"
-    "[out] [4] Data Error   (CPERR)\t[5] Invalid Script   (TMSCT)\n",
-  };
+  static const std::array<std::string, 2> question_;
 
   bool skip_ask_ = false;
 
