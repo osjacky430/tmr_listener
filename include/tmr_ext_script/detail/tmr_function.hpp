@@ -5,14 +5,13 @@
 #include <boost/fusion/include/find.hpp>
 
 #include "tmr_command.hpp"
-#include "tmr_constexpr_string.hpp"
 #include "tmr_fundamental_type.hpp"
 #include "tmr_fwd.hpp"
-#include "tmr_mt_helper.hpp"
-#include "tmr_stringifier.hpp"
+#include "tmr_utility/tmr_constexpr_string.hpp"
+#include "tmr_utility/tmr_mt_helper.hpp"
+#include "tmr_utility/tmr_stringifier.hpp"
 
-namespace tm_robot_listener {
-namespace motion_function {
+namespace tmr_listener {
 namespace detail {
 
 /**
@@ -55,9 +54,9 @@ struct FunctionSet {
   using FunctorContainer = boost::fusion::vector<Functions...>;
   using EndType          = typename boost::fusion::result_of::end<FunctorContainer>::type;
 
-  tm_robot_listener::detail::ConstString name_;
+  tmr_listener::detail::ConstString name_;
 
-  explicit constexpr FunctionSet(tm_robot_listener::detail::ConstString const t_str) noexcept : name_{t_str} {}
+  explicit constexpr FunctionSet(tmr_listener::detail::ConstString const t_str) noexcept : name_{t_str} {}
 
   /**
    * @brief operator() for best syntax resemblance
@@ -73,7 +72,7 @@ struct FunctionSet {
   template <typename... Args>
   auto operator()(Args const&... t_arguments) const {
     using namespace boost::fusion::result_of;
-    using TargetFunctor = Function<typename tm_robot_listener::detail::RealType<Args>::type...>;
+    using TargetFunctor = Function<typename tmr_listener::detail::RealType<Args>::type...>;
     using FindResult    = typename find<FunctorContainer, TargetFunctor>::type;
 
     static_assert(not std::is_same<FindResult, EndType>::value, "Function signature not match");
@@ -84,44 +83,18 @@ struct FunctionSet {
 };
 
 /**
- * @brief Utility class for Header usage classification
- */
-struct TMSCTTag {
-  using ResponseType = TMSCTResponse;
-  static constexpr auto HEADER() { return "$TMSCT"; }
-};
-
-/**
- * @brief Utility class for Header usage classification
- */
-struct TMSTATag {
-  using ResponseType = TMSTAResponse;
-  static constexpr auto HEADER() { return "$TMSTA"; }
-};
-
-/**
- * @brief Utility class for Header usage classification
- */
-struct CPERRTag {
-  using ResponseType = CPERRResponse;
-  static constexpr auto HEADER() { return "$CPERR"; }
-};
-
-/**
  * @brief useful typedef
  */
 template <typename RetType, typename... Functions>
-using TMSTCFuncSet = FunctionSet<TMSCTTag, MotionFnCallPrinter, RetType, Functions...>;
+using TMSTCFuncSet = FunctionSet<tmr_listener::detail::TMSCTTag, MotionFnCallPrinter, RetType, Functions...>;
 
 template <typename... Functions>
-using TMSTAFuncSet = FunctionSet<TMSTATag, SubCmdCallPrinter, void, Functions...>;
+using TMSTAFuncSet = FunctionSet<tmr_listener::detail::TMSTATag, SubCmdCallPrinter, void, Functions...>;
 
 }  // namespace detail
-}  // namespace motion_function
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
-namespace tm_robot_listener {
-namespace motion_function {
+namespace tmr_listener {
 namespace detail {
 
 /**
@@ -150,14 +123,13 @@ inline auto assemble_to_msg(std::vector<std::string> const& t_input) noexcept {
 }
 
 template <>
-inline auto assemble_to_msg<TMSCTTag>(std::vector<std::string> const& t_input) noexcept {
+inline auto assemble_to_msg<tmr_listener::detail::TMSCTTag>(std::vector<std::string> const& t_input) noexcept {
   auto const id   = t_input.front();
   auto const data = std::vector<std::string>{std::next(t_input.begin()), t_input.end()};
   return id + ',' + boost::algorithm::join(data, "\r\n");
 }
 
 }  // namespace detail
-}  // namespace motion_function
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

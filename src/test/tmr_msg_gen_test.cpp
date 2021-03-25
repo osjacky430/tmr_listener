@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "tmr_listener_handle/tmr_motion_function.hpp"
+#include "tmr_ext_script/tmr_motion_function.hpp"
 
 TEST(ChecksumTest, ChecksumStringMatch) {
-  using namespace tm_robot_listener::motion_function;
+  using namespace tmr_listener;
 
   EXPECT_EQ(calculate_checksum("$TMSTA,10,01,08,true,"), "6D");
   EXPECT_EQ(calculate_checksum("$TMSTA,5,01,15,"), "6F");
@@ -50,7 +50,7 @@ TEST(ChecksumTest, ChecksumStringMatch) {
   }
 
 TEST(VariableTest, BinaryOperator) {
-  using namespace tm_robot_listener;
+  using namespace tmr_listener;
 
   Variable<int> other_int{"other_int"};
   Variable<int> int_var{"int_var"};
@@ -73,7 +73,7 @@ TEST(VariableTest, BinaryOperator) {
 }
 
 TEST(VariableTest, UnaryOperator) {
-  using namespace tm_robot_listener;
+  using namespace tmr_listener;
 
   Variable<int> int_var{"int_var"};
   Variable<bool> bool_var{"bool_var"};
@@ -116,7 +116,7 @@ TEST(VariableTest, UnaryOperator) {
 }
 
 TEST(ExpressionTest, BinaryOperator) {
-  using namespace tm_robot_listener;
+  using namespace tmr_listener;
 
   Variable<int> int_var{"int_var"};
   Variable<int> other_int{"other_int"};
@@ -171,7 +171,8 @@ TEST(ExpressionTest, BinaryOperator) {
 }
 
 TEST(TMMsgGen, StringMatch) {
-  using namespace tm_robot_listener::motion_function;
+  using namespace tmr_listener;
+  using namespace tmr_listener::motion_function;
   using namespace std::string_literals;
 
   {
@@ -185,7 +186,6 @@ TEST(TMMsgGen, StringMatch) {
   }
 
   {
-    using namespace tm_robot_listener;
     Variable<std::array<float, 6>> targetP1{"targetP1"};
     Variable<std::array<float, 6>> targetP2{"targetP2"};
 

@@ -29,9 +29,9 @@ With this in mind, the design constraint will be:
 
 ## Why Pluginlib?
 
-Seeing the picture of the design consideration above, one may realize the reason behind this already. Briefly speaking, ROS provides three ways (at least I could think of) of message exchanging: 1. `Publisher/Subscriber` 2. `Service` 3. `Actionlib`. But they have some common drawbacks, e.g., they can't tell the end user when did TM robot enter listen node mode, at least not in the easy way, might involve multiple connections to same port, which is impossible to manage well for mulituple listen node handler case.
+Seeing the picture of the design consideration above, one may realize the reason behind this already. Briefly speaking, ROS provides three ways (at least I could think of) of message exchanging: 1. `Publisher/Subscriber` 2. `Service` 3. `Actionlib`. But they have some common drawbacks, e.g., they can't tell the end user when did TM robot enter listen node mode, at least not in the easy way, or might involve multiple connections to the server if you want to implement them in different ros packages, this might be tricky because ros nodes would need to know others' existence.
 
-As for `Pluginlib`, even though we implement the task handlers in different packages, the execution part is controlled by one node, i.e., no multiple communication needed, easy to implement listen mode entered notification.
+As for `Pluginlib`, even though we implement the task handlers in different packages, the execution part is controlled by one node, i.e., no multiple communication needed, and also easy to implement listen mode entered notification.
 
 ## TM external script language
 
@@ -39,7 +39,7 @@ The external script language of TM robot is quite difficult to implement, due to
 
 - Variable: namely named variable, declaration, and its operators.
 - Function call, e.g. Queue(1, 1), PTP("CPP", 161.f, 241.f, 470.f, -179.f, 0.f, 175.f, 60, 200, 0, false), etc.
-- Combination of two things above.
+- Combination of two things mentioned above.
 
 ### Variables
 
@@ -54,7 +54,7 @@ Under construction...
 There are two commands in TM external script language, i.e., TMSCT and TMSTA. TMSTA is relatively simple (by simple, I mean limited amount of combinations), whereas TMSCT is complicated. One way to implement message generation is to wrap the hard coded command of TMSTA into function, this is possible due to its simplicity, and fluent interface with builder pattern for TMSCT:
 
 ```cpp
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 auto queue_tag_done(int const t_tag_number) {
   return TMSTACommand{"$TMSTA,01," + std::to_string(t_tag_number) + ...};
@@ -79,7 +79,7 @@ TMR_MOTION_FUNC(QueueTag, RETURN_TYPE(bool), SIGNATURE(Int), SIGNATURE(Int, Int)
 
 }
 
-using namespace tm_robot_listener;
+using namespace tmr_listener;
 // to generate TMSCT message
 auto const cmd_tmsct = TMSCT << QueueTag(1, 1) << End();
 
@@ -90,7 +90,7 @@ auto const cmd_tmsta = queue_tag_done();
 Even though this can prevent user from misusing the library, the process of message generation is no longer similar (not both fluent interface). To make the process similar, we can create two classes that handles each command generations (using fluent interface, of course), as long as they return the same thing. However, we have another disadvantage: the error can't be related to business logic, for example:
 
 ```cpp
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 struct TMSCTCommand;
 struct TMSTACommand;
@@ -120,7 +120,7 @@ TMSTA << QueueTag(1, 1) << End(); // This will generate compile error: no known 
 If we want to create our own error messages, we must use `static_assert`, or something `concept`-ish. We have no choice but to template the class, thanks to lazy evaluation, the error will only show up unless we use it:
 
 ```cpp
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 struct TMSTATag {
   static constexpr auto HEADER() { return "$TMSTA"; }
@@ -146,7 +146,7 @@ static constexpr Header<TMSTATag> TMSTA{};
 TMR_MOTION_FUNC(QueueTag, RETURN_TYPE(bool), SIGNATURE(Int), SIGNATURE(Int, Int));
 }
 
-using namespace tm_robot_listener;
+using namespace tmr_listener;
 TMSTA << QueueTag(1, 1) << End(); // This will generate compile error: This command cannot be used by this header
 ```
 

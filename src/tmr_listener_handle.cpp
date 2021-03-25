@@ -1,6 +1,6 @@
 #include <boost/range/algorithm_ext.hpp>
 
-#include "tmr_listener_handle/tmr_listener_handle.hpp"
+#include "tmr_listener/tmr_listener_handle.hpp"
 
 namespace {
 
@@ -11,7 +11,7 @@ auto get_tokenized_result(std::string const& t_input) noexcept {
 
 }  // namespace
 
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 Decision ListenerHandle::start_task_handling(std::vector<std::string> const& t_data) noexcept {
   auto const ret_val = this->start_task(t_data);
@@ -24,7 +24,7 @@ Decision ListenerHandle::start_task_handling(std::vector<std::string> const& t_d
  * @details If the command is not empty, then the responsded_ is set to false, indicating that we are waiting for new
  *          responses from the server. Otherwise, the response remains the same.
  */
-motion_function::BaseHeaderProductPtr ListenerHandle::generate_request() noexcept {
+BaseHeaderProductPtr ListenerHandle::generate_request() noexcept {
   auto const ret_val = this->generate_cmd(this->responded_);
 
   if (not ret_val->empty()) {
@@ -41,11 +41,11 @@ void ListenerHandle::handle_response(std::vector<std::string> const& t_response)
   auto const data_begin = std::next(t_response.begin(), 2);
   auto const data_end   = std::prev(t_response.end());
 
-  if (header == motion_function::TMSTA) {
+  if (header == TMSTA) {
     TMSTAResponse const resp{boost::lexical_cast<int>(*data_begin),
                              std::vector<std::string>(std::next(data_begin), data_end)};
     this->response_msg(resp);
-  } else if (header == motion_function::TMSCT) {
+  } else if (header == TMSCT) {
     using namespace boost::range;
     using namespace boost::adaptors;
 
@@ -56,7 +56,7 @@ void ListenerHandle::handle_response(std::vector<std::string> const& t_response)
     TMSCTResponse const resp{*data_begin, result[0] == "OK", std::vector<int>{line_num.begin(), line_num.end()}};
 
     this->response_msg(resp);
-  } else if (header == motion_function::CPERR) {
+  } else if (header == CPERR) {
     auto const err = [](std::string const& t_data) {
       if (t_data == "F1") {
         return ErrorCode::NotInListenNode;
@@ -72,4 +72,4 @@ void ListenerHandle::handle_response(std::vector<std::string> const& t_response)
   this->response_msg();
 }
 
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener

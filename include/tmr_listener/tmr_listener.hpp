@@ -1,5 +1,5 @@
-#ifndef TM_ROBOT_LISTENER_HPP_
-#define TM_ROBOT_LISTENER_HPP_
+#ifndef tmr_listener_HPP_
+#define tmr_listener_HPP_
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -8,18 +8,18 @@
 #include <chrono>
 #include <memory>
 
-#include "tmr_listener_handle/tmr_listener_handle.hpp"
+#include "tmr_listener/tmr_listener_handle.hpp"
 
 #include <pluginlib/class_loader.h>
 #include <ros/ros.h>
 
-namespace tm_robot_listener {
+namespace tmr_listener {
 
 class TMRobotListener {
  private:
   class ScriptExitHandler final : public ListenerHandle {
    protected:
-    motion_function::BaseHeaderProductPtr generate_cmd(MessageStatus /*unused*/) override {
+    BaseHeaderProductPtr generate_cmd(MessageStatus /*unused*/) override {
       using namespace motion_function;
       return TMSCT << ID{"TMRobotListener_DefaultHandler"} << ScriptExit();
     }
@@ -97,7 +97,7 @@ class TMRobotListener {
     using boost::adaptors::transformed;
     auto const plugin_transformer = [this](auto const &t_name) { return this->class_loader_.createInstance(t_name); };
     auto const plugin_names       = this->private_nh_.param("listener_handles", std::vector<std::string>{});
-    ROS_DEBUG_STREAM_NAMED("tm_robot_listener", "plugin num: " << plugin_names.size());
+    ROS_DEBUG_STREAM_NAMED("tmr_listener", "plugin num: " << plugin_names.size());
 
     auto const plugins = plugin_names | transformed(plugin_transformer);
     return TMTaskHandlerArray_t{plugins.begin(), plugins.end()};
@@ -114,7 +114,7 @@ class TMRobotListener {
   boost::thread listener_node_thread_;
 
   ros::NodeHandle private_nh_{"~/"};
-  pluginlib::ClassLoader<ListenerHandle> class_loader_{"tm_robot_listener", "tm_robot_listener::ListenerHandle"};
+  pluginlib::ClassLoader<ListenerHandle> class_loader_{"tmr_listener", "tmr_listener::ListenerHandle"};
 
   TMTaskHandler default_task_handler_{boost::make_shared<ScriptExitHandler>()};
   TMTaskHandlerArray_t task_handlers_{};
@@ -140,6 +140,6 @@ class TMRobotListener {
   void stop() noexcept;
 };
 
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

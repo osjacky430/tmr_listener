@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(tm_robot_listener)
+project(tmr_listener)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(StaticAnalyzers)
@@ -101,7 +101,7 @@ catkin_package(
   INCLUDE_DIRS
   include
   LIBRARIES
-  tm_robot_listener
+  tmr_listener
   CATKIN_DEPENDS
   roscpp
   message_runtime
@@ -126,7 +126,7 @@ catkin_package(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/tm_robot_listener_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/tmr_listener_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -173,7 +173,7 @@ catkin_package(
 
 ## Mark cpp header files for installation
 # need to make sure this is done right, come back to this later
-install(DIRECTORY include/tm_robot_listener include/tmr_listener_handle
+install(DIRECTORY include/tmr_listener include/tmr_utility include/tmr_ext_script
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
@@ -189,7 +189,7 @@ install(DIRECTORY include/tm_robot_listener include/tmr_listener_handle
 
 ## Add gtest based cpp test target and link libraries
 add_subdirectory(src)
-# catkin_add_gtest(${PROJECT_NAME}-test ${CMAKE_}/test/test_tm_robot_listener.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test ${CMAKE_}/test/test_tmr_listener.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

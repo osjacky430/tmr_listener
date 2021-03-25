@@ -11,8 +11,7 @@
 #include "tmr_function.hpp"
 #include "tmr_fwd.hpp"
 
-namespace tm_robot_listener {
-namespace motion_function {
+namespace tmr_listener {
 
 /**
  * @brief calculate xor checksum
@@ -140,8 +139,9 @@ class HeaderProductBuilder {
    */
   template <typename CommandTag>
   decltype(auto) operator<<(Command<CommandTag> const& t_cmd) noexcept {
-    static_assert(std::is_same<CommandTag, motion_function::detail::TMSCTTag>::value,
-                  "Only TMSCT can have multiple commands in one script");
+    using tmr_listener::detail::TMSTATag;
+    static_assert(std::is_same<CommandTag, Tag>::value, "Command is not usable for this header");
+    static_assert(not std::is_same<Tag, TMSTATag>::value, "Only TMSCT can have multiple commands in one script");
     if (not this->result_.ended_ and not this->result_.scriptExit_) {
       this->append_command(t_cmd);
     }
@@ -160,7 +160,8 @@ class HeaderProductBuilder {
    */
   template <typename T>
   decltype(auto) operator<<(Expression<T> const& t_expr) {
-    static_assert(std::is_same<Tag, motion_function::detail::TMSCTTag>::value, "Only TMSCT can declare variable");
+    using tmr_listener::detail::TMSCTTag;
+    static_assert(std::is_same<Tag, TMSCTTag>::value, "Only TMSCT can declare variable");
 
     if (not this->result_.ended_ and not this->result_.scriptExit_) {
       this->append_str(t_expr.value);
@@ -176,7 +177,8 @@ class HeaderProductBuilder {
    * @return share pointer of the result
    */
   auto operator<<(ScriptExit const& /*unused*/) noexcept {
-    static_assert(std::is_same<Tag, detail::TMSCTTag>::value, "ScriptExit() can only be called in TMSCT");
+    using tmr_listener::detail::TMSCTTag;
+    static_assert(std::is_same<Tag, TMSCTTag>::value, "ScriptExit() can only be called in TMSCT");
 
     this->result_.list.emplace_back("ScriptExit()");
     this->result_.scriptExit_ = true;
@@ -195,7 +197,6 @@ class HeaderProductBuilder {
   }
 };
 
-}  // namespace motion_function
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

@@ -3,7 +3,9 @@
     <arg name="ip" default="" doc="set this arg to your desire ip"/>
 
     <arg name="ip_arg" value="$(eval '--ip 127.0.0.1' if arg('mock_tmr') else '--ip ' + arg('ip'))"/>
-    <node pkg="tm_robot_listener" type="tm_robot_listener_node" name="tm_robot_listener" output="screen" args="$(arg ip_arg)">
+    <node pkg="tmr_listener" type="tmr_listener_node" name="tmr_listener" output="screen" args="$(arg ip_arg)">
         <rosparam param="listener_handles">["tm_error_handler::TMErrorHandler"]</rosparam>
     </node>
+
+    <node pkg="tmr_listener" type="tmr_server_mock_node" name="tmr_server_mock" output="screen" launch-prefix="gnome-terminal --" if="$(arg mock_tmr)"/>
 </launch>

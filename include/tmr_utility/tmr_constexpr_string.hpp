@@ -1,7 +1,7 @@
 #ifndef TMR_CONSTEXPR_STRING_HPP_
 #define TMR_CONSTEXPR_STRING_HPP_
 
-namespace tm_robot_listener {
+namespace tmr_listener {
 namespace detail {
 
 struct ConstString {
@@ -49,6 +49,6 @@ struct ConstString {
 };
 
 }  // namespace detail
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

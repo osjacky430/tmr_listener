@@ -5,8 +5,6 @@
 #include <boost/mpl/bool.hpp>
 #include <type_traits>
 
-#include "tmr_fwd.hpp"
-
 namespace tmr_mt_helper {
 
 /**
@@ -83,7 +81,13 @@ struct const_if {
 
 }  // namespace tmr_mt_helper
 
-namespace tm_robot_listener {
+namespace tmr_listener {
+
+// clang-format off
+template <typename T> struct Variable;
+template <typename T> struct Expression;
+// clang-format on
+
 namespace detail {
 
 template <typename T>
@@ -113,35 +117,6 @@ struct RealType<T, std::enable_if_t<!(is_named_var<T> or is_expression<T>)>> {
 };
 
 }  // namespace detail
-}  // namespace tm_robot_listener
-
-namespace tm_robot_listener {
-namespace motion_function {
-namespace detail {
-
-/**
- * @brief
- *
- * @tparam HeaderTag
- * @tparam CommandTag
- */
-template <typename HeaderTag, typename CommandTag>
-struct is_cmd_operable {
-  constexpr explicit is_cmd_operable(Command<CommandTag> const& /*unused*/) {
-    static_assert(std::is_same<HeaderTag, CommandTag>::value, "Command is not usable for this header");
-  }
-};
-
-template <>
-struct is_cmd_operable<TMSCTTag, TMSCTTag> {
-  template <typename CommandTag>
-  constexpr explicit is_cmd_operable(Command<CommandTag> const& /*unused*/) {
-    static_assert(not std::is_same<CommandTag, CommandTag>::value, "ID must come before any TMSCT command");
-  }
-};
-
-}  // namespace detail
-}  // namespace motion_function
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif

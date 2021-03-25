@@ -89,7 +89,7 @@
   TM_DEFINE_BINARY_OPERATOR(CLASS, ^=)   \
   TM_DEFINE_BINARY_OPERATOR(CLASS, |=)
 
-namespace tm_robot_listener {
+namespace tmr_listener {
 namespace detail {
 
 struct statement_to_string {
@@ -110,6 +110,6 @@ inline boost::xpressive::sregex var_name_pattern() noexcept {
 }
 
 }  // namespace detail
-}  // namespace tm_robot_listener
+}  // namespace tmr_listener
 
 #endif
