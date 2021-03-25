@@ -6,6 +6,4 @@
     <node pkg="tmr_listener" type="tmr_listener_node" name="tmr_listener" output="screen" args="$(arg ip_arg)">
         <rosparam param="listener_handles">["tm_error_handler::TMErrorHandler"]</rosparam>
     </node>
-
-    <node pkg="tmr_listener" type="tmr_server_mock_node" name="tmr_server_mock" output="screen" launch-prefix="gnome-terminal --" if="$(arg mock_tmr)"/>
 </launch>
