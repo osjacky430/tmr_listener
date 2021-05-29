@@ -12,8 +12,6 @@ namespace tmr_listener {
  *
  * @tparam Tag  Tag that group Header and function that can be used, this prevents user from appending command
  *              that the Header cannot use
- *
- * @todo  We need to use friend class so only certain class have access to it
  */
 template <typename Tag>
 class Command {

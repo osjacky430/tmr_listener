@@ -1,3 +1,5 @@
+add_subdirectory(tmr_tcp_comm)
+
 add_library(tmr_listener tmr_listener.cpp tmr_listener_handle.cpp)
 target_compile_definitions(tmr_listener PUBLIC FUSION_MAX_VECTOR_SIZE=20)
 target_include_directories(tmr_listener SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
