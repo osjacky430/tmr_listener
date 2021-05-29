@@ -3,12 +3,12 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/range/adaptors.hpp>
 #include <boost/thread.hpp>
 #include <chrono>
 #include <memory>
 
 #include "tmr_listener/tmr_listener_handle.hpp"
+#include "tmr_tcp_comm/tmr_tcp_comm.hpp"
 
 #include <pluginlib/class_loader.h>
 #include <ros/ros.h>
@@ -39,79 +39,27 @@ class TMRobotListener {
   static constexpr auto ID_INDEX           = DATA_START_INDEX + 0;
   static constexpr auto SCRIPT_START_INDEX = DATA_START_INDEX + 1;
 
+  TMRobotTCP tcp_comm_; /*!< TM TCP communication object */
+
   /**
-   * @brief This function checks ros::ok periodically to shutdown the connection immediately
+   * @brief This function parses the message sent by TM robot, once entered listen node, it will initiate
+   *        the write process, otherwise it continues listening to incomming packet
    *
-   * @param t_err system error happened when invoking timer
+   * @param t_input message sent by TM robot
    */
-  void check_ros_heartbeat(boost::system::error_code const &t_err) noexcept;
+  void parse_msg(std::string const &t_input) noexcept;
 
   /**
-   * @brief This function handles the connection and initiate the read process if the connection succeeded
+   * @brief This function gets called once the message to write to TM robot finished transfer
    *
-   * @param t_err system error happened during connection
+   * @param t_byte_writtened bytes written to TM robot
    */
-  void handle_connection(boost::system::error_code const &t_err) noexcept;
+  void finished_transfer_callback(size_t t_byte_writtened) noexcept;
 
   /**
-   * @brief This function extract buffer data from boost asio streambuf and store the result to std::string
-   *
-   * @param t_buffer  Buffer to extract data
-   * @param t_byte_to_extract Number of byte to extract
-   * @return extracted data
+   * @brief Get all the plugin object
    */
-  static std::string extract_buffer_data(boost::asio::streambuf &t_buffer, size_t t_byte_to_extract) noexcept;
-
-  /**
-   * @brief This function handles the read process of TCP connection, once entered listen node, it will initiate the
-   *        write process, otherwise it continues listening to incomming packet
-   *
-   * @param t_err system error happened during read process
-   * @param t_byte_transfered Number of byte read from TM robot
-   */
-  void handle_read(boost::system::error_code const &t_err, size_t t_byte_transfered) noexcept;
-
-  /**
-   * @brief This function handles the write process of TCP connection, it will continue writing once triggered, until
-   *        current_handler_ is reset.
-   *
-   * @param t_err system error happened during write process
-   * @param t_byte_writtened Number of byte written to TM robot
-   */
-  void handle_write(boost::system::error_code const &t_err, size_t t_byte_writtened) noexcept;
-
-  /**
-   * @brief Thread function that initializes and runs the IO services
-   */
-  void listener_node();
-
-  /**
-   * @brief This function handles reconnection when fail situation detected during read/write stage
-   */
-  void reconnect() noexcept;
-
-  /**
-   * @brief Get the all plugin object
-   */
-  auto get_all_plugins() {
-    using boost::adaptors::transformed;
-    auto const plugin_transformer = [this](auto const &t_name) { return this->class_loader_.createInstance(t_name); };
-    auto const plugin_names       = this->private_nh_.param("listener_handles", std::vector<std::string>{});
-    ROS_DEBUG_STREAM_NAMED("tmr_listener", "plugin num: " << plugin_names.size());
-
-    auto const plugins = plugin_names | transformed(plugin_transformer);
-    return TMTaskHandlerArray_t{plugins.begin(), plugins.end()};
-  }
-
-  boost::asio::io_service io_service_;
-  boost::asio::ip::address robot_address_;
-  boost::asio::ip::tcp::endpoint tm_robot_{robot_address_, LISTENER_PORT};
-  boost::asio::ip::tcp::socket listener_{io_service_};
-  boost::asio::steady_timer ros_heartbeat_timer_{io_service_};
-  boost::asio::streambuf input_buffer_;
-  std::string output_buffer_;
-
-  boost::thread listener_node_thread_;
+  TMTaskHandlerArray_t get_all_plugins();
 
   ros::NodeHandle private_nh_{"~/"};
   pluginlib::ClassLoader<ListenerHandle> class_loader_{"tmr_listener", "tmr_listener::ListenerHandle"};
@@ -121,23 +69,20 @@ class TMRobotListener {
   TMTaskHandler current_task_handler_{};
 
  public:
-  static constexpr auto HEARTBEAT_INTERVAL() { return std::chrono::milliseconds(100); }
   static constexpr auto DEFAULT_IP_ADDRESS = "192.168.1.2";
   static constexpr auto LISTENER_PORT      = 5890;
 
   explicit TMRobotListener(std::string const &t_ip_addr = DEFAULT_IP_ADDRESS) noexcept
-    : robot_address_{boost::asio::ip::address::from_string(t_ip_addr)}, task_handlers_{get_all_plugins()} {}
+    : tcp_comm_{TMRobotTCP::Callback{boost::bind(&TMRobotListener::parse_msg, this, _1),
+                                     boost::bind(&TMRobotListener::finished_transfer_callback, this, _1)},
+                LISTENER_PORT, t_ip_addr},
+      task_handlers_{get_all_plugins()} {}
 
   /**
    * @brief This function is the entry point to the TCP/IP connection, it initiates the thread loop and runs io services
    *        in the background
    */
   void start();
-
-  /**
-   * @brief This function stops the timer and closes the socket
-   */
-  void stop() noexcept;
 };
 
 }  // namespace tmr_listener
