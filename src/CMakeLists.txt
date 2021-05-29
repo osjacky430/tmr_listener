@@ -11,6 +11,3 @@ add_executable(tmr_listener_node tmr_listener_node.cpp)
 target_link_libraries(tmr_listener_node PUBLIC tmr_listener)
 
 enable_sanitizers(tmr_listener)
-if (CATKIN_ENABLE_TESTING)
-  add_subdirectory(test)
-endif ()

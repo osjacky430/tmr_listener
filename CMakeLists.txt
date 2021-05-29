@@ -196,3 +196,6 @@ add_subdirectory(src)
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+if (CATKIN_ENABLE_TESTING)
+  add_subdirectory(test)
+endif ()
