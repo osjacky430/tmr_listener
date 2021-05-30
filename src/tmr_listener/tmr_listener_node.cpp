@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
 
   if (opt_map.count("help") != 0) {
     std::cout << listener_opt << '\n';
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   auto const ip = opt_map["ip"].as<std::string>();
@@ -28,5 +28,5 @@ int main(int argc, char **argv) {
   tmr_listener::TMRobotListener listener_node{ip};
   listener_node.start();
 
-  return 0;
+  return EXIT_SUCCESS;
 }
