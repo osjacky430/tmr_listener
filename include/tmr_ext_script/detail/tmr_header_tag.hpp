@@ -19,14 +19,31 @@ struct TMSCTTag {
   static constexpr auto HEADER() noexcept { return "$TMSCT"; }
 
   struct DataFormat {
-    struct FunctionCall;
-    struct VariableDecl;
+    struct FunctionCall {
+      std::string name_;
+      std::string args_;
+
+      static ParseRule<FunctionCall>& parsing_rule() noexcept;
+    };
+
+    struct VariableDecl {
+      std::string type_;
+      std::string name_;
+      std::string val_;
+
+      static ParseRule<VariableDecl>& parsing_rule() noexcept;
+    };
 
     using AvailableCmd = boost::variant<FunctionCall, VariableDecl>;
     using Data         = std::vector<AvailableCmd>;
 
     std::string id_;
     Data cmd_;
+
+    template <typename T>
+    static constexpr bool check_acceptance() noexcept {}
+
+    static std::string assemble(std::vector<std::string> const& t_content) { return ""; }
 
     static ParseRule<DataFormat>& parsing_rule();
   };
