@@ -40,7 +40,7 @@ struct Expression {
 
   std::string const value;  // @note this variable is marked as const as I didn't make the construction and variable
                             // private, make it at least unmodifiable
-  auto operator()() const noexcept { return this->value; }
+  std::string to_str() const noexcept { return this->value; }
 };
 
 TM_DEFINE_OPERATORS(Expression)
@@ -65,7 +65,7 @@ class Variable {  // NOLINT
   explicit Variable(std::string t_name) noexcept : name_(std::move(t_name)) {}  // copy and move idiom
   // explicit constexpr Variable() noexcept : {}
 
-  auto operator()() const noexcept { return this->name_; }
+  std::string to_str() const noexcept { return this->name_; }
 
   /**
    * @brief operator= overloading for assignment expression
@@ -131,7 +131,7 @@ template <typename S, typename T, typename U, typename V>
   static_assert(right_type_require and right_u_type_require,
                 "Expression or Variable must be convertible to the underlying type of the Variable");
 
-  return Expression<S>{'(' + t_expr() + '?' + t_left() + ':' + t_right() + ')'};
+  return Expression<S>{'(' + t_expr.to_str() + '?' + t_left.to_str() + ':' + t_right.to_str() + ')'};
 }
 
 /**
@@ -145,13 +145,13 @@ template <typename S, typename T, typename U, typename V>
 template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_array<T>::value, bool> = true>
 [[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, T const& t_val) {
   // static_assert(); U must be one of the following: T, or underlying type of U that is convertible to T
-  if (not boost::xpressive::regex_match(t_var(), detail::var_name_pattern())) {
-    throw std::invalid_argument{"bad variable name: " + t_var()};
+  if (not boost::xpressive::regex_match(t_var.to_str(), detail::var_name_pattern())) {
+    throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
   }
 
   using namespace boost::fusion;
-  constexpr auto type_decl = detail::get_type_decl_str<typename T::value_type>();
-  auto const formatted = boost::format("%s[] %s=%s") % type_decl.to_std_str() % t_var() % value_to_string<T>{}(t_val);
+  constexpr auto type  = detail::get_type_decl_str<typename T::value_type>();
+  auto const formatted = boost::format("%s[] %s=%s") % type.to_std_str() % t_var.to_str() % value_to_string<T>{}(t_val);
   return Expression<T>{formatted.str()};
 }
 
@@ -168,13 +168,13 @@ template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_arr
 template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std_array<T>::value, bool> = true>
 [[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, T const& t_val) {
   // static_assert();
-  if (not boost::xpressive::regex_match(t_var(), detail::var_name_pattern())) {
-    throw std::invalid_argument{"bad variable name: " + t_var()};
+  if (not boost::xpressive::regex_match(t_var.to_str(), detail::var_name_pattern())) {
+    throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
   }
 
   using namespace boost::fusion;
-  constexpr auto type_decl = detail::get_type_decl_str<T>();
-  auto const formatted     = boost::format("%s %s=%s") % type_decl.to_std_str() % t_var() % value_to_string<T>{}(t_val);
+  constexpr auto type  = detail::get_type_decl_str<T>();
+  auto const formatted = boost::format("%s %s=%s") % type.to_std_str() % t_var.to_str() % value_to_string<T>{}(t_val);
   return Expression<T>{formatted.str()};
 }
 
@@ -192,11 +192,11 @@ template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_arr
 [[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, Variable<T> const& t_val) {
   // static_assert();
   if (not boost::xpressive::regex_match(t_var(), detail::var_name_pattern())) {
-    throw std::invalid_argument{"bad variable name: " + t_var()};
+    throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
   }
 
-  constexpr auto type_decl = detail::get_type_decl_str<typename T::value_type>();
-  auto const formatted     = boost::format("%s[] %s=%s") % type_decl.to_std_str() % t_var() % t_val();
+  constexpr auto type  = detail::get_type_decl_str<typename T::value_type>();
+  auto const formatted = boost::format("%s[] %s=%s") % type.to_std_str() % t_var.to_str() % t_val.to_str();
   return Expression<T>{formatted.str()};
 }
 

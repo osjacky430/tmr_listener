@@ -18,7 +18,8 @@ namespace detail {
  *
  * @note  Design requirement:
  *
- *          Suppose we have a function that takes one argument:
+ *          Suppose we have a function that takes one argument (this is actually what we are dealing with, e.g., we can
+ *          call tm motion function with both literal constants, or variables declared in TM script interpreter):
  *
  *              bool some_func(FundamentalType<int> const&);
  *
@@ -34,6 +35,9 @@ namespace detail {
  *              some_func(Variable<int>{"V"})  // special case, not sure how to deal with it atm
  *
  *        That said, the constructor should not be marked explicit cause implicit conversion is intended.
+ *
+ * @todo Rethink if I need this or not, this to me looks like some stringifier that distinct how to stringify value in
+ *       run time. (it can and should be done at compile time?)
  */
 template <typename T>
 class FundamentalType {
@@ -48,7 +52,7 @@ class FundamentalType {
 
   std::string to_str() const noexcept {
     if (auto const val = boost::get<Variable<T>>(&this->val_)) {
-      return (*val)();
+      return val->to_str();
     }
 
     auto const val = boost::get<T>(&this->val_);

@@ -179,7 +179,7 @@ struct Header {
     static_assert(HEADER_AND_CMD_TAG_NOT_SAME, "Command is not usable for this header");
 
     HeaderProductBuilder<Tag> ret_val{};
-    ret_val.append_command(t_cmd);
+    ret_val.append_str(t_cmd.to_str());
     return ret_val;
   }
 

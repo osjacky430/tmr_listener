@@ -136,10 +136,6 @@ TEST(SpiritParseTest, ContentMatch) {
     EXPECT_EQ(var_4->name_, "PTP");
     EXPECT_EQ(var_4->args_, "\"JPP\",targetP2,100,200,100,true");
 
-    // ASSERT_TRUE(var_2 != nullptr);
-    // EXPECT_EQ(var_2->name_, "ChangeLoad");
-    // EXPECT_EQ(var_2->args_, "payload");
-
     EXPECT_EQ(p.checksum_, "6A");
   }
 }

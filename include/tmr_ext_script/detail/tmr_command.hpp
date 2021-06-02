@@ -18,11 +18,11 @@ class Command {
   template <typename FunctionSetTag, typename PrintPolicy, typename RetType, typename... Functions>
   friend class tmr_listener::detail::FunctionSet;
 
-  std::string const name;
-  explicit Command(std::string t_name) : name(std::move(t_name)) {}
+  std::string const value;
+  explicit Command(std::string t_name) : value(std::move(t_name)) {}
 
  public:
-  std::string get_cmd() const noexcept { return this->name; }
+  std::string to_str() const noexcept { return this->value; }
 };
 
 }  // namespace tmr_listener

@@ -46,7 +46,7 @@ TEST(ChecksumTest, ChecksumStringMatch) {
   {                                                                                                   \
     auto expr = VAR_1 OP VAR_2;                                                                       \
     static_assert(std::is_same<decltype(expr), RESULT_TYPE>::value, "Expression type doesn't match"); \
-    EXPECT_EQ(expr(), "(" #VAR_1 #OP #VAR_2 ")");                                                     \
+    EXPECT_EQ(expr.to_str(), "(" #VAR_1 #OP #VAR_2 ")");                                              \
   }
 
 TEST(VariableTest, BinaryOperator) {
@@ -56,7 +56,7 @@ TEST(VariableTest, BinaryOperator) {
   Variable<int> int_var{"int_var"};
   Variable<float> float_var{"float_var"};
 
-  EXPECT_EQ(declare(int_var, 0)(), "int int_var=0");
+  EXPECT_EQ(declare(int_var, 0).to_str(), "int int_var=0");
 
   VARIABLE_BINARY_OP_TEST(int_var, =, 1, EXPECT(int));
   VARIABLE_BINARY_OP_TEST(int_var, =, float_var, EXPECT(int));
@@ -81,37 +81,37 @@ TEST(VariableTest, UnaryOperator) {
   {
     auto expr = int_var++;
     static_assert(std::is_same<decltype(expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(expr(), "(int_var++)");
+    EXPECT_EQ(expr.to_str(), "(int_var++)");
   }
 
   {
     auto expr = ++int_var;
     static_assert(std::is_same<decltype(expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(expr(), "(++int_var)");
+    EXPECT_EQ(expr.to_str(), "(++int_var)");
   }
 
   {
     auto expr = !bool_var;
     static_assert(std::is_same<decltype(expr), Expression<bool>>::value, "Expression type doesn't match");
-    EXPECT_EQ(expr(), "(!bool_var)");
+    EXPECT_EQ(expr.to_str(), "(!bool_var)");
   }
 
   {
     auto expr = ~int_var;
     static_assert(std::is_same<decltype(expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(expr(), "(~int_var)");
+    EXPECT_EQ(expr.to_str(), "(~int_var)");
   }
 
   {
     auto expr = -int_var;
     static_assert(std::is_same<decltype(expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(expr(), "(-int_var)");
+    EXPECT_EQ(expr.to_str(), "(-int_var)");
   }
 
   {
     auto expr = +int_var;
     static_assert(std::is_same<decltype(expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(expr(), "(+int_var)");
+    EXPECT_EQ(expr.to_str(), "(+int_var)");
   }
 }
 
@@ -129,32 +129,32 @@ TEST(ExpressionTest, BinaryOperator) {
   {
     auto add_two_int_expr = int_expr + other_int_expr;
     static_assert(std::is_same<decltype(add_two_int_expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(add_two_int_expr(), "((int_var+other_int)+(int_var+1))");
+    EXPECT_EQ(add_two_int_expr.to_str(), "((int_var+other_int)+(int_var+1))");
   }
 
   {  // expression with different type
     auto add_int_to_float_expr = int_expr + float_expr;
     static_assert(std::is_same<decltype(add_int_to_float_expr), Expression<float>>::value,
                   "Expression type doesn't match");
-    EXPECT_EQ(add_int_to_float_expr(), "((int_var+other_int)+(int_var+float_var))");
+    EXPECT_EQ(add_int_to_float_expr.to_str(), "((int_var+other_int)+(int_var+float_var))");
   }
 
   {  // expression + r-value
     auto add_int_expr = int_expr + 1;
     static_assert(std::is_same<decltype(add_int_expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(add_int_expr(), "((int_var+other_int)+1)");
+    EXPECT_EQ(add_int_expr.to_str(), "((int_var+other_int)+1)");
   }
 
   {  // expression + variable
     auto add_int_expr = int_expr + int_var;
     static_assert(std::is_same<decltype(add_int_expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(add_int_expr(), "((int_var+other_int)+int_var)");
+    EXPECT_EQ(add_int_expr.to_str(), "((int_var+other_int)+int_var)");
   }
 
   {  // variable + expression
     auto add_int_expr = int_var + int_expr;
     static_assert(std::is_same<decltype(add_int_expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(add_int_expr(), "(int_var+(int_var+other_int))");
+    EXPECT_EQ(add_int_expr.to_str(), "(int_var+(int_var+other_int))");
   }
 
   {
@@ -162,11 +162,11 @@ TEST(ExpressionTest, BinaryOperator) {
 
     auto tern_expr_3_var = ternary_expr<int>(bool_var, int_var, float_var);
     static_assert(std::is_same<decltype(tern_expr_3_var), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(tern_expr_3_var(), "(bool_var?int_var:float_var)");
+    EXPECT_EQ(tern_expr_3_var.to_str(), "(bool_var?int_var:float_var)");
 
     auto tern_expr_3_expr = ternary_expr<int>(int_var == 1, int_var + other_int, float_var + int_var);
     static_assert(std::is_same<decltype(tern_expr_3_expr), Expression<int>>::value, "Expression type doesn't match");
-    EXPECT_EQ(tern_expr_3_expr(), "((int_var==1)?(int_var+other_int):(float_var+int_var))");
+    EXPECT_EQ(tern_expr_3_expr.to_str(), "((int_var==1)?(int_var+other_int):(float_var+int_var))");
   }
 }
 

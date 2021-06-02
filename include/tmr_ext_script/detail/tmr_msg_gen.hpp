@@ -121,7 +121,6 @@ class HeaderProductBuilder {
   HeaderProductBuilder() = default;
 
   // temp
-  void append_command(Command<Tag> const& t_cmd) noexcept { this->result_.list.push_back(t_cmd.get_cmd()); }
   void append_str(std::string const& t_str) noexcept { this->result_.list.push_back(t_str); }
 
  public:
@@ -143,7 +142,7 @@ class HeaderProductBuilder {
     static_assert(std::is_same<CommandTag, Tag>::value, "Command is not usable for this header");
     static_assert(not std::is_same<Tag, TMSTATag>::value, "Only TMSCT can have multiple commands in one script");
     if (not this->result_.ended_ and not this->result_.scriptExit_) {
-      this->append_command(t_cmd);
+      this->append_str(t_cmd.to_str());
     }
 
     return *this;
@@ -155,8 +154,6 @@ class HeaderProductBuilder {
    * @tparam T
    * @param t_var
    * @return decltype(auto)
-   *
-   * @todo unordered_set need to have state across header product builder
    */
   template <typename T>
   decltype(auto) operator<<(Expression<T> const& t_expr) {
