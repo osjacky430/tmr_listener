@@ -1,3 +1,4 @@
 add_subdirectory(tmr_ext_script)
 add_subdirectory(tmr_tcp_comm)
+add_subdirectory(tmr_ethernet)
 add_subdirectory(tmr_listener)
