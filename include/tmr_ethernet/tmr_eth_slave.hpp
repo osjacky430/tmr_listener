@@ -9,6 +9,7 @@
 
 #include "tmr_ethernet/detail/tmr_header_tag.hpp"
 #include "tmr_ethernet/tmr_eth_rw.hpp"
+#include "tmr_listener/EthernetSlaveCmd.h"
 #include "tmr_listener/JsonDataArray.h"
 #include "tmr_prototype/tmr_header.hpp"
 #include "tmr_tcp_comm/tmr_tcp_comm.hpp"
@@ -31,7 +32,28 @@ class TMRobotEthSlave {
   ros::NodeHandle private_nh_{"~"};
   ros::Publisher raw_data_table_pub_{private_nh_.advertise<std_msgs::String>("raw_data_table", 1)};
   ros::Publisher processed_data_table_pub_{private_nh_.advertise<tmr_listener::JsonDataArray>("parsed_data_table", 1)};
+  ros::ServiceServer tmsvr_cmd_srv_{private_nh_.advertiseService("tmsvr_cmd", &TMRobotEthSlave::send_tmsvr_cmd, this)};
+
+  bool responded = false;
+  typename TMSVRPacket::DataFrame server_response_;
+  boost::condition_variable response_signal_;
+  boost::mutex rx_buffer_mutex_;
+
   void parse_input_msg(std::string const& t_input) noexcept;
+
+  /**
+   * @brief
+   *
+   * @param t_req
+   * @param t_resp
+   * @return true
+   * @return false
+   *
+   * @note Completion handlers only run in the context of a thread that has called io_service.run() no matter which
+   *       thread called the asynchronous method. If you've only called io_service.run() in one thread then all
+   *       completion handlers will execute serially in the context of that thread.
+   */
+  bool send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSlaveCmdResponse& t_resp);
 
  public:
   explicit TMRobotEthSlave(std::string const& t_ip) noexcept

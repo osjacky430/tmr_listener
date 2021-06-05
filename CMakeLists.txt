@@ -52,7 +52,7 @@ find_package(Boost REQUIRED)
 add_message_files(FILES JsonData.msg JsonDataArray.msg)
 
 ## Generate services in the 'srv' folder
-add_service_files(FILES ListenerCmd.srv)
+add_service_files(FILES ListenerCmd.srv EthernetSlaveCmd.srv)
 
 ## Generate actions in the 'action' folder
 # add_action_files(

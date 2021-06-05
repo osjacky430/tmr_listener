@@ -41,9 +41,11 @@ struct TMSCTTag {
     Data cmd_;
 
     template <typename T>
-    static constexpr bool check_acceptance() noexcept {}
+    static constexpr bool check_acceptance() noexcept {
+      return true;
+    }
 
-    static std::string assemble(std::vector<std::string> const& t_content) { return ""; }
+    static std::string assemble(std::vector<std::string> const& /**/) { return ""; }
 
     static ParseRule<DataFormat>& parsing_rule();
   };

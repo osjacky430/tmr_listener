@@ -11,10 +11,14 @@ A package that handles TM robot listen node, this package takes care of the TCP 
 - [Getting Started](#getting-started)
   - [Prerequisite](#Prerequisite)
   - [Instal and run](#Instal-and-run)
-- [Creating your own listener handle](#Creating-your-own-listener-handle)
-- [Generate tm external script language](#Generate-tm-external-script-language)
-- [Verify your handler works](#Verifiy-your-handler-works)
-- [Using listen service](#Using-Listen-Service)
+- [TM Robot Listen Node](#tm-robot-listen-node)
+  - [Creating your own listener handle](#Creating-your-own-listener-handle)
+  - [Generate tm external script language](#Generate-tm-external-script-language)
+  - [Verify your handler works](#Verifiy-your-handler-works)
+  - [Using listen service](#Using-Listen-Service)
+- [TM Robot Ethernet Slave](#tm-robot-ethernet-slave)
+  - [Communication mode](#communication-mode)
+  - [Data Table](#data-table)
 - [TODO](#TODO)
 - [Contact](#contact)
 - [Reference](#Reference)
@@ -62,6 +66,8 @@ roslaunch tmr_listener tmr_listener.launch
   - ip: set this arg to your desire ip
 - Optional Arguments:
   - mock_tmr (default "false"): enable this to create tm robot server mock at local host
+
+## TM robot listen node
 
 ### Creating your own listener handle
 
@@ -240,6 +246,23 @@ This will establish the connection between netcat and tmr_listener, the only thi
 
 Under construction...
 
+## TM Robot Ethernet Slave
+
+TM robot ethernet slave provides us a convinient way to read/write variables. This package has full supports for read/write request and periodically updated data table.
+User only needs to make sure the item listed in data table is configured correctly.
+
+### Communication Mode
+
+Currently, **only JSON mode is implemented**, therefore, to let the library function properlly, please make sure the communication mode is set to JSON. (@todo add support for String, and possibly, Binary)
+
+### Data table
+
+TM robot sends data table periodically after power cycling if it was previously set to Enable. Having no prior knowledge regarding the listed item in the data table, this package decides to provide two topics, `/tm_ethernet_slave/raw_data_table` and `/tm_ethernet_slave/parsed_data_table`, to receive the contents. Users can choose either to parse data received from the former with their favorite 3rd party library, e.g., [nlhomann-json](https://github.com/nlohmann/json), or the latter by some handy function this package offers (@todo: implement).
+
+### Read / Write Request
+
+In addition to the periodically send data table, TM also provides way to read/write specified item so long as they exist in the data table. This package provides service, `/tm_ethernet_slave/tmsvr_cmd` , to access this functionality. For read operation, the `EthernetSlaveCmdRequest::value_list` must be left empty, as for write operation, `value_list.size() == item_list.size()` must hold, and the value of `item_list[i]` is `value_list[i]`. 
+
 ### Unit Test
 
 To run unit test, copy paste the following lines to the terminal:
@@ -253,8 +276,8 @@ Notice the option `-v`, **this is needed** since tmr_listener will determine whe
 
 ### TODO
 
+- Rethink implementation of parser object
 - Better ROS interface
-- Inject tm logic to boost asio instead of heavy coupling
 - Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
 - consider function accepting types that can be implicitly converted to the desired type
 - Implement some services

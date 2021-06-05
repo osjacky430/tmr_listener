@@ -98,7 +98,7 @@ class TMRobotTCP {
    */
   void start_tcp_comm();
 
-  void write(std::string t_value) noexcept {
+  void write(std::string const &t_value) noexcept {
     using namespace boost::asio::placeholders;
 
     this->output_buffer_ = t_value;

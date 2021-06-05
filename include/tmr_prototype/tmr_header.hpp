@@ -46,58 +46,6 @@ struct ID {
 namespace tmr_listener {
 namespace prototype {
 
-template <typename Impl>
-struct Header {
-  friend bool operator==(Header const& /*unused*/, std::string const& t_rhs) noexcept { return Impl::NAME() == t_rhs; }
-  friend bool operator!=(Header const& /*unused*/, std::string const& t_rhs) noexcept { return Impl::NAME() != t_rhs; }
-  friend bool operator==(std::string const& t_lhs, Header const& /*unused*/) noexcept { return Impl::NAME() == t_lhs; }
-  friend bool operator!=(std::string const& t_lhs, Header const& /*unused*/) noexcept { return Impl::NAME() != t_lhs; }
-
-  struct Packet {
-    using DataFrame = typename Impl::DataFormat;
-
-    std::size_t length_ = 0;
-    DataFrame data_;
-    std::string checksum_;
-
-    /**
-     * @brief The parsing rule of the packet of the header
-     *
-     * @return ParseRule
-     */
-    static auto& parsing_rule() noexcept {
-      using boost::spirit::qi::int_;
-      using boost::spirit::qi::lit;
-      using boost::spirit::qi::xdigit;
-      using DF = DataFrame;
-
-      static ParseRule<Packet> rule = Impl::NAME() >> lit(',') >> int_ >> ',' >> DF::parsing_rule() >> ",*" >> +xdigit;
-      return rule;
-    }
-  };
-
-  /**
-   * @brief
-   *
-   * @param t_input
-   * @return auto
-   */
-  static auto parse(std::string t_input) noexcept {
-    using namespace boost::spirit::qi;
-    using boost::spirit::ascii::space;
-
-    Packet ret_val;
-    bool const full_match = phrase_parse(t_input.begin(), t_input.end(), Packet::parsing_rule(), space, ret_val);
-
-    return ret_val;
-  }
-
-  template <typename T>
-  auto operator<<(T const& t_input) const noexcept {
-    return Impl::create_builder(t_input);
-  }
-};
-
 /**
  * @brief Base class of the command list
  *
@@ -179,10 +127,10 @@ struct MessageBuilder {
    *
    * @todo  Due to the note above, maybe making ScriptExit a FunctionSet makes more sense?
    */
-  template <typename T, typename SFINAE = std::enable_if_t<Impl::template check_acceptance<T>()>>
-  decltype(auto) operator<<(T const& t_input) const noexcept {
+  template <typename T>
+  decltype(auto) operator<<(T const& t_input) noexcept {
     if (not this->result_.ended_ and not this->result_.scriptExit_) {
-      this->result_.content_.push_back(t_input.to_str());  // require all type to implement to_str()
+      Impl::BuildRule::check(this->result_.content_, t_input);  // require all type to implement to_str()
     }
     return *this;
   }
@@ -207,9 +155,61 @@ struct MessageBuilder {
    * @param t_end  End instance, the struct is merely used for tag dispatch
    * @return share pointer of the result
    */
-  auto operator<<(End /*unused*/) const noexcept {
+  auto operator<<(End /*unused*/) noexcept {
     this->result_.ended_ = true;
     return boost::make_shared<Message<Impl>>(this->result_);
+  }
+};
+
+template <typename Impl>
+struct Header {
+  friend bool operator==(Header const& /*unused*/, std::string const& t_rhs) noexcept { return Impl::NAME() == t_rhs; }
+  friend bool operator!=(Header const& /*unused*/, std::string const& t_rhs) noexcept { return Impl::NAME() != t_rhs; }
+  friend bool operator==(std::string const& t_lhs, Header const& /*unused*/) noexcept { return Impl::NAME() == t_lhs; }
+  friend bool operator!=(std::string const& t_lhs, Header const& /*unused*/) noexcept { return Impl::NAME() != t_lhs; }
+
+  struct Packet {
+    using DataFrame = typename Impl::DataFormat;
+
+    std::size_t length_ = 0;
+    DataFrame data_;
+    std::string checksum_;
+
+    /**
+     * @brief The parsing rule of the packet of the header
+     *
+     * @return ParseRule
+     */
+    static auto& parsing_rule() noexcept {
+      using boost::spirit::qi::int_;
+      using boost::spirit::qi::lit;
+      using boost::spirit::qi::xdigit;
+      using DF = DataFrame;
+
+      static ParseRule<Packet> rule = Impl::NAME() >> lit(',') >> int_ >> ',' >> DF::parsing_rule() >> ",*" >> +xdigit;
+      return rule;
+    }
+  };
+
+  /**
+   * @brief
+   *
+   * @param t_input
+   * @return auto
+   */
+  static auto parse(std::string t_input) noexcept {
+    using namespace boost::spirit::qi;
+    using boost::spirit::ascii::space;
+
+    Packet ret_val;
+    bool const full_match = phrase_parse(t_input.begin(), t_input.end(), Packet::parsing_rule(), space, ret_val);
+
+    return ret_val;
+  }
+
+  template <typename T>
+  auto operator<<(T const& t_input) const noexcept {
+    return Impl::create_builder(t_input);
   }
 };
 

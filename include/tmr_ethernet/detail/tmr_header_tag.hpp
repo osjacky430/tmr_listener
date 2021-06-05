@@ -20,7 +20,7 @@ struct TMSVRTag {
     using Data            = std::vector<DataTableFormat>;
 
     std::string id_;
-    int mode_;
+    Mode mode_;
     std::string raw_content_;
 
     static ParseRule<DataFormat>& parsing_rule() noexcept;
@@ -28,17 +28,16 @@ struct TMSVRTag {
     static Data parse_raw_content(std::string t_input) noexcept;
   };
 
+  struct BuildRule {
+    static void check(std::vector<std::string>& t_content_holder, TMSVRJsonData const& t_input) noexcept;
+
+    static void check(std::vector<std::string>& t_content_holder, TMSVRJsonReadReq const& t_input) noexcept;
+  };
+
   static auto create_builder(ID const& t_id) noexcept {
     prototype::MessageBuilder<TMSVRTag> ret_val{};
     ret_val.result_.content_.push_back(t_id.id_);
     return ret_val;
-  }
-
-  // @todo refactor
-  template <typename T>
-  static constexpr bool check_acceptance() noexcept {
-    static_assert(std::is_same<T, TMSVRJsonData>::value, "Only support JSON format for TMSVR currently");
-    return true;
   }
 
   static std::string assemble(std::vector<std::string> const& t_content) noexcept;

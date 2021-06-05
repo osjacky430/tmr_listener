@@ -1,4 +1,7 @@
+#include <functional>
+
 #include <boost/algorithm/algorithm.hpp>
+#include <boost/phoenix.hpp>
 
 #include "tmr_ethernet/detail/tmr_header_tag.hpp"
 #include "tmr_ethernet/tmr_eth_rw.hpp"
@@ -24,6 +27,8 @@ namespace tmr_listener {
 namespace detail {
 
 ParseRule<TMSVRTag::DataFormat>& TMSVRTag::DataFormat::parsing_rule() noexcept {
+  using boost::phoenix::static_cast_;
+  using boost::spirit::qi::_val;
   using boost::spirit::qi::char_;
   using boost::spirit::qi::int_;
   using boost::spirit::qi::lit;
@@ -31,7 +36,7 @@ ParseRule<TMSVRTag::DataFormat>& TMSVRTag::DataFormat::parsing_rule() noexcept {
   using JsonArray = std::vector<TMSVRJsonData>;
 
   static ParseRule<std::string> const id_rule = +(char_ - ",");
-  static ParseRule<int> const mode_rule       = int_;
+  static ParseRule<Mode> const mode_rule      = int_[_val = static_cast_<Mode>(boost::spirit::qi::_1)];
 
   static ParseRule<std::string> const raw_content_rule = +(char_ - ",*");
 
@@ -53,8 +58,27 @@ TMSVRTag::DataFormat::Data TMSVRTag::DataFormat::parse_raw_content(std::string t
   return ret_val;
 }
 
+void TMSVRTag::BuildRule::check(std::vector<std::string>& t_content_holder, TMSVRJsonData const& t_input) noexcept {
+  if (t_content_holder.size() == 1) {
+    t_content_holder.push_back("3");
+  }
+
+  t_content_holder.push_back(t_input.to_str());
+}
+
+void TMSVRTag::BuildRule::check(std::vector<std::string>& t_content_holder, TMSVRJsonReadReq const& t_input) noexcept {
+  if (t_content_holder.size() == 1) {
+    t_content_holder.push_back("13");
+  }
+
+  t_content_holder.push_back(t_input.to_str());
+}
+
 std::string TMSVRTag::assemble(std::vector<std::string> const& t_content) noexcept {
-  return '[' + boost::algorithm::join(t_content, ",") + ']';
+  auto const id      = t_content[0];
+  auto const mode    = t_content[1];
+  auto const content = std::vector<std::string>{t_content.begin() + 2, t_content.end()};
+  return id + ',' + mode + ",[" + boost::algorithm::join(content, ",") + ']';
 }
 
 }  // namespace detail
