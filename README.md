@@ -277,6 +277,7 @@ Notice the option `-v`, **this is needed** since tmr_listener will determine whe
 ### TODO
 
 - Rethink implementation of parser object
+- Use parser object to parse message from TM, currently only TMSVR parser is used
 - Better ROS interface
 - Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
 - consider function accepting types that can be implicitly converted to the desired type
@@ -287,6 +288,7 @@ Notice the option `-v`, **this is needed** since tmr_listener will determine whe
 - MUST disable user construct Expression from string, only internally usable
 - Reply if tm message not yet respond is bugged since the response is not queued, fix it in the future
 - More Unit test
+  - TMSVR parse test
 - Thread safety
 - Exception safety
 

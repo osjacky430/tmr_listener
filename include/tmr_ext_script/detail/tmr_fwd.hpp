@@ -7,7 +7,7 @@ namespace tmr_listener {
 template <typename Type> struct Expression;
 template <typename Type> struct Variable;
 
-template <typename Tag> struct Command;
+template <typename Tag> class Command;
 template <typename Tag> class Header;
 template <typename Tag> class HeaderProductBuilder;
 // clang-format on
@@ -30,7 +30,7 @@ struct MotionFnCallPrinter;
 struct SubCmdCallPrinter;
 
 template <typename Tag, typename PrintPolicy, typename RetType, typename... Functions>
-class FunctionSet;
+struct FunctionSet;
 
 }  // namespace detail
 }  // namespace tmr_listener

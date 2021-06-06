@@ -20,12 +20,12 @@ struct TMSVRTag {
     using Data            = std::vector<DataTableFormat>;
 
     std::string id_;
-    Mode mode_;
+    Mode mode_{};
     std::string raw_content_;
 
     static ParseRule<DataFormat>& parsing_rule() noexcept;
 
-    static Data parse_raw_content(std::string t_input) noexcept;
+    static Data parse_raw_content(std::string t_raw_content) noexcept;
   };
 
   struct BuildRule {

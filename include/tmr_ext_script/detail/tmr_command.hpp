@@ -16,7 +16,7 @@ namespace tmr_listener {
 template <typename Tag>
 class Command {
   template <typename FunctionSetTag, typename PrintPolicy, typename RetType, typename... Functions>
-  friend class tmr_listener::detail::FunctionSet;
+  friend struct tmr_listener::detail::FunctionSet;
 
   std::string const value;
   explicit Command(std::string t_name) : value(std::move(t_name)) {}

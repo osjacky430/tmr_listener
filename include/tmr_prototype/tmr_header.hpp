@@ -133,8 +133,6 @@ struct MessageBuilder {
    *
    * @note  If ScriptExit or End is appended previously, then t_cmd will be ignored, as this->ended = true or
    *        this->scriptExit_ = true.
-   *
-   * @todo  Due to the note above, maybe making ScriptExit a FunctionSet makes more sense?
    */
   template <typename T>
   decltype(auto) operator<<(T const& t_input) noexcept {

@@ -60,7 +60,7 @@ TMSVRTag::DataFormat::Data TMSVRTag::DataFormat::parse_raw_content(std::string t
 
 void TMSVRTag::BuildRule::check(std::vector<std::string>& t_content_holder, TMSVRJsonData const& t_input) noexcept {
   if (t_content_holder.size() == 1) {
-    t_content_holder.push_back("3");
+    t_content_holder.emplace_back("3");
   }
 
   t_content_holder.push_back(t_input.to_str());
@@ -68,7 +68,7 @@ void TMSVRTag::BuildRule::check(std::vector<std::string>& t_content_holder, TMSV
 
 void TMSVRTag::BuildRule::check(std::vector<std::string>& t_content_holder, TMSVRJsonReadReq const& t_input) noexcept {
   if (t_content_holder.size() == 1) {
-    t_content_holder.push_back("13");
+    t_content_holder.emplace_back("13");
   }
 
   t_content_holder.push_back(t_input.to_str());
