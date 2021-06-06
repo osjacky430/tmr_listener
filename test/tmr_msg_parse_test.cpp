@@ -13,9 +13,7 @@ class MsgParseTester final : public tmr_listener::ListenerHandle {
     return tmr_listener::Decision::Accept;
   }
 
-  tmr_listener::BaseHeaderProductPtr generate_cmd(MessageStatus const /*unused*/) override {
-    return tmr_listener::BaseHeaderProductPtr{};
-  }
+  tmr_listener::MessagePtr generate_cmd(MessageStatus const /*unused*/) override { return tmr_listener::MessagePtr{}; }
 
   void response_msg(tmr_listener::TMSCTResponse const& t_resp) override { this->tmsct_resp_ = t_resp; }
 

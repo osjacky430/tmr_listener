@@ -172,7 +172,8 @@ TEST(ExpressionTest, BinaryOperator) {
 
 TEST(TMMsgGen, StringMatch) {
   using namespace tmr_listener;
-  using namespace tmr_listener::motion_function;
+  using namespace motion_function;
+  using namespace prototype;
   using namespace std::string_literals;
 
   {

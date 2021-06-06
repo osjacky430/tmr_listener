@@ -38,6 +38,11 @@ void TMRobotEthSlave::parse_input_msg(std::string const& t_input) noexcept {
   }
 }
 
+/**
+ * @details Completion handlers only run in the context of a thread that has called io_service.run() no matter which
+ *          thread called the asynchronous method. If you've only called io_service.run() in one thread then all
+ *          completion handlers will execute serially in the context of that thread.
+ */
 bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSlaveCmdResponse& t_resp) {
   bool const is_read = t_req.value_list.empty();
   if (not is_read and t_req.value_list.size() != t_req.item_list.size()) {

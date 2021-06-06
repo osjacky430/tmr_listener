@@ -3,7 +3,7 @@
 
 #define EXPECT_COMPILE_FAIL(expr)                                                        \
   class FailTest final : public tmr_listener::ListenerHandle {                           \
-    using tm_msg_type = tmr_listener::BaseHeaderProductPtr;                              \
+    using tm_msg_type = tmr_listener::MessagePtr;                                        \
                                                                                          \
    protected:                                                                            \
     tm_msg_type generate_cmd(MessageStatus const t_prev_response) override {             \
@@ -23,4 +23,4 @@ EXPECT_COMPILE_FAIL(TEST_EXPRESSION);
 
 #endif
 
-int main(int argc, char** argv) { return 0; }
+int main(int argc, char** argv) { return EXIT_SUCCESS; }

@@ -19,7 +19,7 @@ class TMRobotListener {
  private:
   class ScriptExitHandler final : public ListenerHandle {
    protected:
-    BaseHeaderProductPtr generate_cmd(MessageStatus /*unused*/) override {
+    MessagePtr generate_cmd(MessageStatus /*unused*/) override {
       using namespace motion_function;
       return TMSCT << ID{"TMRobotListener_DefaultHandler"} << ScriptExit();
     }

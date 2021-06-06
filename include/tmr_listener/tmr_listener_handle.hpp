@@ -28,9 +28,9 @@ class ListenerHandle {
    * @brief This function generates TM external script commands, this is left for end user to implement.
    *
    * @param t_prev_response Did TM robot responded to previous message
-   * @return motion_function::BaseHeaderProductPtr
+   * @return motion_function::MessagePtr
    */
-  virtual BaseHeaderProductPtr generate_cmd(MessageStatus t_prev_response) = 0;
+  virtual MessagePtr generate_cmd(MessageStatus t_prev_response) = 0;
 
   virtual void response_msg(TMSTAResponse const& /*unused*/) {}
   virtual void response_msg(TMSCTResponse const& /*unused*/) {}
@@ -74,9 +74,9 @@ class ListenerHandle {
   /**
    * @brief This function generates request to send to TM robot, it calls ListenerHandle::generate_cmd internally
    *
-   * @return BaseHeaderProductPtr
+   * @return MessagePtr
    */
-  BaseHeaderProductPtr generate_request() noexcept;
+  MessagePtr generate_request() noexcept;
 
   ListenerHandle()                                 = default;
   ListenerHandle(ListenerHandle const& /*unused*/) = default;

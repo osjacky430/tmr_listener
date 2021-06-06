@@ -112,23 +112,6 @@ struct SubCmdCallPrinter {
   }
 };
 
-/**
- * @brief
- *
- * @tparam T
- */
-template <typename T>
-inline auto assemble_to_msg(std::vector<std::string> const& t_input) noexcept {
-  return boost::algorithm::join(t_input, ",");
-}
-
-template <>
-inline auto assemble_to_msg<tmr_listener::detail::TMSCTTag>(std::vector<std::string> const& t_input) noexcept {
-  auto const id   = t_input.front();
-  auto const data = std::vector<std::string>{std::next(t_input.begin()), t_input.end()};
-  return id + ',' + boost::algorithm::join(data, "\r\n");
-}
-
 }  // namespace detail
 }  // namespace tmr_listener
 

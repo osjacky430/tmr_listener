@@ -20,7 +20,7 @@ class TMErrorHandler final : public tmr_listener::ListenerHandle {
   tmr_listener::Variable<std::array<float, 6>> targetP1{"targetP1"};
   tmr_listener::Variable<std::array<float, 6>> targetP2{"targetP2"};
 
-  using MessageType = tmr_listener::motion_function::BaseHeaderProductPtr;
+  using MessageType = tmr_listener::motion_function::MessagePtr;
 
  protected:
   MessageType generate_cmd(MessageStatus const t_prev_response) override {

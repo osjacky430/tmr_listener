@@ -24,7 +24,7 @@ Decision ListenerHandle::start_task_handling(std::vector<std::string> const& t_d
  * @details If the command is not empty, then the responsded_ is set to false, indicating that we are waiting for new
  *          responses from the server. Otherwise, the response remains the same.
  */
-BaseHeaderProductPtr ListenerHandle::generate_request() noexcept {
+MessagePtr ListenerHandle::generate_request() noexcept {
   auto const ret_val = this->generate_cmd(this->responded_);
 
   if (not ret_val->empty()) {

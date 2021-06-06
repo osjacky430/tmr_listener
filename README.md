@@ -105,14 +105,14 @@ PLUGINLIB_EXPORT_CLASS(MyTMListenerHandleNamespace::MyTMListenerHandle, tmr_list
 
 For the rest of the setup, [see pluginlib tutorial (pretty outdated IMO)](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin). `tmr_listener::ListenerHandle` provides several functions that can/must be overriden:
 
-#### 1. motion_function::BaseHeaderProductPtr generate_cmd (MessageStatus const t_prev_response)
+#### 1. motion_function::MessagePtr generate_cmd (MessageStatus const t_prev_response)
 
 This function is the only way for the handler to talk to the TM robot, and therefore it must be overriden by the user. `t_prev_response` indicates whether TM robot responded to the message sent previously. Most of the time, we would like to generate command only after TM robot responded to our previous message. The responded message will be passed to the handler via [`response_msg`](<#3.-response_msg-(...)>).
 
 ```cpp
 struct YourHandler final : public tmr_listener::ListenerHandle {
   protected:
-    BaseHeaderProductPtr generate_cmd(MessageStatus const t_prev_response) override {
+    MessagePtr generate_cmd(MessageStatus const t_prev_response) override {
       if (t_prev_response == MessageStatus::Responded) {
         // generate command
       }
@@ -151,7 +151,7 @@ The overload set `response_msg` allows user to respond to certain header packet,
 // this example overrides TMSCTResponse and the one with no argument
 struct YourHandler final : public tmr_listener::ListenerHandle {
   private:
-    BaseHeaderProductPtr next_cmd_;
+    MessagePtr next_cmd_;
     int msg_count_ = 0;
   protected:
     using tmr_listener::ListenerHandle::response_mgs;

@@ -42,16 +42,12 @@ class TMRobotEthSlave {
   void parse_input_msg(std::string const& t_input) noexcept;
 
   /**
-   * @brief
+   * @brief TMSVR command service
    *
-   * @param t_req
-   * @param t_resp
-   * @return true
-   * @return false
-   *
-   * @note Completion handlers only run in the context of a thread that has called io_service.run() no matter which
-   *       thread called the asynchronous method. If you've only called io_service.run() in one thread then all
-   *       completion handlers will execute serially in the context of that thread.
+   * @param t_req   Contains all information to generate TMSVR command
+   * @param t_resp  Empty for request read. As for write request, this contains the response from server
+   * @return true   Service call successed
+   * @return false  Service call failed, possibly due to invalid context, e.g. empty string
    */
   bool send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSlaveCmdResponse& t_resp);
 

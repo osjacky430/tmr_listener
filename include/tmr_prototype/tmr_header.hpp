@@ -87,8 +87,7 @@ class Message final : public MessageBase {
    *
    * @return command in string form
    *
-   * @note one line one command only
-   * @note TMSTA doesn't support multi-command, only first will be consumed and replied
+   *
    * @note bad argument for motion function will not return ERROR for TMSCT
    * @note Error > Warning for TMSCT, even warning and error happened at the same time, TMSCT only returns ERROR line
    */
@@ -107,6 +106,16 @@ class Message final : public MessageBase {
    * @return false
    */
   bool has_script_exit() const noexcept override { return this->scriptExit_; }
+};
+
+/**
+ * @brief Specialized case to represent empty response
+ */
+template <>
+struct Message<void> final : public MessageBase {
+  bool empty() const noexcept override { return true; }
+  std::string to_str() const noexcept override { return ""; }
+  bool has_script_exit() const noexcept override { return false; }
 };
 
 template <typename Impl>
@@ -142,9 +151,7 @@ struct MessageBuilder {
    * @return share pointer of the result
    */
   auto operator<<(ScriptExit /*unused*/) noexcept {
-    Impl::template check_acceptance<ScriptExit>();
-
-    this->result_.content_.emplace_back("ScriptExit()");
+    Impl::BuildRule::check(this->result_.content_, ScriptExit{});
     this->result_.scriptExit_ = true;
     return boost::make_shared<Message<Impl>>(this->result_);
   }
@@ -161,6 +168,37 @@ struct MessageBuilder {
   }
 };
 
+/**
+ * @brief Header class implementation represents the "Header" concept in TM external scripting language
+ *
+ * @details tmr_listener creates several global Header instances, i.e., TMSCT, TMSTA and TMSVR. Also, for all motion
+ *          functions, tmr_listener creates a FunctionSet instance for each of them. By doing so, we can avoid
+ *          syntax error or typo.
+ *
+ *          With tmr_listener, user can generate listen node command easily by fluent interface (see example (1)
+ *          below). Instead of typing: "$TMSCT,XX,1,QueueTag(1,1),*XX\r\n", a typo, e.g., TMSCT to TMSTA, or
+ *          QueueTag(1,1) to QueuTag(1,1), or wrong length, or checksum error, you name it, may ruin one's day.
+ *
+ *          The generation of external script message is composed of three parts: Header, Command, and End signal. For
+ *          the last part, end signal, End() and ScriptExit() is used, commands cannot be appended after End() and
+ *          ScriptExit(), doing so results in compile error (no known conversion). (see example (2) below)
+ *
+ *          Commands without End() or ScriptExit() will also result in compile error (see example (3) below). Also,
+ *          TM listen node commands are tagged, meaning that it is impossible to misuse (see example (4), (5), and (6)).
+ *
+ * @tparam Tag  Used to prevent users from appending wrong function to the header
+ *
+ * @code{.cpp}
+ *
+ *      TMSCT << ID{"1"} << QueueTag(1, 1) << End(); // (1) Generate "$TMSCT,15,1,QueueTag(1,1),*46"
+ *      TMSCT << ID{"1"} << QueueTag(1, 1) << End() << QueueTag(1, 1);  // (2) compile error: no known conversion
+ *      TMSCT << ID{"1"} << QueueTag(1, 1);  // (3) compile error
+ *      TMSTA << ID{"1"} << End();  // (4) compile error: ID is only meaningful in TMSCT and TMSVR command
+ *      TMSTA << QueueTag(1, 1) << End(); // (5) compile error: Command is not usable for this header
+ *      TMSTA << QueueTagDone(1) << ScriptExit(); // (6) compile error: Script exit can only be used in TMSCT
+ *
+ *  @endcode
+ */
 template <typename Impl>
 struct Header {
   friend bool operator==(Header const& /*unused*/, std::string const& t_rhs) noexcept { return Impl::NAME() == t_rhs; }
@@ -168,6 +206,9 @@ struct Header {
   friend bool operator==(std::string const& t_lhs, Header const& /*unused*/) noexcept { return Impl::NAME() == t_lhs; }
   friend bool operator!=(std::string const& t_lhs, Header const& /*unused*/) noexcept { return Impl::NAME() != t_lhs; }
 
+  /**
+   * @class @class This class holds the information of the format of the packet, and its parsing rule
+   */
   struct Packet {
     using DataFrame = typename Impl::DataFormat;
 
@@ -192,10 +233,12 @@ struct Header {
   };
 
   /**
-   * @brief
+   * @brief Parse input message into Packet
    *
-   * @param t_input
-   * @return auto
+   * @param t_input Input string
+   * @return Packet
+   *
+   * @todo  Should return something like "expected" for inputs that are not fully matched
    */
   static auto parse(std::string t_input) noexcept {
     using namespace boost::spirit::qi;
@@ -214,6 +257,6 @@ struct Header {
 };
 
 }  // namespace prototype
-};  // namespace tmr_listener
+}  // namespace tmr_listener
 
 #endif
