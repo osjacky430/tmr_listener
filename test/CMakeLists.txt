@@ -48,5 +48,5 @@ catkin_add_gtest(tmr_msg_gen tmr_msg_gen_test.cpp)
 target_include_directories(tmr_msg_gen PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 catkin_add_gtest(tmr_msg_parse tmr_msg_parse_test.cpp)
-target_link_libraries(tmr_msg_parse tmr_listener)
+target_link_libraries(tmr_msg_parse tmr_listener tmr_eth_slave)
 target_include_directories(tmr_msg_parse PRIVATE ${CMAKE_SOURCE_DIR}/include)

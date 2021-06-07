@@ -35,7 +35,7 @@ struct TMSVRJsonData {
 
   std::string to_str() const noexcept {
     using namespace std::string_literals;
-    return R"({"Item":)" + this->item_ + R"(,"Value":)" + this->value_ + "}"s;
+    return R"({"Item":)"s + this->item_ + R"(,"Value":)"s + this->value_ + "}"s;
   }
 };
 
@@ -70,7 +70,7 @@ struct TMSVRJsonReadReq {
 
   std::string to_str() const noexcept {
     using namespace std::string_literals;
-    return R"({"Item":)" + this->item_ + "}"s;
+    return R"({"Item":)"s + this->item_ + "}"s;
   }
 };
 
