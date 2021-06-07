@@ -11,13 +11,13 @@
 namespace tmr_listener {
 
 enum class Mode {
-  ServierResponse = 00, /*!< Indicates the server responds to the client comand in string format */
-  Binary          = 01, /*!< Indicates the content data type in binary format */
-  String          = 02, /*!< Indicates the content data type in string format */
-  Json            = 03, /*!< Indicates the content data type in JSON format */
-  ReadBinary      = 11, /*!< Indicates the content data type in binary format (Request read) */
-  ReadString      = 12, /*!< Indicates the content data type in string format (Request read) */
-  ReadJson        = 13  /*!< Indicates the content data type in JSON format (Request read) */
+  ServerResponse = 00, /*!< Indicates the server responds to the client comand in string format */
+  Binary         = 01, /*!< Indicates the content data type in binary format */
+  String         = 02, /*!< Indicates the content data type in string format */
+  Json           = 03, /*!< Indicates the content data type in JSON format */
+  ReadBinary     = 11, /*!< Indicates the content data type in binary format (Request read) */
+  ReadString     = 12, /*!< Indicates the content data type in string format (Request read) */
+  ReadJson       = 13  /*!< Indicates the content data type in JSON format (Request read) */
 };
 
 /**
@@ -35,7 +35,7 @@ struct TMSVRJsonData {
 
   std::string to_str() const noexcept {
     using namespace std::string_literals;
-    return R"({\"Item\":)" + this->item_ + R"(,\"Value\":)" + this->value_ + "}"s;
+    return R"({"Item":)" + this->item_ + R"(,"Value":)" + this->value_ + "}"s;
   }
 };
 
@@ -70,7 +70,7 @@ struct TMSVRJsonReadReq {
 
   std::string to_str() const noexcept {
     using namespace std::string_literals;
-    return R"({\"Item\":)" + this->item_ + "}"s;
+    return R"({"Item":)" + this->item_ + "}"s;
   }
 };
 

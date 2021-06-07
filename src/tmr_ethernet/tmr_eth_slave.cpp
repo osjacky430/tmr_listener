@@ -70,6 +70,7 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
       auto const ret_val = ret_cmd << End();
       return ret_val->to_str();
     }();
+    ROS_DEBUG_STREAM_NAMED("tmsvr_request", cmd);
     this->comm_.write(cmd);
   } catch (std::exception& e) {
     ROS_ERROR_STREAM(e.what());
@@ -82,7 +83,7 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
   this->response_signal_.wait(lock, tm_responded);
   this->responded = false;
 
-  if (this->server_response_.mode_ == Mode::ServierResponse) {
+  if (this->server_response_.mode_ == Mode::ServerResponse) {
     ROS_DEBUG_STREAM_NAMED("tmsvr response", this->server_response_.raw_content_);
     t_resp.res = this->server_response_.raw_content_;  // possible reason: response of request write, or error happened
   } else {
@@ -93,6 +94,7 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
                      [](auto const& t_in) { return t_in.value_; });
       return ret_val;
     }(this->server_response_.raw_content_);
+    ROS_DEBUG_STREAM_NAMED("tmsvr_response", t_req);
   }
 
   return true;
