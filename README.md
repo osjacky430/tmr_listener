@@ -279,6 +279,7 @@ Notice the option `-v`, **this is needed** since tmr_listener will determine whe
 - Rethink implementation of parser object
 - Use parser object to parse message from TM, currently only TMSVR parser is used
 - Better ROS interface
+- Launch with valgrind to catch possible memory leak 
 - Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
 - consider function accepting types that can be implicitly converted to the desired type
 - Implement some services

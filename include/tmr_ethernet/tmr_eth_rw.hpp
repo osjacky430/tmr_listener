@@ -34,9 +34,8 @@ struct TMSVRJsonData {
   static ParseRule<TMSVRJsonData>& parsing_rule() noexcept;
 
   std::string to_str() const noexcept {
-    auto const item_entry  = "\"Item\":" + this->item_;
-    auto const value_entry = "\"Value\":" + this->value_;
-    return '{' + item_entry + ',' + value_entry + '}';
+    using namespace std::string_literals;
+    return R"({\"Item\":)" + this->item_ + R"(,\"Value\":)" + this->value_ + "}"s;
   }
 };
 
@@ -69,7 +68,10 @@ static auto generate_write_req(std::string const& t_item, std::string const& t_v
 struct TMSVRJsonReadReq {
   std::string item_;
 
-  std::string to_str() const noexcept { return "{\"Item\":" + this->item_ + '}'; }
+  std::string to_str() const noexcept {
+    using namespace std::string_literals;
+    return R"({\"Item\":)" + this->item_ + "}"s;
+  }
 };
 
 /**
@@ -79,7 +81,11 @@ struct TMSVRJsonReadReq {
  * @param t_item  variable name to request value
  * @return TMSVRJsonReadReq
  */
-static auto generate_read_req(std::string const& t_item) noexcept {
+static auto generate_read_req(std::string const& t_item) {
+  if (t_item.empty()) {
+    throw std::invalid_argument("empty item and empty value is not allowed");
+  }
+
   auto const is_string_quoted = [](std::string const& t_input) {
     return t_input.find_first_of('\"') == 0 and t_input.find_last_of('\"') == t_input.size() - 1;
   };

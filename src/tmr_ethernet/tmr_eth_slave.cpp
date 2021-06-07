@@ -80,8 +80,10 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
   boost::unique_lock<boost::mutex> lock{this->rx_buffer_mutex_};
   auto const tm_responded = [this]() { return this->responded; };
   this->response_signal_.wait(lock, tm_responded);
+  this->responded = false;
 
   if (this->server_response_.mode_ == Mode::ServierResponse) {
+    ROS_DEBUG_STREAM_NAMED("tmsvr response", this->server_response_.raw_content_);
     t_resp.res = this->server_response_.raw_content_;  // possible reason: response of request write, or error happened
   } else {
     t_req.value_list = [](std::string const& t_raw_content) {  // possible reason: request read

@@ -56,9 +56,9 @@ struct TMSCTTag {
      *
      * @note templated here because I wanted to handle the compile error myself
      */
-    template <typename T>
-    static void check(std::vector<std::string>& t_content_holder, Command<T> const& t_cmd) noexcept {
-      static_assert(std::is_same<T, TMSCTTag>::value, "This command cannot be used by TMSCT");
+    template <typename Tag>
+    static void check(std::vector<std::string>& t_content_holder, Command<Tag> const& t_cmd) noexcept {
+      static_assert(std::is_same<Tag, TMSCTTag>::value, "This command cannot be used by TMSCT");
       t_content_holder.push_back(t_cmd.to_str());
     }
 
@@ -67,8 +67,8 @@ struct TMSCTTag {
      *
      * @param t_expr Expression to append
      */
-    template <typename T>
-    static void check(std::vector<std::string>& t_content_holder, Expression<T> const& t_expr) noexcept {
+    template <typename Type>
+    static void check(std::vector<std::string>& t_content_holder, Expression<Type> const& t_expr) noexcept {
       t_content_holder.push_back(t_expr.to_str());
     }
   };
@@ -170,6 +170,12 @@ struct TMSTATag {
   }
 };
 
+/**
+ * @brief This static_assert happens when ScriptExit is appended to TMSTA message
+ *
+ * @tparam T  This can only be ScriptExit
+ * @note I need to make it templated so that it will only be evaluated if this is called
+ */
 template <typename T>
 struct TMSTATag::BuildRule::check_error_msg<T, typename std::enable_if<std::is_same<ScriptExit, T>::value>::type> {
   static_assert(not std::is_same<T, T>::value, "ScriptExit() is TMSCT only");

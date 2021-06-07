@@ -39,24 +39,24 @@ namespace detail {
  * @todo Rethink if I need this or not, this to me looks like some stringifier that distinct how to stringify value in
  *       run time. (it can and should be done at compile time?)
  */
-template <typename T>
+template <typename Type>
 class FundamentalType {
  public:
-  using operating_t  = boost::variant<T, Variable<T>>;
-  using underlying_t = T;
+  using operating_t  = boost::variant<Type, Variable<Type>>;
+  using underlying_t = Type;
 
   constexpr FundamentalType() = default;
-  constexpr FundamentalType(operating_t const& t_val) : val_(t_val) {}  // NOLINT
-  constexpr FundamentalType(T const& t_val) : val_(t_val) {}            // NOLINT
-  constexpr FundamentalType(Variable<T> const& t_val) : val_(t_val) {}  // NOLINT
+  constexpr FundamentalType(operating_t const& t_val) : val_(t_val) {}     // NOLINT
+  constexpr FundamentalType(Type const& t_val) : val_(t_val) {}            // NOLINT
+  constexpr FundamentalType(Variable<Type> const& t_val) : val_(t_val) {}  // NOLINT
 
   std::string to_str() const noexcept {
-    if (auto const val = boost::get<Variable<T>>(&this->val_)) {
+    if (auto const val = boost::get<Variable<Type>>(&this->val_)) {
       return val->to_str();
     }
 
-    auto const val = boost::get<T>(&this->val_);
-    return value_to_string<T>{}(*val);
+    auto const val = boost::get<Type>(&this->val_);
+    return value_to_string<Type>{}(*val);
   }
 
  private:
@@ -87,7 +87,7 @@ using TypeMap = boost::fusion::map<TypeNamePair<int>, TypeNamePair<double>, Type
  * @return ConstString
  * @note  This is meant to be called at compile time, do not call it at run time. It is run time inefficient
  */
-template <typename T>
+template <typename Type>
 inline auto constexpr get_type_decl_str() noexcept {
   constexpr auto INT_DECL      = TypeNamePair<int>{"int"};
   constexpr auto DOUBLE_DECL   = TypeNamePair<double>{"double"};
@@ -101,7 +101,7 @@ inline auto constexpr get_type_decl_str() noexcept {
   constexpr auto type_map = TypeMap{
     INT_DECL, DOUBLE_DECL, BOOL_DECL, FLOAT_DECL, STRING_DECL, BYTE_DECL, HALFWORD_DECL, WORD_DECL,
   };
-  return boost::fusion::at_key<T>(type_map);
+  return boost::fusion::at_key<Type>(type_map);
 }
 
 }  // namespace detail
