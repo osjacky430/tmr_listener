@@ -94,8 +94,8 @@ void TMRobotTCP::handle_write(boost::system::error_code const &t_err, size_t con
     return;
   }
 
-  if (not t_err) {  // NOLINT, boost pre c++11 safe bool idiom
-    if (this->cb_.msg_sent_) {
+  if (not t_err) {              // NOLINT, boost pre c++11 safe bool idiom
+    if (this->cb_.msg_sent_) {  // NOLINT, safe bool idiom
       this->cb_.msg_sent_(t_byte_writtened);
     }
   } else {

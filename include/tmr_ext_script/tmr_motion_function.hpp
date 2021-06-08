@@ -143,8 +143,10 @@ inline auto dummy_command_list(std::string t_dummy_cmd_id) noexcept {
   return TMSCT << ID{std::move(t_dummy_cmd_id)} << End();
 }
 
-using TMSCTPacket = tmr_listener::prototype::Header<tmr_listener::detail::TMSCTTag>::Packet;
-using TMSTAPacket = tmr_listener::prototype::Header<tmr_listener::detail::TMSTATag>::Packet;
+using TMSCTHeader = prototype::Header<detail::TMSCTTag>;
+using TMSCTPacket = TMSCTHeader::Packet;
+using TMSTAHeader = prototype::Header<detail::TMSTATag>;
+using TMSTAPacket = TMSTAHeader::Packet;
 
 }  // namespace tmr_listener
 

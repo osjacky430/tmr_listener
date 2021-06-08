@@ -257,7 +257,7 @@ Currently, **only JSON mode is implemented**, therefore, to let the library func
 
 ### Data table
 
-TM robot sends data table periodically after power cycling if it was previously set to Enable. Having no prior knowledge regarding the listed item in the data table, this package decides to provide two topics, `/tm_ethernet_slave/raw_data_table` and `/tm_ethernet_slave/parsed_data_table`, to receive the contents. Users can choose either to parse data received from the former with their favorite 3rd party library, e.g., [nlhomann-json](https://github.com/nlohmann/json), or the latter by some handy function this package offers (@todo: implement).
+TM robot sends data table periodically after power cycling if it was previously set to Enable. Having no prior knowledge regarding the listed item in the data table, this package decides to provide two topics, `/tm_ethernet_slave/raw_data_table` and `/tm_ethernet_slave/parsed_data_table`, to receive the contents. Users can choose either to parse data received from the former with their favorite 3rd party library, e.g., [nlhomann-json](https://github.com/nlohmann/json), or the latter by some handy function this package offers.
 
 ### Read / Write Request
 
@@ -277,6 +277,7 @@ Notice the option `-v`, **this is needed** since tmr_listener will determine whe
 ### TODO
 
 - Rethink implementation of parser object
+  - Maybe I should adapt ros msg object as spirit parse data storage class
 - Use parser object to parse message from TM, currently only TMSVR parser is used
 - Better ROS interface
 - Launch with valgrind to catch possible memory leak 
@@ -289,7 +290,6 @@ Notice the option `-v`, **this is needed** since tmr_listener will determine whe
 - MUST disable user construct Expression from string, only internally usable
 - Reply if tm message not yet respond is bugged since the response is not queued, fix it in the future
 - More Unit test
-  - TMSVR parse test
 - Thread safety
 - Exception safety
 
@@ -308,4 +308,3 @@ Jacky Tseng (master branch) - jacky.tseng@gyro.com.tw
 ### Notes
 
 - [Memory leak issue due to plugin lib](https://github.com/ros/class_loader/issues/131)
-- Expression template may be used in this case, however, I'm not familiar with the framework such as Proto, Pheonix, etc.

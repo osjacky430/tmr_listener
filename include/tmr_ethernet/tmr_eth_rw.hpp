@@ -49,7 +49,7 @@ using TMSVRJsonWriteReq = TMSVRJsonData;
  * @param t_value value
  * @return TMSVRJsonWriteReq object
  */
-static auto generate_write_req(std::string const& t_item, std::string const& t_value) {
+static inline auto generate_write_req(std::string const& t_item, std::string const& t_value) {
   if (t_item.empty() or t_value.empty()) {
     throw std::invalid_argument("empty item and empty value is not allowed");
   }
@@ -81,7 +81,7 @@ struct TMSVRJsonReadReq {
  * @param t_item  variable name to request value
  * @return TMSVRJsonReadReq
  */
-static auto generate_read_req(std::string const& t_item) {
+static inline auto generate_read_req(std::string const& t_item) {
   if (t_item.empty()) {
     throw std::invalid_argument("empty item and empty value is not allowed");
   }

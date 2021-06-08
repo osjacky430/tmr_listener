@@ -16,9 +16,10 @@
 
 namespace tmr_listener {
 
-using TMSVRPacket = prototype::Header<detail::TMSVRTag>::Packet;
+using TMSVRHeader = prototype::Header<detail::TMSVRTag>;
+using TMSVRPacket = TMSVRHeader::Packet;
 
-static constexpr auto TMSVR = prototype::Header<detail::TMSVRTag>{};
+static constexpr auto TMSVR = TMSVRHeader{};
 
 }  // namespace tmr_listener
 
@@ -34,7 +35,7 @@ class TMRobotEthSlave {
   ros::Publisher processed_data_table_pub_{private_nh_.advertise<tmr_listener::JsonDataArray>("parsed_data_table", 1)};
   ros::ServiceServer tmsvr_cmd_srv_{private_nh_.advertiseService("tmsvr_cmd", &TMRobotEthSlave::send_tmsvr_cmd, this)};
 
-  bool responded = false;
+  bool responded_ = false;
   typename TMSVRPacket::DataFrame server_response_;
   boost::condition_variable response_signal_;
   boost::mutex rx_buffer_mutex_;

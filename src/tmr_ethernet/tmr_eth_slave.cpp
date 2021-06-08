@@ -6,7 +6,7 @@
 namespace tmr_listener {
 
 void TMRobotEthSlave::parse_input_msg(std::string const& t_input) noexcept {
-  auto const parsed_data = TMSVR.parse(t_input);
+  auto const parsed_data = TMSVRHeader::parse(t_input);
   if (parsed_data.data_.mode_ == Mode::Json) {
     auto const raw_data = [](std::string const& t_to_set) {
       std_msgs::String ret_val;
@@ -15,7 +15,7 @@ void TMRobotEthSlave::parse_input_msg(std::string const& t_input) noexcept {
     }(parsed_data.data_.raw_content_);
     this->raw_data_table_pub_.publish(raw_data);
 
-    auto const parsed_content = parsed_data.data_.parse_raw_content(parsed_data.data_.raw_content_);
+    auto const parsed_content = TMSVRPacket::DataFrame::parse_raw_content(parsed_data.data_.raw_content_);
     // *boost::get<std::vector<tmr_listener::TMSVRJsonData>>(&parsed_data.data_.data_);
 
     auto const processed_data = [](std::vector<tmr_listener::TMSVRJsonData> const& t_to_tf) {
@@ -27,13 +27,14 @@ void TMRobotEthSlave::parse_input_msg(std::string const& t_input) noexcept {
       };
 
       tmr_listener::JsonDataArray ret_val;
+      ret_val.data.reserve(t_to_tf.size());
       std::transform(t_to_tf.begin(), t_to_tf.end(), std::back_inserter(ret_val.data), tm_struct_to_ros_msg);
       return ret_val;
     }(parsed_content);
     this->processed_data_table_pub_.publish(processed_data);
   } else {
     this->server_response_ = parsed_data.data_;
-    this->responded        = true;
+    this->responded_       = true;
     this->response_signal_.notify_all();
   }
 }
@@ -79,17 +80,18 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
 
   // @todo add timeout
   boost::unique_lock<boost::mutex> lock{this->rx_buffer_mutex_};
-  auto const tm_responded = [this]() { return this->responded; };
+  auto const tm_responded = [this]() { return this->responded_; };
   this->response_signal_.wait(lock, tm_responded);
-  this->responded = false;
+  this->responded_ = false;
 
   if (this->server_response_.mode_ == Mode::ServerResponse) {
-    ROS_DEBUG_STREAM_NAMED("tmsvr response", this->server_response_.raw_content_);
+    ROS_DEBUG_STREAM_NAMED("tmsvr_response", this->server_response_.raw_content_);
     t_resp.res = this->server_response_.raw_content_;  // possible reason: response of request write, or error happened
   } else {
     t_req.value_list = [](std::string const& t_raw_content) {  // possible reason: request read
-      std::vector<std::string> ret_val;
       auto const parsed = TMSVRPacket::DataFrame::parse_raw_content(t_raw_content);
+      std::vector<std::string> ret_val;
+      ret_val.reserve(parsed.size());
       std::transform(parsed.begin(), parsed.end(), std::back_inserter(ret_val),
                      [](auto const& t_in) { return t_in.value_; });
       return ret_val;
@@ -108,7 +110,7 @@ void TMRobotEthSlave::start() noexcept {
   ros::spin();
 
   // make sure the service is shutdown
-  this->responded = true;
+  this->responded_ = true;
   this->response_signal_.notify_all();
 
   if (thread.joinable()) {

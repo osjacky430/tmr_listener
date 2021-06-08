@@ -4,5 +4,8 @@ target_include_directories(tmr_eth_slave PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(tmr_eth_slave PUBLIC ${catkin_LIBRARIES} tmr_tcp_comm)
 target_compile_options(tmr_eth_slave PUBLIC "-Wfatal-errors")
 
+set_project_warnings(tmr_eth_slave)
 add_executable(tmr_eth_slave_node tmr_eth_slave_node.cpp)
 target_link_libraries(tmr_eth_slave_node PUBLIC tmr_tcp_comm tmr_eth_slave)
+
+enable_sanitizers(tmr_eth_slave)
