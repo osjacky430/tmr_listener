@@ -33,8 +33,6 @@ ParseRule<TMSVRTag::DataFormat>& TMSVRTag::DataFormat::parsing_rule() noexcept {
   using boost::spirit::qi::int_;
   using boost::spirit::qi::lit;
 
-  using JsonArray = std::vector<TMSVRJsonData>;
-
   static ParseRule<std::string> const id_rule = +(char_ - ",");
   static ParseRule<Mode> const mode_rule      = int_[_val = static_cast_<Mode>(boost::spirit::qi::_1)];
 

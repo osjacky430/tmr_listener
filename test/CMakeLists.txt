@@ -43,6 +43,7 @@ test_ext_script_syntax(TEST_CASE "TMSTA_ONLY_1_CMD_PER_SCRIPT"
 # cmake-format: on
 
 add_library(tmr_test_main test_main.cpp)
+enable_sanitizers(tmr_test_main)
 
 # stupid catkin_add_gtest function, catkin just sucks really hard, I must disable warning as error
 # since I have no control over adding gtest dependency, at least I do it myself
