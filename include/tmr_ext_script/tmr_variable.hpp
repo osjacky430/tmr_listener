@@ -179,7 +179,7 @@ template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std
 }
 
 /**
- * @brief This function creates Variable declaration expression, non-array version
+ * @brief This function creates Variable declaration initialized with the other Variable, array version
  *
  * @tparam T  underlying type of the variable
  * @param t_var Variable to be declared
@@ -191,12 +191,34 @@ template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std
 template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_array<T>::value, bool> = true>
 [[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, Variable<T> const& t_val) {
   // static_assert();
-  if (not boost::xpressive::regex_match(t_var(), detail::var_name_pattern())) {
+  if (not boost::xpressive::regex_match(t_var.to_str(), detail::var_name_pattern())) {
     throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
   }
 
   constexpr auto type  = detail::get_type_decl_str<typename T::value_type>();
   auto const formatted = boost::format("%s[] %s=%s") % type.to_std_str() % t_var.to_str() % t_val.to_str();
+  return Expression<T>{formatted.str()};
+}
+
+/**
+ * @brief This function creates Variable declaration initialized with the other Variable, non-array version
+ *
+ * @tparam T  underlying type of the variable
+ * @param t_var Variable to be declared
+ * @param t_val Initial value of the variable
+ * @return Expression of initialization
+ *
+ * @todo Add case for Variable and Expression
+ */
+template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std_array<T>::value, bool> = true>
+[[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, Variable<T> const& t_val) {
+  // static_assert();
+  if (not boost::xpressive::regex_match(t_var.to_str(), detail::var_name_pattern())) {
+    throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
+  }
+
+  constexpr auto type  = detail::get_type_decl_str<T>();
+  auto const formatted = boost::format("%s %s=%s") % type.to_std_str() % t_var.to_str() % t_val.to_str();
   return Expression<T>{formatted.str()};
 }
 

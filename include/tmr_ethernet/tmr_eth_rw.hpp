@@ -48,6 +48,8 @@ using TMSVRJsonWriteReq = TMSVRJsonData;
  * @param t_item  key
  * @param t_value value
  * @return TMSVRJsonWriteReq object
+ *
+ * @note Value doesn't need to be quoted, user should pass quoted string themselves if the type to set is string
  */
 static inline auto generate_write_req(std::string const& t_item, std::string const& t_value) {
   if (t_item.empty() or t_value.empty()) {
@@ -58,8 +60,7 @@ static inline auto generate_write_req(std::string const& t_item, std::string con
     return t_input.find_first_of('\"') == 0 and t_input.find_last_of('\"') == t_input.size() - 1;
   };
 
-  return TMSVRJsonWriteReq{is_string_quoted(t_item) ? t_item : '\"' + t_item + '\"',
-                           is_string_quoted(t_value) ? t_value : '\"' + t_value + '\"'};
+  return TMSVRJsonWriteReq{is_string_quoted(t_item) ? t_item : '\"' + t_item + '\"', t_value};
 }
 
 /**

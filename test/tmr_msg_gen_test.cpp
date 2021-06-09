@@ -56,7 +56,12 @@ TEST(VariableTest, BinaryOperator) {
   Variable<int> int_var{"int_var"};
   Variable<float> float_var{"float_var"};
 
+  Variable<std::array<float, 6>> some_point{"some_point"};
+  Variable<std::array<float, 6>> other_point{"other_point"};
+
   EXPECT_EQ(declare(int_var, 0).to_str(), "int int_var=0");
+  EXPECT_EQ(declare(other_int, int_var).to_str(), "int other_int=int_var");
+  EXPECT_EQ(declare(some_point, other_point).to_str(), "float[] some_point=other_point");
 
   VARIABLE_BINARY_OP_TEST(int_var, =, 1, EXPECT(int));
   VARIABLE_BINARY_OP_TEST(int_var, =, float_var, EXPECT(int));

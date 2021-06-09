@@ -304,6 +304,7 @@ Notice the option `-v`, **this is needed** since tmr_listener will determine whe
 - MUST disable user construct Expression from string, only internally usable
 - Reply if tm message not yet respond is bugged since the response is not queued, fix it in the future
 - More Unit test
+- Code coverage
 - Thread safety
 - Exception safety
 
