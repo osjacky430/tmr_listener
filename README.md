@@ -257,7 +257,21 @@ Currently, **only JSON mode is implemented**, therefore, to let the library func
 
 ### Data table
 
-TM robot sends data table periodically after power cycling if it was previously set to Enable. Having no prior knowledge regarding the listed item in the data table, this package decides to provide two topics, `/tm_ethernet_slave/raw_data_table` and `/tm_ethernet_slave/parsed_data_table`, to receive the contents. Users can choose either to parse data received from the former with their favorite 3rd party library, e.g., [nlhomann-json](https://github.com/nlohmann/json), or the latter by some handy function this package offers.
+TM robot sends data table periodically after power cycling if it was previously set to Enable. Having no prior knowledge regarding the listed item in the data table, this package decides to provide two topics, `/tm_ethernet_slave/raw_data_table` and `/tm_ethernet_slave/parsed_data_table`, to receive the contents. Users can choose either to parse data received from the former with their favorite 3rd party library, e.g., [nlhomann-json](https://github.com/nlohmann/json), or the latter by some handy function this package offers:
+
+``` c++
+#include "tmr_listener/JsonDataArray.h"
+#include "tmr_utility/tmr_parser.hpp"
+
+void parsed_data_cb(tmr_listener::JsonDataArray::ConstPtr& t_msg) {
+  // assuming data[0] contains Item: "rng", Value: 0
+  auto const v = tmr_listener::parse_as<int>(t_msg->data[0].value_);  // the type of v is int
+
+  // assuming data[1] contains Item: "Joint_Angle", Value: [89.4597,-35.00033,125.000435,-0.000126898289,90.0,0.0005951971]
+  auto const array_v = tmr_listener::parse_as<double, 6>(t_msg->data[1].value_);  // the type of array_v is std::array<double, 6>
+}
+
+```
 
 ### Read / Write Request
 

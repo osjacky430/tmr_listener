@@ -28,6 +28,14 @@ static inline auto get_tm_type_parser() {
 template <typename T>
 using ParseRule = boost::spirit::qi::rule<std::string::iterator, T(), boost::spirit::ascii::space_type>;
 
+/**
+ * @brief This function parse input string as type specified in template parameter T. it will throw if it failed to
+ *        parse the input string to the desired type
+ *
+ * @tparam T  The type of the content of input string
+ * @param t_str_to_parse  Input string contains desire type
+ * @return T  Content of t_str_to_parse
+ */
 template <typename T>
 static inline T parse_as(std::string const& t_str_to_parse) {
   using namespace boost::spirit;
@@ -43,6 +51,15 @@ static inline T parse_as(std::string const& t_str_to_parse) {
   return ret_val;
 }
 
+/**
+ * @brief This function parses input string as array, it will throw if the number of elements in the input
+ *        string doesn't match the number of NTTP, i.e. N.
+ *
+ * @tparam T  The type of the array element
+ * @tparam N  Number of elements, since TM has only fix sized array, this must be known at compile time
+ * @param t_str_to_parse  Input string contains array
+ * @return std::array<T, N> Content of t_str_to_parse
+ */
 template <typename T, std::size_t N>
 static inline std::array<T, N> parse_as(std::string const& t_str_to_parse) {
   using namespace boost::spirit;
