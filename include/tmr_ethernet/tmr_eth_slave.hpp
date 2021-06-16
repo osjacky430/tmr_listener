@@ -16,15 +16,6 @@
 
 namespace tmr_listener {
 
-using TMSVRHeader = prototype::Header<detail::TMSVRTag>;
-using TMSVRPacket = TMSVRHeader::Packet;
-
-static constexpr auto TMSVR = TMSVRHeader{};
-
-}  // namespace tmr_listener
-
-namespace tmr_listener {
-
 class TMRobotEthSlave {
   static constexpr unsigned short ETHERNET_SLAVE_PORT = 5891;
 

@@ -32,7 +32,8 @@ class ListenerHandle {
    */
   virtual MessagePtr generate_cmd(MessageStatus t_prev_response) = 0;
 
-  virtual void response_msg(TMSTAResponse const& /*unused*/) {}
+  virtual void response_msg(TMSTAResponse::Subcmd00 const& /*unused*/) {}
+  virtual void response_msg(TMSTAResponse::Subcmd01 const& /*unused*/) {}
   virtual void response_msg(TMSCTResponse const& /*unused*/) {}
   virtual void response_msg(CPERRResponse const& /*unused*/) {}
   virtual void response_msg() {}
@@ -49,7 +50,7 @@ class ListenerHandle {
    *
    * @note Only one handle at a time currently (@todo maybe extend to support multiple handles in the future)
    */
-  virtual Decision start_task(std::vector<std::string> const& t_data) = 0;
+  virtual Decision start_task(std::string const& t_data) = 0;
 
  public:
   /**
@@ -61,15 +62,25 @@ class ListenerHandle {
    * @return Decision::Accept   informs listener to use current handler to send message to TM
    * @return Decision::Ignore   informs listener not to use current handler
    */
-  Decision start_task_handling(std::vector<std::string> const& t_data) noexcept;
+  Decision start_task_handling(std::string const& t_data) noexcept;
 
   /**
    * @brief This function parses the messages sent from TM, after parsing the messages, it will call one of the
    *        callbacks (ListenerHandler::response_msg overload sets) according to the header of the message.
    *
-   * @param t_response  message sent from TM
+   * @param t_packet  message sent from TM
    */
-  void handle_response(std::vector<std::string> const& t_response) noexcept;
+  template <typename T>
+  void handle_response(T const& t_packet) noexcept {
+    this->responded_ = MessageStatus::Responded;
+    this->response_msg(t_packet);
+    this->response_msg();
+  }
+
+  /**
+   * @brief
+   */
+  virtual void handle_disconnect() noexcept {}
 
   /**
    * @brief This function generates request to send to TM robot, it calls ListenerHandle::generate_cmd internally

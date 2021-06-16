@@ -71,6 +71,13 @@ static inline std::array<T, N> parse_as(std::string const& t_str_to_parse) {
   auto const& type_map = detail::get_tm_type_parser();
   qi::parse(t_str_to_parse.cbegin(), t_str_to_parse.cend(),
             ('[' >> at_key<T>(type_map)[at(boost::phoenix::ref(ret_val), ref(i)++) = boost::spirit::_1] % ',' >> ']'));
+
+  if (N > i) {
+    using namespace std::string_literals;
+    throw std::invalid_argument("Result contains "s + std::to_string(i) + " elements, which differs from expected: "s +
+                                std::to_string(N));
+  }
+  // @todo utilize return value of parse ? or simply compare the local variable with the size of array
   return ret_val;
 }
 

@@ -18,6 +18,9 @@ struct CPERRResponse;
 struct ScriptExit;
 struct End;
 
+enum class ErrorCode;
+enum class TagNumberStatus;
+
 }  // namespace tmr_listener
 
 namespace tmr_listener {

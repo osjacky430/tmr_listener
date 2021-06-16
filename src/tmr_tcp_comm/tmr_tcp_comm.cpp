@@ -110,8 +110,12 @@ void TMRobotTCP::reconnect() noexcept {
   using namespace boost::asio::placeholders;
 
   boost::system::error_code ignore_error_code;
+
   this->listener_.close(ignore_error_code);
   this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotTCP::handle_connection, this, error));
+  if (this->cb_.disconnected_) {
+    this->cb_.disconnected_();
+  }
 }
 
 void TMRobotTCP::stop() noexcept {

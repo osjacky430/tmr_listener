@@ -16,6 +16,7 @@ class TMRobotTCP {
   struct Callback {
     boost::function<void(std::string const &)> msg_recved_;
     boost::function<void(size_t const)> msg_sent_ = {};
+    boost::function<void()> disconnected_         = {};
   };
 
  private:

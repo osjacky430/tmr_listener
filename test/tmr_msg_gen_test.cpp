@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "tmr_ethernet/tmr_eth_rw.hpp"
 #include "tmr_ext_script/tmr_motion_function.hpp"
 
 TEST(ChecksumTest, ChecksumStringMatch) {
@@ -206,5 +207,45 @@ TEST(TMMsgGen, StringMatch) {
               "float[] targetP2={90,-35,125,0,90,0}\r\n"
               "PTP(\"JPP\",targetP2,10,200,10,false)\r\n"
               "QueueTag(2),*54\r\n");
+  }
+}
+
+TEST(TM_Msg_Gen, TMSVR_Msg_String_Match) {
+  using namespace tmr_listener;
+  using namespace std::string_literals;
+
+  {
+    auto const read_req = generate_read_req("TCP_Mass"s);
+    EXPECT_EQ(read_req.item_, R"("TCP_Mass")"s);
+    EXPECT_EQ(read_req.to_str(), R"({"Item":"TCP_Mass"})"s);
+
+    auto const to_read = TMSVR << ID{"Q3"} << read_req << End();
+    EXPECT_EQ(to_read->to_str(),
+              "$TMSVR,27,Q3,13,"
+              R"([{"Item":"TCP_Mass"}])"
+              ",*3C\r\n"s);
+
+    auto const write_req = generate_write_req("Ctrl_DO0"s, "1"s);
+    EXPECT_EQ(write_req.item_, R"("Ctrl_DO0")"s);
+    EXPECT_EQ(write_req.value_, "1"s);
+    EXPECT_EQ(write_req.to_str(), R"({"Item":"Ctrl_DO0","Value":1})"s);
+
+    auto const write_req_1 = generate_write_req("Ctrl_DO1"s, "0");
+    auto const write_req_2 = generate_write_req("g_ss", R"(["Hello","TM","Robot"])");
+    auto const to_write    = TMSVR << ID{"T9"} << write_req << write_req_1 << write_req_2 << End();
+    EXPECT_EQ(to_write->to_str(), R"($TMSVR,113,T9,3,[{"Item":"Ctrl_DO0","Value":1},{"Item":"Ctrl_DO1","Value":0},)"
+                                  R"({"Item":"g_ss","Value":["Hello","TM","Robot"]}],*7C)"
+                                  "\r\n"s);
+  }
+
+  {
+    auto const read_req = generate_read_req(R"("Stick_PlayPause")"s);
+    EXPECT_EQ(read_req.item_, R"("Stick_PlayPause")"s);
+    EXPECT_EQ(read_req.to_str(), R"({"Item":"Stick_PlayPause"})"s);
+
+    auto const write_req = generate_write_req(R"("Stick_PlayPause")"s, "true"s);
+    EXPECT_EQ(write_req.item_, R"("Stick_PlayPause")"s);
+    EXPECT_EQ(write_req.value_, "true"s);
+    EXPECT_EQ(write_req.to_str(), R"({"Item":"Stick_PlayPause","Value":true})"s);
   }
 }

@@ -48,7 +48,7 @@ enable_sanitizers(tmr_test_main)
 # stupid catkin_add_gtest function, catkin just sucks really hard, I must disable warning as error
 # since I have no control over adding gtest dependency, at least I do it myself
 catkin_add_gtest(tmr_msg_gen tmr_msg_gen_test.cpp)
-target_link_libraries(tmr_msg_gen tmr_test_main)
+target_link_libraries(tmr_msg_gen tmr_test_main tmr_eth_slave)
 target_include_directories(tmr_msg_gen PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 catkin_add_gtest(tmr_msg_parse tmr_msg_parse_test.cpp)

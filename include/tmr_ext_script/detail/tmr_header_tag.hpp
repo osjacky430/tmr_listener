@@ -3,9 +3,11 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/spirit/include/qi.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <string>
+#include <type_traits>
+#include <vector>
 
 #include "tmr_ext_script/detail/tmr_command.hpp"
 #include "tmr_ext_script/tmr_variable.hpp"
@@ -35,8 +37,17 @@ struct TMSCTTag {
       static ParseRule<VariableDecl>& parsing_rule() noexcept;
     };
 
-    using AvailableCmd = boost::variant<FunctionCall, VariableDecl>;
-    using Data         = std::vector<AvailableCmd>;
+    struct ScriptResult {
+      bool result_;
+      std::vector<int> abnormal_lines_;
+
+      static ParseRule<ScriptResult>& parsing_rule() noexcept;
+    };
+
+    using ServerResponse = boost::variant<ScriptResult, std::string>;
+    using ClientRequest  = std::vector<boost::variant<FunctionCall, VariableDecl>>;
+    using AvailableCmd   = boost::variant<ClientRequest, ServerResponse>;
+    using Data           = AvailableCmd;
 
     std::string id_;
     Data cmd_;
@@ -90,7 +101,7 @@ struct TMSCTTag {
    *
    * @tparam T  Type identified by operator<< of the prototype class
    *
-   * @note The function above is NOT a specialization of this function, these two, despite having same name, is totally
+   * @note The function above is NOT a specialization of this function, these two, despite having same name, are totally
    *       different thing, and not related. However, they both participate overload resolution, and the less templated
    *       function (normal function) has precedence over templated function. Thus create_builder(ID{"1"}) will call the
    *       function above instead of this. (Also, note that function can't be overloaded based on return type)
@@ -122,7 +133,11 @@ struct TMSTATag {
   static constexpr auto NAME() noexcept { return "$TMSTA"; }
 
   struct DataFormat {
-    std::string cmd_;
+    using Subcmd00Resp = boost::tuple<bool, std::string>;
+    using Subcmd01Resp = boost::tuple<std::string, TagNumberStatus>;
+
+    using Response = boost::variant<Subcmd00Resp, Subcmd01Resp>;
+    Response resp_;
 
     static ParseRule<TMSTATag::DataFormat>& parsing_rule();
   };
@@ -204,12 +219,19 @@ struct TMSTATag::create_builder_error_msg<
  */
 struct CPERRTag {
   static constexpr auto NAME() noexcept { return "$CPERR"; }
+
+  struct DataFormat {
+    ErrorCode err_;
+
+    static ParseRule<DataFormat>& parsing_rule() noexcept;
+  };
 };
 
 }  // namespace detail
 }  // namespace tmr_listener
 
 BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSCTTag::DataFormat, id_, cmd_)
-BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSTATag::DataFormat, cmd_)
+BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSTATag::DataFormat, resp_)
+BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::CPERRTag::DataFormat, err_)
 
 #endif

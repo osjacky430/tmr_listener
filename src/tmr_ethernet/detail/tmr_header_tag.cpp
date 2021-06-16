@@ -6,14 +6,17 @@
 #include "tmr_ethernet/detail/tmr_header_tag.hpp"
 #include "tmr_ethernet/tmr_eth_rw.hpp"
 
+using boost::phoenix::static_cast_;
+using boost::spirit::as_string;
+using boost::spirit::ascii::space;
+using boost::spirit::qi::_val;
+using boost::spirit::qi::char_;
+using boost::spirit::qi::int_;
+using boost::spirit::qi::lit;
+
 namespace tmr_listener {
 
 ParseRule<TMSVRJsonData>& TMSVRJsonData::parsing_rule() noexcept {
-  using boost::spirit::as_string;
-  using boost::spirit::ascii::space;
-  using boost::spirit::qi::char_;
-  using boost::spirit::qi::lexeme;
-
   static ParseRule<std::string> const name_rule = as_string[+(char_ - space - ',')];
   static ParseRule<std::string> const val_rule  = as_string[+(char_ - '}')];
 
@@ -27,12 +30,6 @@ namespace tmr_listener {
 namespace detail {
 
 ParseRule<TMSVRTag::DataFormat>& TMSVRTag::DataFormat::parsing_rule() noexcept {
-  using boost::phoenix::static_cast_;
-  using boost::spirit::qi::_val;
-  using boost::spirit::qi::char_;
-  using boost::spirit::qi::int_;
-  using boost::spirit::qi::lit;
-
   static ParseRule<std::string> const id_rule = +(char_ - ",");
   static ParseRule<Mode> const mode_rule      = int_[_val = static_cast_<Mode>(boost::spirit::qi::_1)];
 
@@ -43,9 +40,6 @@ ParseRule<TMSVRTag::DataFormat>& TMSVRTag::DataFormat::parsing_rule() noexcept {
 }
 
 TMSVRTag::DataFormat::Data TMSVRTag::DataFormat::parse_raw_content(std::string t_raw_content) noexcept {
-  using namespace boost::spirit::qi;
-  using boost::spirit::ascii::space;
-
   using JsonArray = std::vector<TMSVRJsonData>;
 
   static ParseRule<JsonArray> const data_rule = '[' >> *(TMSVRJsonData::parsing_rule() >> *lit(',')) >> ']';

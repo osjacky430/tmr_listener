@@ -145,7 +145,7 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 
 #### 3. response_msg (...)
 
-The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need, the rest of the header will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden.
+The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need (currently available overloads: `TMSCTResponse`, `TMSTAResponse::Subcmd00`, `TMSTAResponse::Subcmd01`, `CPERRResponse` and one with no argument), the rest of the header will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden.
 
 ```cpp
 // this example overrides TMSCTResponse and the one with no argument
@@ -154,7 +154,7 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
     MessagePtr next_cmd_;
     int msg_count_ = 0;
   protected:
-    using tmr_listener::ListenerHandle::response_mgs;
+    using tmr_listener::ListenerHandle::response_mgs; // this is needed
 
     // Exit script if error happened
     void response_msg(tmr_listener::TMSCTResponse const& t_resp) override {

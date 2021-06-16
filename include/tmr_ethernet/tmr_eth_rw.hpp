@@ -10,6 +10,15 @@
 
 namespace tmr_listener {
 
+using TMSVRHeader = prototype::Header<detail::TMSVRTag>;
+using TMSVRPacket = TMSVRHeader::Packet;
+
+static constexpr auto TMSVR = TMSVRHeader{};
+
+}  // namespace tmr_listener
+
+namespace tmr_listener {
+
 enum class Mode {
   ServerResponse = 00, /*!< Indicates the server responds to the client comand in string format */
   Binary         = 01, /*!< Indicates the content data type in binary format */
@@ -84,7 +93,7 @@ struct TMSVRJsonReadReq {
  */
 static inline auto generate_read_req(std::string const& t_item) {
   if (t_item.empty()) {
-    throw std::invalid_argument("empty item and empty value is not allowed");
+    throw std::invalid_argument("empty item is not allowed");
   }
 
   auto const is_string_quoted = [](std::string const& t_input) {

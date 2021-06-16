@@ -1,7 +1,5 @@
-#include <boost/asio/buffer.hpp>
-#include <boost/asio/placeholders.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/variant.hpp>
 
 #include <chrono>
 #include <functional>
@@ -11,12 +9,6 @@
 
 namespace {
 
-inline auto get_tokenized_result(std::string const &t_result) noexcept {
-  auto const tok_res = boost::tokenizer<boost::char_separator<char>>(t_result, boost::char_separator<char>(","));
-  auto const ret_val = std::vector<std::string>{tok_res.begin(), tok_res.end()};
-  return ret_val;
-}
-
 inline auto strip_crlf(std::string const &t_input) noexcept {
   return t_input.size() < 2 ? t_input : std::string{t_input.begin(), t_input.end() - 2};
 }
@@ -24,6 +16,39 @@ inline auto strip_crlf(std::string const &t_input) noexcept {
 }  // namespace
 
 namespace tmr_listener {
+
+struct TMRobotListener::PacketVisitor final : public boost::static_visitor<void> {
+  TMRobotListener *context_holder_;
+
+  explicit PacketVisitor(TMRobotListener *t_ctx) : boost::static_visitor<void>(), context_holder_{t_ctx} {}
+
+  template <typename T>
+  void operator()(T const &) {
+    ROS_INFO_STREAM("unknown");
+  }
+};
+
+template <>
+void TMRobotListener::PacketVisitor::operator()(CPERRPacket const &t_packet) {
+  this->context_holder_->current_task_handler_->handle_response(CPERRResponse{t_packet.data_.err_});
+}
+
+template <>
+void TMRobotListener::PacketVisitor::operator()(TMSTAPacket const &t_packet) {
+  boost::apply_visitor(*this, t_packet.data_.resp_);
+}
+
+template <>
+void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::Subcmd00Resp const &t_packet) {
+  TMSTAResponse::Subcmd00 resp{boost::get<0>(t_packet), boost::get<1>(t_packet)};
+  this->context_holder_->current_task_handler_->handle_response(resp);
+}
+
+template <>
+void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::Subcmd01Resp const &t_packet) {
+  TMSTAResponse::Subcmd01 resp{boost::get<0>(t_packet), boost::get<1>(t_packet)};
+  this->context_holder_->current_task_handler_->handle_response(resp);
+}
 
 /**
  * @details Since TM robot sends TMSCT message only during listen node, we can assume that if there is no task handler
@@ -37,39 +62,67 @@ namespace tmr_listener {
  * @note    The buffer passed to async_read_until is already committed
  * @note    TM robot will send OK message even after ScriptExit()
  */
-void TMRobotListener::parse_msg(std::string const &t_input) noexcept {
-  auto const parsed_result = ::get_tokenized_result(t_input);
-  ROS_INFO_STREAM("Received: " << ::strip_crlf(t_input));
+template <>
+void TMRobotListener::PacketVisitor::operator()(TMSCTPacket const &t_tmsct) {
+  TMRobotListener *&ctx = this->context_holder_;
 
-  auto const id     = *boost::next(parsed_result.begin(), ID_INDEX);
-  auto const header = parsed_result.front();
-  if (not this->current_task_handler_) {
-    if (header == TMSCT and id == TMR_INIT_MSG_ID) {
-      // assign current handler to the one that satisfies the condition (match message)
-      auto const data = std::vector<std::string>{boost::next(parsed_result.begin(), SCRIPT_START_INDEX),
-                                                 boost::prior(parsed_result.end(), 1)};
-      ROS_INFO_STREAM("In Listener node, node message: " << data[0]);
-      auto const predicate = [&data](auto const &t_handler) {
-        return t_handler->start_task_handling(data) == Decision::Accept;
+  auto const server_response = boost::get<TMSCTPacket::DataFrame::ServerResponse>(t_tmsct.data_.cmd_);
+  if (not ctx->current_task_handler_) {
+    if (t_tmsct.data_.id_ == TMRobotListener::TMR_INIT_MSG_ID) {
+      auto const response_content = boost::get<std::string>(server_response);
+      ROS_INFO_STREAM("In Listener node, node message: " << response_content);
+      auto const predicate = [&response_content](auto const &t_handler) {
+        return t_handler->start_task_handling(response_content) == Decision::Accept;
       };
-      auto const matched = std::find_if(this->task_handlers_.begin(), this->task_handlers_.end(), predicate);
-
-      auto const cmd = [&]() {
-        if (matched != this->task_handlers_.end()) {
-          this->current_task_handler_ = *matched;
-          return this->current_task_handler_->generate_request();
+      auto const matched = std::find_if(ctx->task_handlers_.begin(), ctx->task_handlers_.end(), predicate);
+      auto const cmd     = [&]() {
+        if (matched != ctx->task_handlers_.end()) {
+          ctx->current_task_handler_ = *matched;
+          return ctx->current_task_handler_->generate_request();
         }
 
         ROS_WARN_NAMED("tm_listener_node", "tm_listener_node doesn't find any handler satisfies the condition.");
-        return this->default_task_handler_->generate_request();
+        return ctx->default_task_handler_->generate_request();
       }();
 
       ROS_INFO_STREAM_NAMED("tm_listen_node", "Write msg: " << ::strip_crlf(cmd->to_str()));
-      this->tcp_comm_.write(cmd->to_str());
+      ctx->tcp_comm_.write(cmd->to_str());
     }
   } else {
-    this->current_task_handler_->handle_response(parsed_result);
+    auto const response_content = boost::get<TMSCTPacket::DataFrame::ScriptResult>(server_response);
+    TMSCTResponse const resp{t_tmsct.data_.id_, response_content.result_, std::move(response_content.abnormal_lines_)};
+    ctx->current_task_handler_->handle_response(resp);
   }
+}
+
+}  // namespace tmr_listener
+
+namespace tmr_listener {
+
+TMRobotListener::ListenData TMRobotListener::parse(std::string t_input) {
+  using namespace boost::spirit::qi;
+  using boost::spirit::ascii::space;
+
+  static ParseRule<ListenData> parse_rule = TMSCTPacket::parsing_rule() | TMSTAPacket::parsing_rule() |  //
+                                            CPERRPacket::parsing_rule();
+
+  ListenData ret_val;
+  bool const res = phrase_parse(t_input.begin(), t_input.end(), parse_rule, space, ret_val);
+
+  return ret_val;
+}
+
+/**
+ * @todo  We don't need to parse the input in one step, maybe parse the input in mulitple step, see TMSVR parsing
+ * @todo  If ScriptExit() happened, this->current_task_handler_ will reset, result in bad_get for not-yet-responded
+ *        message. Maybe the ID of the message needs to be traced. Not sure.
+ */
+void TMRobotListener::receive_tm_msg_callback(std::string const &t_input) noexcept {
+  ROS_INFO_STREAM("Received: " << ::strip_crlf(t_input));
+
+  auto const result = parse(t_input);
+  auto visitor      = PacketVisitor{this};
+  boost::apply_visitor(visitor, result);
 }
 
 /**
@@ -85,6 +138,17 @@ void TMRobotListener::finished_transfer_callback(size_t const /*t_byte_writtened
 
     ROS_INFO_STREAM_COND_NAMED(not str.empty(), "tm_listen_node", "Write msg: " << ::strip_crlf(str));
     this->tcp_comm_.write(str);
+  }
+}
+
+/**
+ * @details
+ *
+ */
+void TMRobotListener::disconnected_callback() noexcept {
+  if (this->current_task_handler_) {
+    this->current_task_handler_->handle_disconnect();
+    this->current_task_handler_.reset();
   }
 }
 
