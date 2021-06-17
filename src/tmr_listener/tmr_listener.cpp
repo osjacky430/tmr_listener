@@ -1,7 +1,6 @@
 #include <boost/tokenizer.hpp>
 #include <boost/variant.hpp>
 
-#include <chrono>
 #include <functional>
 #include <numeric>
 
@@ -24,7 +23,7 @@ struct TMRobotListener::PacketVisitor final : public boost::static_visitor<void>
 
   template <typename T>
   void operator()(T const &) {
-    ROS_INFO_STREAM("unknown");
+    throw std::invalid_argument("Unimplemented or unknown header, please help report issues.");
   }
 };
 
@@ -59,7 +58,6 @@ void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::Subcmd01
  *          If there is no handler that is willing to handle the current listen node, then default_task_handler_ will
  *          generate the response, sending ScriptExit() immediately to TM robot.
  *
- * @note    The buffer passed to async_read_until is already committed
  * @note    TM robot will send OK message even after ScriptExit()
  */
 template <>
@@ -74,6 +72,7 @@ void TMRobotListener::PacketVisitor::operator()(TMSCTPacket const &t_tmsct) {
       auto const predicate = [&response_content](auto const &t_handler) {
         return t_handler->start_task_handling(response_content) == Decision::Accept;
       };
+      // maybe we should issue warning if not only one handler satisfy the predicate
       auto const matched = std::find_if(ctx->task_handlers_.begin(), ctx->task_handlers_.end(), predicate);
       auto const cmd     = [&]() {
         if (matched != ctx->task_handlers_.end()) {
@@ -143,7 +142,6 @@ void TMRobotListener::finished_transfer_callback(size_t const /*t_byte_writtened
 
 /**
  * @details
- *
  */
 void TMRobotListener::disconnected_callback() noexcept {
   if (this->current_task_handler_) {

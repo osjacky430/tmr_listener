@@ -78,7 +78,8 @@ class ListenerHandle {
   }
 
   /**
-   * @brief
+   * @brief This function is called when the connection is lost, it is suggested to override this function to reset all
+   *        states, otherwise this handler will continue execute things that is not yet finished last time
    */
   virtual void handle_disconnect() noexcept {}
 

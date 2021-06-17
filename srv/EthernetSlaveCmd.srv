@@ -1,5 +1,5 @@
 string id
 string[] item_list
-string[] value_list # 
+string[] value_list #
 ---
 string res

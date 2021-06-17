@@ -31,6 +31,7 @@ class TMRobotTCP {
   boost::thread comm_thread_;
 
   Callback cb_;
+  bool is_connected_ = false;
 
   static constexpr auto MESSAGE_END_BYTE = "\r\n"; /* !< TM script message ends with this 2 bytes, \r\n */
 
@@ -101,10 +102,23 @@ class TMRobotTCP {
    */
   void start_tcp_comm();
 
-  void write(std::string const &t_value) noexcept {
+  bool is_connected() const noexcept { return this->is_connected_; }
+  auto &get_io_service() noexcept { return this->io_service_; }
+
+  /**
+   * @brief This function write the input value to TM server
+   *
+   * @param t_value string to write to server
+   *
+   * @note  A buffer object does not have any ownership of the memory it refers to. It is the responsibility of the
+   *        application to ensure the memory region remains valid until it is no longer required for an I/O operation.
+   *        When the memory is no longer available, the buffer is said to have been invalidated. Therefore, we need to
+   *        move t_value into output buffer.
+   */
+  void write(std::string t_value) noexcept {
     using namespace boost::asio::placeholders;
 
-    this->output_buffer_ = t_value;
+    this->output_buffer_ = std::move(t_value);
     boost::asio::async_write(this->listener_, boost::asio::buffer(this->output_buffer_),
                              boost::bind(&TMRobotTCP::handle_write, this, error, bytes_transferred));
   }

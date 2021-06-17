@@ -214,7 +214,6 @@ TEST(SpiritParse, TMSVRContentMatch) {
               (std::array<double, 6>{0.000297520659, 0.0, 0.00035643563, 0.0, 0.0, 0.000445544545}));
     EXPECT_EQ((parse_as<double, 6>(parsed.at(15).value_)),  // Joint_Torque
               (std::array<double, 6>{-8997.56, 8997.56, -32431.0977, -6253.28, 827.64, 3799.62}));
-    //
 
     EXPECT_EQ(parse_as<int>(parsed.at(16).value_), 60);  // Project_Speed
     EXPECT_EQ(parse_as<int>(parsed.at(17).value_), 1);   // MA_Mode

@@ -45,11 +45,11 @@ void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) noexc
   if (t_err) {  // NOLINT boost pre c++11 safe bool idiom
     ROS_ERROR_STREAM_THROTTLE_NAMED(1.0, "tm_socket_connection",
                                     "Connection error, reason: " << t_err.message() << ", retrying...");
-
     this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotTCP::handle_connection, this, error));
   } else {
     ROS_INFO_STREAM_NAMED("tm_socket_connection", "Connection success, waiting for server response");
 
+    this->is_connected_ = true;
     boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE,
                                   boost::bind(&TMRobotTCP::handle_read, this, error, bytes_transferred));
   }
@@ -113,12 +113,14 @@ void TMRobotTCP::reconnect() noexcept {
 
   this->listener_.close(ignore_error_code);
   this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotTCP::handle_connection, this, error));
+  this->is_connected_ = false;
   if (this->cb_.disconnected_) {
     this->cb_.disconnected_();
   }
 }
 
 void TMRobotTCP::stop() noexcept {
+  this->is_connected_ = false;
   boost::system::error_code ignore_error_code;
   this->listener_.close(ignore_error_code);
   this->ros_heartbeat_timer_.cancel();

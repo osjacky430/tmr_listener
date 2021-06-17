@@ -29,6 +29,10 @@ enum class Mode {
   ReadJson       = 13  /*!< Indicates the content data type in JSON format (Request read) */
 };
 
+static constexpr bool is_request_read(Mode const t_mode) noexcept {
+  return t_mode == Mode::ReadBinary or t_mode == Mode::ReadString or t_mode == Mode::ReadJson;
+}
+
 /**
  * @brief This class holds key-value pair for TM ethernet data, it is used in TMSVR message generation and TMSVR data
  *        table storagee class
