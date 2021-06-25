@@ -14,9 +14,9 @@ jobs:
         os: [ubuntu-18.04, ubuntu-16.04]
         include:
           - os: ubuntu-16.04
-            env: { ROS_DISTRO: kinetic, ROS_REPO: main }
+            env: { ROS_DISTRO: kinetic, ROS_REPO: main, CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON }
           - os: ubuntu-18.04
-            env: { ROS_DISTRO: melodic, ROS_REPO: main }
+            env: { ROS_DISTRO: melodic, ROS_REPO: main, CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
