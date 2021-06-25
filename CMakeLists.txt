@@ -143,6 +143,8 @@ install(DIRECTORY include/tmr_listener include/tmr_utility include/tmr_ext_scrip
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+add_library(project_warnings INTERFACE)
+set_project_warnings(project_warnings)
 
 add_subdirectory(src)
 
