@@ -1,0 +1,5 @@
+<launch>
+  <rosparam param="listener_handles" ns="tmr_listener">["HandlerMock"]</rosparam>
+  <node pkg="tmr_listener" type="fake_listener_node" name="fake_listener" output="screen"/>
+  <test test-name="test" pkg="tmr_listener" type="tmr_listen_comm_rostest" time-limit="5.0"/>
+</launch>

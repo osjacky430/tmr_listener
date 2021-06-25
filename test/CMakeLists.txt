@@ -55,3 +55,5 @@ target_link_libraries(
   tmr_eth_slave
   gtest_main)
 target_include_directories(tmr_msg_parse PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+add_subdirectory(ros)

@@ -148,6 +148,7 @@ set_project_warnings(project_warnings)
 
 add_subdirectory(src)
 
-if (CATKIN_ENABLE_TESTING)
+option(TMR_ENABLE_TESTING "enable tm robot unit testing" OFF)
+if (TMR_ENABLE_TESTING)
   add_subdirectory(test)
 endif ()
