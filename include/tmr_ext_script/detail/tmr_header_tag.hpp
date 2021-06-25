@@ -192,25 +192,23 @@ struct TMSTATag {
  * @note I need to make it templated so that it will only be evaluated if this is called
  */
 template <typename T>
-struct TMSTATag::BuildRule::check_error_msg<T, typename std::enable_if<std::is_same<ScriptExit, T>::value>::type> {
+struct TMSTATag::BuildRule::check_error_msg<T, std::enable_if_t<std::is_same<ScriptExit, T>::value>> {
   static_assert(not std::is_same<T, T>::value, "ScriptExit() is TMSCT only");
 };
 
 template <typename T>
-struct TMSTATag::BuildRule::check_error_msg<T,
-                                            typename std::enable_if<std::is_same<Command<TMSTATag>, T>::value>::type> {
+struct TMSTATag::BuildRule::check_error_msg<T, std::enable_if_t<std::is_same<Command<TMSTATag>, T>::value>> {
   static_assert(not std::is_same<T, T>::value, "TMSTA only accept one command per message");
 };
 
 template <typename T>
-struct TMSTATag::create_builder_error_msg<T, typename std::enable_if<std::is_same<ID, T>::value>::type> {
+struct TMSTATag::create_builder_error_msg<T, std::enable_if_t<std::is_same<ID, T>::value>> {
   static_assert(not std::is_same<T, ID>::value, "ID can only be used in TMSCT and TMSVR");
 };
 
 template <typename T>
-struct TMSTATag::create_builder_error_msg<
-  T, typename std::enable_if<tmr_mt_helper::is_specialization_of<T, Command>::value and
-                             not std::is_same<Command<TMSTATag>, T>::value>::type> {
+struct TMSTATag::create_builder_error_msg<T, std::enable_if_t<tmr_mt_helper::is_specialization_of<T, Command>::value and
+                                                              not std::is_same<Command<TMSTATag>, T>::value>> {
   static_assert(not std::is_same<T, T>::value, "Mismatched tag for TMSTA command");
 };
 

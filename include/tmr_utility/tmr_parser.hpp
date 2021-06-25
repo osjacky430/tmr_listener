@@ -66,7 +66,7 @@ static inline std::array<T, N> parse_as(std::string const& t_str_to_parse) {
   using namespace boost::phoenix;
   using boost::fusion::at_key;
 
-  int i = 0;
+  std::size_t i = 0;
   std::array<T, N> ret_val;
   auto const& type_map = detail::get_tm_type_parser();
   qi::parse(t_str_to_parse.cbegin(), t_str_to_parse.cend(),

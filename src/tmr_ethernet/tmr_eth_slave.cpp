@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include <boost/thread/scoped_thread.hpp>
+
 #include "tmr_ethernet/tmr_eth_rw.hpp"
 #include "tmr_ethernet/tmr_eth_slave.hpp"
 
@@ -51,19 +53,23 @@ void TMRobotEthSlave::parse_input_msg(std::string const& t_input) noexcept {
  *          3) ethernet slave node shutdown while the service is waiting for TM robot responde
  */
 bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSlaveCmdResponse& t_resp) {
+  using namespace std::string_literals;
   if (not this->comm_.is_connected()) {
     ROS_ERROR_STREAM("TM robot is not connected, make sure the robot arm is powered on");
+    t_resp.res = "TM robot is not connected, make sure the robot arm is powered on"s;
     return false;
   }
 
   bool const is_read = t_req.value_list.empty();
   if (not is_read and t_req.value_list.size() != t_req.item_list.size()) {
     ROS_ERROR_STREAM("the size of item list must equal to the size of value list for write operation");
+    t_resp.res = "the size of item list must equal to the size of value list for write operation"s;
     return false;
   }
 
   if (t_req.id.empty()) {
-    ROS_ERROR_STREAM("Empty ID found, @todo it will become auto generated if not entered in the future");
+    ROS_ERROR_STREAM("Empty ID found, @todo it will become auto generated if not entered in the future"s);
+    t_resp.res = "Empty ID found, @todo it will become auto generated if not entered in the future"s;
     return false;
   }
 
@@ -118,20 +124,18 @@ void TMRobotEthSlave::start() noexcept {
 
   namespace ph = boost::asio::placeholders;
   this->sigterm_handler_.async_wait(boost::bind(&TMRobotEthSlave::sigterm_handler, this, ph::error, ph::signal_number));
-  auto thread = boost::thread{boost::bind(&TMRobotTCP::start_tcp_comm, boost::ref(this->comm_))};
+  auto thread_fn = boost::bind(&TMRobotTCP::start_tcp_comm, boost::ref(this->comm_));
+  auto thread    = boost::scoped_thread<>{boost::thread{std::move(thread_fn)}};
   ros::spin();
-
-  if (thread.joinable()) {
-    thread.join();
-  }
 }
 
 void TMRobotEthSlave::sigterm_handler(boost::system::error_code const t_err, int const /**/) noexcept {
   if (!t_err) {  // NOLINT, boost pre c++11 safe bool idiom
-    ros::shutdown();
-
     this->responded_ = true;
     this->response_signal_.notify_all();
+
+    ros::shutdown();
+    this->comm_.stop();
   }
 }
 

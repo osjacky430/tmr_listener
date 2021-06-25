@@ -1,4 +1,4 @@
-#include <boost/tokenizer.hpp>
+#include <boost/thread/scoped_thread.hpp>
 #include <boost/variant.hpp>
 
 #include <functional>
@@ -164,12 +164,11 @@ void TMRobotListener::start() {
   while (not ros::ok()) {
   }
 
-  auto thread = boost::thread{boost::bind(&TMRobotTCP::start_tcp_comm, boost::ref(this->tcp_comm_))};
+  auto thread_fn = boost::bind(&TMRobotTCP::start_tcp_comm, boost::ref(this->tcp_comm_));
+  boost::scoped_thread<> thread{boost::thread{std::move(thread_fn)}};
   ros::spin();
 
-  if (thread.joinable()) {
-    thread.join();
-  }
+  this->tcp_comm_.stop();
 }
 
 }  // namespace tmr_listener

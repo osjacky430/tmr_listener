@@ -12,7 +12,7 @@ namespace tmr_listener {
 enum class Decision { Accept, Ignore };
 
 /**
- * @brief This function is the main interface exposed to the user, end user implement listen node task handler by
+ * @brief This class is the main interface exposed to the user, end user implement listen node task handler by
  *        inheriting this class. For detail description, see ["Creating your own listener handle" part in top level
  *        README.md](tmr_listener/README.md)
  */
@@ -78,10 +78,13 @@ class ListenerHandle {
   }
 
   /**
-   * @brief This function is called when the connection is lost, it is suggested to override this function to reset all
-   *        states, otherwise this handler will continue execute things that is not yet finished last time
+   * @brief This function is called when the connection is lost due to external reasons (e.g. TM robot forced shutdown),
+   *        it is suggested to override this function to reset all states, otherwise this handler will continue execute
+   *        things that is not yet finished last time
+   *
+   * @note  Connection lost is not exactly equal to ErrorCode::NotInListenNode
    */
-  virtual void handle_disconnect() noexcept {}
+  virtual void handle_disconnect() {}
 
   /**
    * @brief This function generates request to send to TM robot, it calls ListenerHandle::generate_cmd internally
@@ -95,7 +98,7 @@ class ListenerHandle {
   ListenerHandle(ListenerHandle&& /*unused*/)      = default;
 
   ListenerHandle& operator=(ListenerHandle const& /*unused*/) = default;
-  ListenerHandle& operator=(ListenerHandle&&) /*unused*/ = default;
+  ListenerHandle& operator=(ListenerHandle&& /*unused*/) = default;
 
   virtual ~ListenerHandle() = default;
 };

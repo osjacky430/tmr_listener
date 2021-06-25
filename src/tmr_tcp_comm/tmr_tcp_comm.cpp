@@ -8,25 +8,13 @@ namespace tmr_listener {
 std::string TMRobotTCP::extract_buffer_data(boost::asio::streambuf &t_buffer, size_t const t_byte_to_extract) noexcept {
   if (t_byte_to_extract > 0) {
     auto const buffer_begin = boost::asio::buffers_begin(t_buffer.data());
-    std::string const result{buffer_begin, buffer_begin + t_byte_to_extract};
+    std::string const result{buffer_begin, buffer_begin + static_cast<std::ptrdiff_t>(t_byte_to_extract)};
     t_buffer.consume(t_byte_to_extract);
 
     return result;
   }
 
   return std::string{""};
-}
-
-void TMRobotTCP::check_ros_heartbeat(boost::system::error_code const &t_err) noexcept {
-  using namespace boost::asio::placeholders;
-
-  if (not ros::ok() or t_err) {  // NOLINT boost pre c++11 safe bool idiom
-    ROS_ERROR_STREAM_COND_NAMED(ros::ok(), "tm_socket_ros_heartbeat_timer", "Timer Error: " << t_err.message());
-    this->stop();
-  } else {
-    this->ros_heartbeat_timer_.expires_from_now(HEARTBEAT_INTERVAL());
-    this->ros_heartbeat_timer_.async_wait(boost::bind(&TMRobotTCP::check_ros_heartbeat, this, error));
-  }
 }
 
 /**
@@ -109,11 +97,8 @@ void TMRobotTCP::handle_write(boost::system::error_code const &t_err, size_t con
 void TMRobotTCP::reconnect() noexcept {
   using namespace boost::asio::placeholders;
 
-  boost::system::error_code ignore_error_code;
-
-  this->listener_.close(ignore_error_code);
+  this->stop();
   this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotTCP::handle_connection, this, error));
-  this->is_connected_ = false;
   if (this->cb_.disconnected_) {
     this->cb_.disconnected_();
   }
@@ -122,16 +107,14 @@ void TMRobotTCP::reconnect() noexcept {
 void TMRobotTCP::stop() noexcept {
   this->is_connected_ = false;
   boost::system::error_code ignore_error_code;
+  this->listener_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_error_code);
   this->listener_.close(ignore_error_code);
-  this->ros_heartbeat_timer_.cancel();
 }
 
 void TMRobotTCP::start_tcp_comm() {
   using namespace boost::asio::placeholders;
 
   this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotTCP::handle_connection, this, error));
-  this->ros_heartbeat_timer_.expires_from_now(HEARTBEAT_INTERVAL());
-  this->ros_heartbeat_timer_.async_wait(boost::bind(&TMRobotTCP::check_ros_heartbeat, this, error));
 
   try {
     this->io_service_.run();
