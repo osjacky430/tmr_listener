@@ -17,8 +17,9 @@ jobs:
             env: { ROS_DISTRO: kinetic, CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON }
           - os: ubuntu-18.04
             env: { ROS_DISTRO: melodic, ROS_REPO: main, CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON -DENABLE_COVERAGE=ON,
-                   AFTER_INSTALL_TARGET_DEPENDENCIES: 'pip install gcovr', DOCKER_RUN_OPTS: '-v "$PWD/shared:/shared"',
-                   AFTER_SCRIPT: 'cd /root/target_ws/build/tmr_listener && gcovr . -r /root/target_ws/src/tmr_listener/ --branches --xml-pretty -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches --gcov-exclude=".*test.*" --gcov-exclude=".*node.*" --exclude="/root/target_ws/src/tmr_listener/src/tmr_cmd_line_option.hpp" && mv /root/target_ws/build/tmr_listener/coverage.xml /shared/coverage.xml' }
+                   BEFORE_INIT: 'apt -y update && apt -y upgrade && apt -y install curl git', AFTER_INSTALL_TARGET_DEPENDENCIES: 'pip install gcovr', 
+                   DOCKER_RUN_OPTS: '$(bash <(curl -s https://codecov.io/env))',
+                   AFTER_SCRIPT: 'gcovr /root/target_ws/build/tmr_listener -r /root/target_ws/src/tmr_listener --branches --xml-pretty -o /root/target_ws/build/tmr_listener/coverage.xml --exclude-unreachable-branches --exclude-throw-branches --gcov-exclude=".*test.*" --gcov-exclude=".*node.*" --exclude="/root/target_ws/src/tmr_listener/src/tmr_cmd_line_option.hpp" && bash <(curl -s https://codecov.io/bash) -f /root/target_ws/build/tmr_listener/coverage.xml' }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -27,7 +28,3 @@ jobs:
           key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
       - uses: "ros-industrial/industrial_ci@master"
         env: ${{ matrix.env }}
-      - uses: codecov/codecov-action@v1
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        with:
-          files: $PWD/shared/coverage.xml
