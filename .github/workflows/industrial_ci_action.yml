@@ -16,7 +16,7 @@ jobs:
           - os: ubuntu-16.04
             env: { ROS_DISTRO: kinetic, CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON }
           - os: ubuntu-18.04
-            env: { ROS_DISTRO: melodic, ROS_REPO: main, CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON }
+            env: { ROS_DISTRO: melodic, ROS_REPO: main, CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON -DENABLE_COVERAGE=ON, AFTER_INSTALL_TARGET_DEPENDENCIES: 'pip install gcovr' }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -25,3 +25,12 @@ jobs:
           key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
       - uses: "ros-industrial/industrial_ci@master"
         env: ${{ matrix.env }}
+      - name: Generate coverage report
+        if: ${{ matrix.os == 'ubuntu-18.04' }}
+        run: |
+          cd /root/target_ws/build/tmr_listener
+          gcovr . -r /root/target_ws/src/tmr_listener/ --branches --xml-pretty -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches --gcov-exclude=".*test.*" --gcov-exclude=".*node.*" --exclude="/root/target_ws/src/tmr_listener/src/tmr_cmd_line_option.hpp"
+      - uses: codecov/codecov-action@v1
+        if: ${{ matrix.os == 'ubuntu-18.04' }}
+        with:
+          files: /root/target_ws/build/coverage.xml

@@ -321,8 +321,12 @@ TM robot sends data table periodically after power cycling if it was previously 
 #include <std_msgs/String.h>
 
 void raw_data_cb(std_msgs::String::ConstPtr& t_msg) {
+  // possible content of t_msg->data: [{"Item":"Robot_Link","Value":0}, {"Item":"Ctrl_DO1","Value":0},{"Item":"g_ss","Value":["Hello","TM","Robot"]}]
+  // which is an array, first element: {"Item":"Robot_Link","Value":0}
   auto const json_obj = nlohmann::json::parse(t_msg->data);
-  auto const joint_angle = json_obj["Joint_Angle"];
+  
+  // assuming the first element in the array is: {"Item": "Robot_Link","Value":0}
+  auto const robot_link = json_obj[0]["Value"].get<int>();
 }
 
 ```
@@ -377,6 +381,8 @@ if (not ros::service::call("/tmr_eth_slave/tmsvr_cmd", cmd)) {
 To run unit test, copy paste the following lines to the terminal:
 
 ```sh
+catkin build tmr_listener -DTMR_ENABLE_TESTING=ON
+catkin run_tests tmr_listener
 catkin build -v tmr_listener --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test
 ```
 
@@ -414,6 +420,7 @@ Jacky Tseng (master branch) - jacky.tseng@gyro.com.tw
 3. [the performance benefits of final classes](https://devblogs.microsoft.com/cppblog/the-performance-benefits-of-final-classes/)
 4. [Professional CMake - A practical guide, P122. ~ P126.](https://crascit.com/professional-cmake/)
 5. [boost asio for tcp socket programming](https://www.boost.org/doc/libs/1_58_0/doc/html/boost_asio.html)
+6. [cpp starter project](https://github.com/lefticus/cpp_starter_project)
 
 ### Notes
 

@@ -3,8 +3,6 @@ project(tmr_listener)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(StaticAnalyzers)
-include(Sanitizers)
-include(CompilerWarning)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -137,14 +135,18 @@ catkin_package(
 install(DIRECTORY include/tmr_listener include/tmr_utility include/tmr_ext_script
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..)
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+include(Sanitizers)
+add_library(project_options INTERFACE)
+enable_sanitizers(project_options)
+
+include(CompilerWarning)
 add_library(project_warnings INTERFACE)
 set_project_warnings(project_warnings)
+
+add_library(catkin_lib INTERFACE)
+target_link_libraries(catkin_lib INTERFACE ${catkin_LIBRARIES})
+target_include_directories(catkin_lib SYSTEM INTERFACE ${catkin_INCLUDE_DIRS})
+target_include_directories(catkin_lib INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
 

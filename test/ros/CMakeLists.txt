@@ -1,5 +1,5 @@
 add_library(tmr_listener_handle_mock tmr_listener_handle_mock.cpp)
-target_link_libraries(tmr_listener_handle_mock PUBLIC tmr_listener gmock)
+target_link_libraries(tmr_listener_handle_mock PUBLIC tmr_listener gmock project_options)
 
 add_subdirectory(test_double)
 
