@@ -83,7 +83,7 @@ Normally, one would only need to implement plugin for specific task (see [creati
 
 Plugin manager is default implemented via pluginlib. However, one would like to skip the use of it (e.g. You only have one plugin, using pluginlib may be an overkill) and provide their own plugin management implementation. To do so, you need to inherit from `TMRPluginManagerBase`, the example below shows the default implementation of the TM Robot plugin manager:
 
-``` c++
+``` cpp
 // In header file:
 
 // Runtime library plugin manager
@@ -110,7 +110,7 @@ class RTLibPluginManager final : public TMRPluginManagerBase {
 
 In order to use your own plugin manager implementation, pass it to the constructor of `tmr_listener::TMRobotListener`: 
 
-``` c++
+``` cpp
 #include "tmr_listener/tmr_listener.hpp"
 ... // other includes
 
@@ -133,7 +133,7 @@ The default plugin manager used by the library loads plugins via DLL. Therefore,
 
 First and foremost, this package requires c++14, simply add the line(s) in `CMakeLists.txt`:
 
-```cmake
+``` cmake
 # add this...
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -316,7 +316,7 @@ Currently, **only JSON mode is implemented**, therefore, to let the library func
 
 TM robot sends data table periodically after power cycling if it was previously set to Enable. Having no prior knowledge regarding the listed item in the data table, this package decides to provide two topics, `/tm_ethernet_slave/raw_data_table` and `/tm_ethernet_slave/parsed_data_table`, to receive the contents. Users can choose either to parse data received from the former with their favorite 3rd party library, e.g., [nlohmann-json](https://github.com/nlohmann/json):
 
-``` c++
+``` cpp
 #include <nlohmann/json.hpp>
 #include <std_msgs/String.h>
 
@@ -333,7 +333,7 @@ void raw_data_cb(std_msgs::String::ConstPtr& t_msg) {
 
 , or the latter by some handy function this package offers:
 
-``` c++
+``` cpp
 #include "tmr_listener/JsonDataArray.h"
 #include "tmr_utility/tmr_parser.hpp"
 
@@ -350,7 +350,7 @@ void parsed_data_cb(tmr_listener::JsonDataArray::ConstPtr& t_msg) {
 
 This package provides service, `/tm_ethernet_slave/tmsvr_cmd` , to read/write variables. For read operation, the `EthernetSlaveCmdRequest::value_list` must be left empty, since the read result is stored in it; as for write operation, `value_list.size() == item_list.size()` must hold, and the value of `item_list[i]` is `value_list[i]`.
 
-``` c++
+``` cpp
 // write operation
 tmr_listener::EthernetSlaveCmd cmd;
 cmd.request.id = "StartProject";
