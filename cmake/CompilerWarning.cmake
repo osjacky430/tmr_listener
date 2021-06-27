@@ -62,8 +62,7 @@ function (set_project_warnings project_name)
   elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
       set(GCC_WARNINGS
-          ${GCC_WARNINGS}
-          -Wnull-dereference # warn if a null dereference is detected
+          ${GCC_WARNINGS} -Wnull-dereference # warn if a null dereference is detected
           -Wmisleading-indentation # warn if indentation implies blocks where blocks do not exist
           -Wduplicated-cond # warn if if / else chain has duplicated conditions
       )

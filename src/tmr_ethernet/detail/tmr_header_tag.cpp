@@ -39,7 +39,7 @@ ParseRule<TMSVRTag::DataFormat>& TMSVRTag::DataFormat::parsing_rule() noexcept {
   return rule;
 }
 
-TMSVRTag::DataFormat::Data TMSVRTag::DataFormat::parse_raw_content(std::string t_raw_content) noexcept {
+TMSVRTag::DataFormat::Data TMSVRTag::DataFormat::parse_raw_content(std::string t_raw_content) {
   using JsonArray = std::vector<TMSVRJsonData>;
 
   static ParseRule<JsonArray> const data_rule = '[' >> *(TMSVRJsonData::parsing_rule() >> *lit(',')) >> ']';

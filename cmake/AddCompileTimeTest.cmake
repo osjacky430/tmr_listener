@@ -3,12 +3,7 @@ function (_create_test)
   set(oneValueArgs TARGET_NAME TEST_NAME EXPRESSION)
   set(multiValueArgs ERR_MSG_REGEX)
 
-  cmake_parse_arguments(
-    ""
-    "${options}"
-    "${oneValueArgs}"
-    "${multiValueArgs}"
-    ${ARGN})
+  cmake_parse_arguments("" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   add_executable(${_TARGET_NAME} tmr_msg_gen_syntax_test.cpp)
   set_target_properties(${_TARGET_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
@@ -16,10 +11,8 @@ function (_create_test)
   target_compile_definitions(${_TARGET_NAME} PRIVATE ${_TEST_NAME} TEST_EXPRESSION=${_EXPRESSION})
 
   include(CTest)
-  add_test(
-    NAME ${_TEST_NAME}
-    COMMAND ${CMAKE_COMMAND} --build . --target ${_TARGET_NAME} --config $<CONFIGURATION>
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+  add_test(NAME ${_TEST_NAME} COMMAND ${CMAKE_COMMAND} --build . --target ${_TARGET_NAME} --config $<CONFIGURATION>
+           WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
   if (NOT ${_SHOULD_PASS})
     set_tests_properties(${_TEST_NAME} PROPERTIES PASS_REGULAR_EXPRESSION "${_ERR_MSG_REGEX}")
@@ -29,19 +22,10 @@ endfunction ()
 function (test_ext_script_syntax)
 
   set(options SHOULD_PASS)
-  set(oneValueArgs
-      TEST_CASE
-      PASS_EXPR
-      FAIL_EXPR
-      ERR_MSG_REGEX)
+  set(oneValueArgs TEST_CASE PASS_EXPR FAIL_EXPR ERR_MSG_REGEX)
   set(multiValueArgs)
 
-  cmake_parse_arguments(
-    ""
-    "${options}"
-    "${oneValueArgs}"
-    "${multiValueArgs}"
-    ${ARGN})
+  cmake_parse_arguments("" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   string(TOUPPER "${_TEST_CASE}" test_name)
   string(TOLOWER "${_TEST_CASE}" target_name)

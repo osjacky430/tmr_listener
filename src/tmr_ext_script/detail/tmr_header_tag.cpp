@@ -14,9 +14,7 @@ using boost::spirit::qi::eol;
 using boost::spirit::qi::int_;
 using boost::spirit::qi::int_parser;
 using boost::spirit::qi::lexeme;
-using boost::spirit::qi::lit;
 using boost::spirit::qi::symbols;
-using boost::spirit::qi::xdigit;
 
 namespace tmr_listener {
 namespace detail {

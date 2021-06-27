@@ -2,16 +2,14 @@
 
 The overall design consideration can be summarized into the picture down below:
 
-```
-                                              ----------> Listen node handler 1
- _____________               ______________  /    .
-|             |   TX, RX    |              |     (2)
-|    TM14     |  <------>   | tmr_listener | <----------> Listen node handler m   (only one handler is active when entered listen node)
-|_____________|     (1)     |______________|      .
-                                             \----------> Listen node handler n
+                                                  ----------> Listen node handler 1
+     _____________               ______________  /    .
+    |             |   TX, RX    |              |     (2)
+    |    TM14     |  <------>   | tmr_listener | <----------> Listen node handler m   (only one handler is active when entered listen node)
+    |_____________|     (1)     |______________|      .
+                                                 \----------> Listen node handler n
 
-                              tmr_listener handles communication (1) and task dispatch (2)
-```
+                                  tmr_listener handles communication (1) and task dispatch (2)
 
 Doing so not only adhere to OCP (open-closed principle), but also hide the connection implementation from the end user. User has one and only one responsibility -- to implement the ListenerHandle class -- then everything is good to go.
 
@@ -19,27 +17,27 @@ Secondly, even though it is user's responsibility to generate/parse the command,
 
 With this in mind, the design constraint will be:
 
-- Provide uniform interface (ListenerHandle)
-  - Furthermore, to avoid end user messes up with the library, e.g. returning random string, the result is wrapped in a struct `Command`. This struct can only be initialized by the command builder (@todo implement)
-- Create an easy to use, hard to misuse command generator. To me, this means that:
-  1.  the interface is simple, (syntax that can be understanded intuitively, **AND** similar)
-      - Builder pattern + fluent interface using `operator<<` is adopted, considering the command can easily scale up since there are quite a few motion functions, not to mention their possible combinations, doing so makes the syntax of the message generator intuitive.
-  2.  misusing it will issue compile error instead of runtime error
-      - Misusing = compile error: Meta programming, strong type for strong interface
+-   Provide uniform interface (ListenerHandle)
+    -   Furthermore, to avoid end user messes up with the library, e.g. returning random string, the result is wrapped in a struct `Command`. This struct can only be initialized by the command builder (@todo implement)
+-   Create an easy to use, hard to misuse command generator. To me, this means that:
+    1.  the interface is simple, (syntax that can be understanded intuitively, **AND** similar)
+        -   Builder pattern + fluent interface using `operator<<` is adopted, considering the command can easily scale up since there are quite a few motion functions, not to mention their possible combinations, doing so makes the syntax of the message generator intuitive.
+    2.  misusing it will issue compile error instead of runtime error
+        -   Misusing = compile error: Meta programming, strong type for strong interface
 
 ## Why Pluginlib?
 
-Seeing the picture of the design consideration above, one may realize the reason behind this already. Briefly speaking, ROS provides three ways (at least I could think of) of message exchanging: 1. `Publisher/Subscriber` 2. `Service` 3. `Actionlib`. But they have some common drawbacks, e.g., they can't tell the end user when did TM robot enter listen node mode, at least not in the easy way, or might involve multiple connections to the server if you want to implement them in different ros packages, this might be tricky because ros nodes would need to know others' existence.
+Seeing the picture of the design consideration above, one may realize the reason behind this already. Briefly speaking, ROS provides three ways (at least I could think of) of message exchanging: 1. `Publisher/Subscriber` 2. `Service` 3. `Actionlib` . But they have some common drawbacks, e.g., they can't tell the end user when did TM robot enter listen node mode, at least not in the easy way, or might involve multiple connections to the server if you want to implement them in different ros packages, this might be tricky because ros nodes would need to know others' existence.
 
-As for `Pluginlib`, even though we implement the task handlers in different packages, the execution part is controlled by one node, i.e., no multiple communication needed, and also easy to implement listen mode entered notification.
+As for `Pluginlib` , even though we implement the task handlers in different packages, the execution part is controlled by one node, i.e., no multiple communication needed, and also easy to implement listen mode entered notification.
 
 ## TM external script language
 
 The external script language of TM robot is quite difficult to implement, due to the fact that it has the concept of named variable. This library decomposed the external script language into several parts:
 
-- Variable: namely named variable, declaration, and its operators.
-- Function call, e.g. Queue(1, 1), PTP("CPP", 161.f, 241.f, 470.f, -179.f, 0.f, 175.f, 60, 200, 0, false), etc.
-- Combination of two things mentioned above.
+-   Variable: namely named variable, declaration, and its operators.
+-   Function call, e.g. Queue(1, 1), PTP("CPP", 161.f, 241.f, 470.f, -179.f, 0.f, 175.f, 60, 200, 0, false), etc.
+-   Combination of two things mentioned above.
 
 ### Variables
 
@@ -117,7 +115,7 @@ TMSTA << QueueTag(1, 1) << End(); // This will generate compile error: no known 
                                   // One may wonder: why and what is this error?
 ```
 
-If we want to create our own error messages, we must use `static_assert`, or something `concept`-ish. We have no choice but to template the class, thanks to lazy evaluation, the error will only show up unless we use it:
+If we want to create our own error messages, we must use `static_assert` , or something `concept` -ish. We have no choice but to template the class, thanks to lazy evaluation, the error will only show up unless we use it:
 
 ```cpp
 namespace tmr_listener {
@@ -152,6 +150,6 @@ TMSTA << QueueTag(1, 1) << End(); // This will generate compile error: This comm
 
 ### Notes
 
-1. ScriptExit will return OK
-2. Variable can't be declared and used at the same line
-3. One line can only have one command, TMSTA accept only one command at a time
+1.  ScriptExit will return OK
+2.  Variable can't be declared and used at the same line
+3.  One line can only have one command, TMSTA accept only one command at a time

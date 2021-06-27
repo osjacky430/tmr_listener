@@ -75,7 +75,7 @@ class RTLibPluginManager final : public TMRPluginManagerBase {
 
  public:
   TMTaskHandlerArray_t get_all_plugins() const noexcept override { return this->all_plugins_; }
-  TMTaskHandler find_task_handler(std::string const &) const noexcept override;
+  TMTaskHandler find_task_handler(std::string const &t_input) const noexcept override;
 };
 
 using TMRPluginManagerBasePtr = boost::shared_ptr<TMRPluginManagerBase>;
@@ -110,7 +110,7 @@ class TMRobotListener {
    *
    * @return TMRListenDataParser
    */
-  static TMRListenDataParser parsing_rule();
+  static TMRListenDataParser parsing_rule() noexcept;
 
   static constexpr auto LISTENER_PORT = 5890;
 
@@ -120,13 +120,14 @@ class TMRobotListener {
    * @param t_ip_addr The ip address of the TM robot
    * @param t_plugin_manager  The ListenerHandle plugin manager, default uses plugin lib to load plugins
    */
-  TMRobotListener(std::string const &t_ip_addr,
-                  TMRPluginManagerBasePtr const &t_plugin_manager = boost::make_shared<RTLibPluginManager>()) noexcept
-    : tcp_comm_{TMRobotTCP::Callback{boost::bind(&TMRobotListener::receive_tm_msg_callback, this, _1),
-                                     boost::bind(&TMRobotListener::finished_transfer_callback, this, _1),
-                                     boost::bind(&TMRobotListener::disconnected_callback, this)},
+  explicit TMRobotListener(std::string const &t_ip_addr,
+                           TMRPluginManagerBasePtr t_plugin_manager = boost::make_shared<RTLibPluginManager>()) noexcept
+    : tcp_comm_{TMRobotTCP::Callback{
+                  [this](auto &&t_ph) { this->receive_tm_msg_callback(std::forward<decltype(t_ph)>(t_ph)); },
+                  [this](auto &&t_ph) { this->finished_transfer_callback(std::forward<decltype(t_ph)>(t_ph)); },
+                  [this]() { this->disconnected_callback(); }},
                 LISTENER_PORT, t_ip_addr},
-      plugin_manager_{t_plugin_manager} {}
+      plugin_manager_{std::move(t_plugin_manager)} {}
 
   /**
    * @brief This function is the entry point to the TCP/IP connection, it initiates the thread loop and runs io services
@@ -146,8 +147,11 @@ class TMRobotListener {
    *        the write process, otherwise it continues listening to incomming packet
    *
    * @param t_input message sent by TM robot
+   *
+   * @note  This noexcept operator is only to remind me to determine whether parse() should throw or ignore not fully
+   *        matched case
    */
-  void receive_tm_msg_callback(std::string const &t_input) noexcept;
+  void receive_tm_msg_callback(std::string const &t_input) noexcept(noexcept(parse(t_input)));
 
   /**
    * @brief This function gets called once the message to write to TM robot finished transfer
@@ -165,7 +169,7 @@ class TMRobotListener {
    * @brief This class make suitable responses for each packet type. It is basically a static_visitor that operates on
    *        ListenData
    */
-  struct PacketVisitor;
+  class PacketVisitor;
   // struct InListenNodeVisitor
   // struct OutListenNodeVisitor
 };

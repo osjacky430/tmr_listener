@@ -32,7 +32,7 @@ class TMRobotEthSlave {
   boost::mutex rx_buffer_mutex_;
   boost::asio::signal_set sigterm_handler_{comm_.get_io_service(), SIGINT};
 
-  void parse_input_msg(std::string const& t_input) noexcept;
+  void parse_input_msg(std::string const& t_input);
 
   /**
    * @brief TMSVR command service
@@ -46,8 +46,8 @@ class TMRobotEthSlave {
 
  public:
   explicit TMRobotEthSlave(std::string const& t_ip) noexcept
-    : comm_{TMRobotTCP::Callback{boost::bind(&TMRobotEthSlave::parse_input_msg, this, _1)}, ETHERNET_SLAVE_PORT, t_ip} {
-  }
+    : comm_{TMRobotTCP::Callback{[this](auto&& t_ph) { this->parse_input_msg(std::forward<decltype(t_ph)>(t_ph)); }},
+            ETHERNET_SLAVE_PORT, t_ip} {}
 
   /**
    * @brief This function is the entry point to the TCP/IP connection, it initiates the thread loop and runs io services

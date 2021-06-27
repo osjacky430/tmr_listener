@@ -42,7 +42,7 @@ struct TMSTAResponse {
 };
 
 struct TMSCTResponse {
-  std::string id_{""};
+  std::string id_;
   bool script_result_ = false;
   std::vector<int> abnormal_line_{};
 
@@ -495,5 +495,10 @@ TMR_FUSION_ADAPT_PACKET(tmr_listener::TMSTAPacket)
 TMR_FUSION_ADAPT_PACKET(tmr_listener::CPERRPacket)
 
 #undef TMR_FUSION_ADAPT_PACKET
+#undef TMR_MOTION_FUNC
+#undef TMR_SUBCMD
+#undef SIGNATURE
+#undef RETURN_TYPE
+#undef TMR_VOID
 
 #endif

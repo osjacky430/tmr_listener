@@ -50,12 +50,13 @@ class TMRobotTCP {
    *        When the memory is no longer available, the buffer is said to have been invalidated. Therefore, we need to
    *        move t_value into output buffer.
    */
-  void write(std::string t_value) noexcept {
+  void write(std::string t_value) {
     using namespace boost::asio::placeholders;
 
     this->output_buffer_ = std::move(t_value);
-    boost::asio::async_write(this->listener_, boost::asio::buffer(this->output_buffer_),
-                             boost::bind(&TMRobotTCP::handle_write, this, error, bytes_transferred));
+    boost::asio::async_write(
+      this->listener_, boost::asio::buffer(this->output_buffer_),
+      [this](auto t_err, auto t_byte_transferred) { this->handle_write(t_err, t_byte_transferred); });
   }
 
  private:
@@ -85,7 +86,7 @@ class TMRobotTCP {
    *
    * @param t_err system error happened during connection
    */
-  void handle_connection(boost::system::error_code const &t_err) noexcept;
+  void handle_connection(boost::system::error_code const &t_err);
 
   /**
    * @brief This function handles the read process of TCP connection, once entered listen node, it will initiate the
@@ -94,7 +95,7 @@ class TMRobotTCP {
    * @param t_err system error happened during read process
    * @param t_byte_transfered Number of byte read from TM robot
    */
-  void handle_read(boost::system::error_code const &t_err, size_t t_byte_transfered) noexcept;
+  void handle_read(boost::system::error_code const &t_err, size_t t_byte_transfered);
 
   /**
    * @brief This function handles the write process of TCP connection, it will continue writing once triggered, until
@@ -103,12 +104,12 @@ class TMRobotTCP {
    * @param t_err system error happened during write process
    * @param t_byte_writtened Number of byte written to TM robot
    */
-  void handle_write(boost::system::error_code const &t_err, size_t t_byte_writtened) noexcept;
+  void handle_write(boost::system::error_code const &t_err, size_t t_byte_writtened);
 
   /**
    * @brief This function handles reconnection when fail situation detected during read/write stage
    */
-  void reconnect() noexcept;
+  void reconnect();
 };
 
 }  // namespace tmr_listener

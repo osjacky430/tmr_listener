@@ -8,7 +8,7 @@ namespace tmr_listener {
 std::string TMRobotTCP::extract_buffer_data(boost::asio::streambuf &t_buffer, size_t const t_byte_to_extract) noexcept {
   if (t_byte_to_extract > 0) {
     auto const buffer_begin = boost::asio::buffers_begin(t_buffer.data());
-    std::string const result{buffer_begin, buffer_begin + static_cast<std::ptrdiff_t>(t_byte_to_extract)};
+    std::string result{buffer_begin, buffer_begin + static_cast<std::ptrdiff_t>(t_byte_to_extract)};
     t_buffer.consume(t_byte_to_extract);
 
     return result;
@@ -23,9 +23,7 @@ std::string TMRobotTCP::extract_buffer_data(boost::asio::streambuf &t_buffer, si
  *           After the connection is established, obtain first message when entering listener node, this message serves
  *           as a signal to tell which handler should handle the work
  */
-void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) noexcept {
-  using namespace boost::asio::placeholders;
-
+void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) {
   if (not ros::ok()) {
     return;
   }
@@ -33,13 +31,13 @@ void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) noexc
   if (t_err) {  // NOLINT boost pre c++11 safe bool idiom
     ROS_ERROR_STREAM_THROTTLE_NAMED(1.0, "tm_socket_connection",
                                     "Connection error, reason: " << t_err.message() << ", retrying...");
-    this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotTCP::handle_connection, this, error));
+    this->listener_.async_connect(this->tm_robot_, [this](auto t_error) { this->handle_connection(t_error); });
   } else {
     ROS_INFO_STREAM_NAMED("tm_socket_connection", "Connection success, waiting for server response");
 
     this->is_connected_ = true;
-    boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE,
-                                  boost::bind(&TMRobotTCP::handle_read, this, error, bytes_transferred));
+    auto const callback = [this](auto t_error, auto t_tx_byte_num) { this->handle_read(t_error, t_tx_byte_num); };
+    boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE, callback);
   }
 }
 
@@ -55,7 +53,7 @@ void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) noexc
  * @note    The buffer passed to async_read_until is already committed
  * @note    TM robot will send OK message even after ScriptExit()
  */
-void TMRobotTCP::handle_read(boost::system::error_code const &t_err, size_t const t_byte_transfered) noexcept {
+void TMRobotTCP::handle_read(boost::system::error_code const &t_err, size_t const t_byte_transfered) {
   using namespace boost::asio::placeholders;
 
   if (not ros::ok()) {
@@ -67,8 +65,8 @@ void TMRobotTCP::handle_read(boost::system::error_code const &t_err, size_t cons
     this->cb_.msg_recved_(result);  // call callback to owner to handle incoming buffer
 
     // initiate another read process
-    boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE,
-                                  boost::bind(&TMRobotTCP::handle_read, this, error, bytes_transferred));
+    auto const callback = [this](auto t_error, auto t_tx_byte_num) { this->handle_read(t_error, t_tx_byte_num); };
+    boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE, callback);
   } else {
     ROS_ERROR_STREAM_NAMED("tm_listener_node", "Read Error: " << t_err.message());
     ROS_ERROR_STREAM_NAMED("tm_socket_connection", "Read Error detected, reconnecting...");
@@ -77,7 +75,7 @@ void TMRobotTCP::handle_read(boost::system::error_code const &t_err, size_t cons
   }
 }
 
-void TMRobotTCP::handle_write(boost::system::error_code const &t_err, size_t const t_byte_writtened) noexcept {
+void TMRobotTCP::handle_write(boost::system::error_code const &t_err, size_t const t_byte_writtened) {
   if (not ros::ok()) {
     return;
   }
@@ -94,12 +92,10 @@ void TMRobotTCP::handle_write(boost::system::error_code const &t_err, size_t con
   }
 }
 
-void TMRobotTCP::reconnect() noexcept {
-  using namespace boost::asio::placeholders;
-
+void TMRobotTCP::reconnect() {
   this->stop();
-  this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotTCP::handle_connection, this, error));
-  if (this->cb_.disconnected_) {
+  this->listener_.async_connect(this->tm_robot_, [this](auto t_err) { this->handle_connection(t_err); });
+  if (this->cb_.disconnected_) {  // NOLINT, pre c++11 safe bool idiom
     this->cb_.disconnected_();
   }
 }
@@ -112,9 +108,7 @@ void TMRobotTCP::stop() noexcept {
 }
 
 void TMRobotTCP::start_tcp_comm() {
-  using namespace boost::asio::placeholders;
-
-  this->listener_.async_connect(this->tm_robot_, boost::bind(&TMRobotTCP::handle_connection, this, error));
+  this->listener_.async_connect(this->tm_robot_, [this](auto t_err) { this->handle_connection(t_err); });
 
   try {
     this->io_service_.run();

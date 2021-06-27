@@ -104,7 +104,7 @@ struct statement_to_string {
   }
 };
 
-inline boost::xpressive::sregex var_name_pattern() noexcept {
+inline boost::xpressive::sregex var_name_pattern() {
   static auto const var_name_regex = boost::xpressive::sregex::compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
   return var_name_regex;
 }

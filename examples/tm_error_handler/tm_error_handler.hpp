@@ -68,7 +68,7 @@ class TMErrorHandler final : public tmr_listener::ListenerHandle {
   tmr_listener::Variable<float> payload_{"payload"};
   tmr_listener::Variable<std::array<float, 6>> targetP1{"targetP1"};
   tmr_listener::Variable<std::array<float, 6>> targetP2{"targetP2"};
-  int running_mission_;
+  int running_mission_ = 0;
 
   ros::NodeHandle nh_{"tmr_eth_slave"};
   ros::Subscriber parsed_data_table_{nh_.subscribe("parsed_data_table", 10, &TMErrorHandler::data_table_cb, this)};
@@ -143,6 +143,9 @@ class TMErrorHandler final : public tmr_listener::ListenerHandle {
 
     return tmr_listener::Decision::Ignore;
   }
+
+ public:
+  TMErrorHandler() = default;
 };
 
 }  // namespace tm_error_handler

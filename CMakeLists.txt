@@ -1,14 +1,15 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5.1)
 project(tmr_listener)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(StaticAnalyzers)
+include(StandardProjectSetting)
+include(CatkinExtension)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -153,4 +154,14 @@ add_subdirectory(src)
 option(TMR_ENABLE_TESTING "enable tm robot unit testing" OFF)
 if (TMR_ENABLE_TESTING)
   add_subdirectory(test)
+
+  if (ENABLE_COVERAGE)
+    # cmake-format: off
+    catkin_add_gcov_report(
+      OUTPUT_DIR "coverage.xml"
+      GCOV_EXCLUDE ".*test.*" ".*node.*"
+      EXCLUDE_SRC "${PROJECT_SOURCE_DIR}/src/tmr_cmd_line_option.hpp"
+      EXTRA_OPTIONS --xml-pretty --exclude-unreachable-branches --exclude-throw-branches)
+    # cmake-format: on
+  endif ()
 endif ()

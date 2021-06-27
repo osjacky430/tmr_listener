@@ -7,7 +7,7 @@
 
 namespace tmr_listener {
 
-void TMRobotEthSlave::parse_input_msg(std::string const& t_input) noexcept {
+void TMRobotEthSlave::parse_input_msg(std::string const& t_input) {
   auto const parsed_data = TMSVRHeader::parse(t_input);
   if (parsed_data.data_.mode_ == Mode::Json) {
     auto const raw_data = [](std::string const& t_to_set) {
@@ -122,10 +122,8 @@ void TMRobotEthSlave::start() noexcept {
   while (not ros::ok()) {
   }
 
-  namespace ph = boost::asio::placeholders;
-  this->sigterm_handler_.async_wait(boost::bind(&TMRobotEthSlave::sigterm_handler, this, ph::error, ph::signal_number));
-  auto thread_fn = boost::bind(&TMRobotTCP::start_tcp_comm, boost::ref(this->comm_));
-  auto thread    = boost::scoped_thread<>{boost::thread{std::move(thread_fn)}};
+  this->sigterm_handler_.async_wait([this](auto t_err, auto t_sig_num) { this->sigterm_handler(t_err, t_sig_num); });
+  auto thread = boost::scoped_thread<>{boost::thread{[&comm = this->comm_] { comm.start_tcp_comm(); }}};
   ros::spin();
 }
 

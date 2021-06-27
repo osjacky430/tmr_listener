@@ -25,7 +25,7 @@ struct TMSVRTag {
 
     static ParseRule<DataFormat>& parsing_rule() noexcept;
 
-    static Data parse_raw_content(std::string t_raw_content) noexcept;
+    static Data parse_raw_content(std::string t_raw_content);
   };
 
   struct BuildRule {

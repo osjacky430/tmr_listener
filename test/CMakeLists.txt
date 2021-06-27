@@ -45,18 +45,9 @@ test_ext_script_syntax(TEST_CASE "TMSTA_ONLY_1_CMD_PER_SCRIPT"
 # stupid catkin_add_gtest function, catkin just sucks really hard, I must disable warning as error
 # since I have no control over adding gtest dependency, at least I do it myself
 catkin_add_gtest(tmr_msg_gen tmr_msg_gen_test.cpp)
-target_link_libraries(
-  tmr_msg_gen
-  gtest_main
-  tmr_eth_slave
-  project_options)
+target_link_libraries(tmr_msg_gen gtest_main tmr_eth_slave project_options)
 
 catkin_add_gtest(tmr_msg_parse tmr_msg_parse_test.cpp)
-target_link_libraries(
-  tmr_msg_parse
-  tmr_listener
-  tmr_eth_slave
-  project_options
-  gtest_main)
+target_link_libraries(tmr_msg_parse tmr_listener tmr_eth_slave project_options gtest_main)
 
 add_subdirectory(ros)

@@ -38,9 +38,10 @@ struct TMSCTTag {
     };
 
     struct ScriptResult {
-      bool result_;
+      bool result_ = true;
       std::vector<int> abnormal_lines_;
 
+      ScriptResult() noexcept = default;
       static ParseRule<ScriptResult>& parsing_rule() noexcept;
     };
 

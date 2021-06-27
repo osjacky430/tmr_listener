@@ -16,7 +16,7 @@ inline auto strip_crlf(std::string const &t_input) noexcept {
 
 namespace tmr_listener {
 
-struct TMRobotListener::PacketVisitor final : public boost::static_visitor<> {
+class TMRobotListener::PacketVisitor final : public boost::static_visitor<> {
   /**
    * @note Every object passed as a raw pointer (or iterator) is assumed to be owned by the caller, so that its lifetime
    *       is handled by the caller. Viewed another way: ownership transferring APIs are relatively rare compared to
@@ -26,6 +26,7 @@ struct TMRobotListener::PacketVisitor final : public boost::static_visitor<> {
   TMTaskHandler &current_task_handler_;
   TMRPluginManagerBase const *const plugin_manager_;
 
+ public:
   explicit PacketVisitor(TMRobotTCP *t_tcp_comm, TMTaskHandler &t_current_task_handler_,
                          TMRPluginManagerBase const *const t_plugin_manager)
     : boost::static_visitor<>(),
@@ -34,7 +35,7 @@ struct TMRobotListener::PacketVisitor final : public boost::static_visitor<> {
       plugin_manager_{t_plugin_manager} {}
 
   template <typename T>
-  void operator()(T const &) {
+  void operator()(T const & /*unused*/) {
     throw std::invalid_argument("Unimplemented or unknown header, please help report issues.");
   }
 };
@@ -108,7 +109,7 @@ void TMRobotListener::PacketVisitor::operator()(TMSCTPacket const &t_tmsct) {
     }
   } else {
     auto const response_content = boost::get<TMSCTPacket::DataFrame::ScriptResult>(server_response);
-    TMSCTResponse const resp{t_tmsct.data_.id_, response_content.result_, std::move(response_content.abnormal_lines_)};
+    TMSCTResponse const resp{t_tmsct.data_.id_, response_content.result_, response_content.abnormal_lines_};
     this->current_task_handler_->handle_response(resp);
   }
 }
@@ -146,7 +147,7 @@ TMTaskHandler RTLibPluginManager::find_task_handler(std::string const &t_input) 
  * @note  Even though I can make it a static class variable, I decided to create local static to make it
  *        similar to other parsing rule
  */
-TMRobotListener::TMRListenDataParser TMRobotListener::parsing_rule() {
+TMRobotListener::TMRListenDataParser TMRobotListener::parsing_rule() noexcept {
   static TMRListenDataParser parser = TMSCTPacket::parsing_rule() | TMSTAPacket::parsing_rule() |  //
                                       CPERRPacket::parsing_rule();
   return parser;
@@ -168,7 +169,7 @@ TMRobotListener::ListenData TMRobotListener::parse(std::string t_input) {
 /**
  * @todo  We don't need to parse the input in one step, maybe parse the input in mulitple step, see TMSVR parsing
  */
-void TMRobotListener::receive_tm_msg_callback(std::string const &t_input) noexcept {
+void TMRobotListener::receive_tm_msg_callback(std::string const &t_input) noexcept(noexcept(parse(t_input))) {
   ROS_INFO_STREAM("Received: " << ::strip_crlf(t_input));
 
   auto const result = parse(t_input);
@@ -200,8 +201,7 @@ void TMRobotListener::start() {
   while (not ros::ok()) {
   }
 
-  auto thread_fn = boost::bind(&TMRobotTCP::start_tcp_comm, boost::ref(this->tcp_comm_));
-  boost::scoped_thread<> thread{boost::thread{std::move(thread_fn)}};
+  boost::scoped_thread<> thread{boost::thread{[&comm = this->tcp_comm_] { comm.start_tcp_comm(); }}};
   ros::spin();
 
   this->tcp_comm_.stop();

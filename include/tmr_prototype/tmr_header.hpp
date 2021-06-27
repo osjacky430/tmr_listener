@@ -20,7 +20,7 @@ namespace tmr_listener {
  *
  * @note  The input string should contain "$"
  */
-inline auto calculate_checksum(std::string const& t_data) noexcept {
+inline auto calculate_checksum(std::string const& t_data) {
   return (boost::format("%02X") % std::accumulate(std::next(t_data.begin()), t_data.end(), 0, std::bit_xor<>{})).str();
 }
 
@@ -38,7 +38,7 @@ struct End {};
  * @brief Utility class for tag dispatch
  */
 struct ID {
-  std::string id_{""};
+  std::string id_;
 };
 
 }  // namespace tmr_listener
@@ -211,7 +211,7 @@ struct Header {
     using DataFrame = typename Impl::DataFormat;
 
     std::size_t length_ = 0;
-    DataFrame data_;
+    DataFrame data_{};
     std::string checksum_;
 
     /**
@@ -238,7 +238,7 @@ struct Header {
    *
    * @todo  Should return something like "expected" for inputs that are not fully matched
    */
-  static auto parse(std::string t_input) noexcept {
+  static auto parse(std::string t_input) {
     using namespace boost::spirit::qi;
     using boost::spirit::ascii::space;
 
