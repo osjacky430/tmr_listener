@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from subprocess32 import Popen, STDOUT
+from subprocess import Popen
 
-import rospy
 import signal
 import rostest
 import time
