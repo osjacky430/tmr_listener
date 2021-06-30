@@ -10,9 +10,9 @@ if (ENABLE_CPP_CHECK)
         --project=${CMAKE_BINARY_DIR}/compile_commands.json
         --enable=all
         --inline-suppr
+        --std=c++14
         -i/opt/ros/melodic/include
-        -i/usr/src/googletest
-        -i/home/gyro/Desktop/catkin/devel/.private/tmr_listener/include)
+        -i/usr/src/googletest)
   else ()
     message(SEND_ERROR "cppcheck requested but executable not found")
   endif ()

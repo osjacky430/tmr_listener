@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.5.1)
 project(tmr_listener)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-include(StaticAnalyzers)
 include(StandardProjectSetting)
 include(CatkinExtension)
 
@@ -136,6 +135,8 @@ catkin_package(
 install(DIRECTORY include/tmr_listener include/tmr_utility include/tmr_ext_script
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..)
 
+include(StaticAnalyzers)
+
 include(Sanitizers)
 add_library(project_options INTERFACE)
 enable_sanitizers(project_options)
@@ -159,7 +160,7 @@ if (TMR_ENABLE_TESTING)
     # cmake-format: off
     catkin_add_gcov_report(
       OUTPUT_DIR "coverage.xml"
-      GCOV_EXCLUDE ".*test.*" ".*node.*"
+      GCOV_EXCLUDE ".*test.*"
       EXCLUDE_SRC "${PROJECT_SOURCE_DIR}/src/tmr_cmd_line_option.hpp"
       EXTRA_OPTIONS --xml-pretty --exclude-unreachable-branches --exclude-throw-branches)
     # cmake-format: on

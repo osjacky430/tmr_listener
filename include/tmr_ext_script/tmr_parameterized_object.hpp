@@ -215,7 +215,7 @@ constexpr struct EndModuleTag {
 } EndModule;
 
 template <std::size_t N>
-struct [[deprecated("not implemented yet")]] ExternalModule {};
+struct [[deprecated("not implemented yet")]] ExternalModule{};
 
 constexpr struct SafetyTag { static constexpr auto IO_NAME = "Safety"; } Safety;
 
@@ -316,5 +316,8 @@ struct FTAttribute : AttributeOwner {
 constexpr auto FT = Item<DefaultMapping<FTAttribute>>{"FT"};
 
 }  // namespace tmr_listener
+
+#undef RW_ATTRIBUTE
+#undef R_ATTRIBUTE
 
 #endif

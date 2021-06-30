@@ -1,22 +1,26 @@
 function (catkin_add_gcov_report)
-  set(options)
+  set(options VERBOSE)
   set(filterArgs ROOT_DIR FILTER GCOV_FILTER GCOV_EXCLUDE EXCLUDE_SRC EXCLUDE_DIR)
   set(targetArgs TARGET WORKING_DIR)
   set(multiValueArgs OUTPUT_DIR EXTRA_OPTIONS)
 
   cmake_parse_arguments("" "${options}" "${targetsArgs}" "${filterArgs};${multiValueArgs}" ${ARGN})
 
-  find_program(GCOVR gcovr)
+  find_program(GCOVR gcovr REQUIRED)
 
-  set(GCOVR_OUTPUT_EXTENSIONS ".xml" ".json" ".txt" ".csv" ".html")
+  set(GCOVR_OUTPUT_EXTENSIONS ".xml" ".json" ".csv" ".html" ".txt")
+  set(GCOVR_OUTPUT_FLAGS "--xml" "--json" "--csv" "--html" "--txt")
   set(output_list)
   foreach (output_file IN LISTS _OUTPUT_DIR)
     get_filename_component(extension ${output_file} EXT)
-    if (NOT ${extension} IN_LIST GCOVR_OUTPUT_EXTENSIONS)
-      message(FATAL_ERROR "${extension} is not supported by gcovr")
+    list(FIND GCOVR_OUTPUT_EXTENSIONS ${extension} position)
+    if (${position} EQUAL -1)
+      message(FATAL_ERROR "${extension} is not supported by gcovr, supported format: ${GCOVR_OUTPUT_EXTENSIONS}")
+    else ()
+      list(GET GCOVR_OUTPUT_FLAGS ${position} flag)
+      list(APPEND output_list "${flag}" "${output_file}")
     endif ()
 
-    list(APPEND output_list "-o" "${output_file}")
   endforeach ()
 
   set(gcov_filter_list)
@@ -37,8 +41,12 @@ function (catkin_add_gcov_report)
     set(working_dir ${CMAKE_BINARY_DIR})
   endif ()
 
+  if (${_VERBOSE})
+    list(APPEND _EXTRA_OPTIONS "-v")
+  endif ()
+
   add_custom_command(
-    TARGET run_tests #
+    TARGET run_tests # catkin target
     POST_BUILD COMMAND ${GCOVR} . -r ${PROJECT_SOURCE_DIR} ${_EXTRA_OPTIONS} ${output_list} ${gcov_filter_list}
                        ${exclude_src_list} #
     WORKING_DIRECTORY ${working_dir} #

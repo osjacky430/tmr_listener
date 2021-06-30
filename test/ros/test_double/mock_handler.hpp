@@ -60,6 +60,15 @@ struct handler_mock_counter<T, N, std::enable_if_t<!have_handler_mock_n_expectat
   static constexpr auto value = N;
 };
 
+/**
+ * @brief Plugin manager implement for unit test, we can't test default plugin manager directly, because we need to
+ *        set mock expectation after the plugins are created, but we have no access to them.
+ *
+ * @todo Maybe we can do this in the constructor, but it might be a bit weird.
+ * @todo Maybe there should be a function that serves as initialization, and we set mock expectation there
+ *
+ * @tparam ExpectationSetter
+ */
 template <typename ExpectationSetter>
 struct InLibraryTMRPluginManager final : public TMRPluginManagerBase {
  private:

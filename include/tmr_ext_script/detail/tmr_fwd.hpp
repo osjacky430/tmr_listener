@@ -5,7 +5,7 @@ namespace tmr_listener {
 
 // clang-format off
 template <typename Type> struct Expression;
-template <typename Type> struct Variable;
+template <typename Type> class Variable;
 
 template <typename Tag> class Command;
 template <typename Tag> class Header;

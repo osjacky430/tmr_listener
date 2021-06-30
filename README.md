@@ -1,6 +1,6 @@
 # TM Robot Listener
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/osjacky430/tmr_listener/CI) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Grade)
+![GitHub Workflow Status](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Grade)
 
 A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave, but still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
 
@@ -163,15 +163,15 @@ PLUGINLIB_EXPORT_CLASS(MyTMListenerHandleNamespace::MyTMListenerHandle, tmr_list
 
 For the rest of the setup, [see pluginlib tutorial (pretty outdated IMO)](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin). `tmr_listener::ListenerHandle` provides several functions that can/must be overriden:
 
-#### 1. MessagePtr generate_cmd (MessageStatus const t_prev_response)
+#### 1. tmr_listener::MessagePtr generate_cmd (tmr_listener::MessageStatus const t_prev_response)
 
 This function is the only way for the handler to talk to the TM robot, and therefore it must be overriden by the user. `t_prev_response` indicates whether TM robot responded to the message sent previously. Most of the time, we would like to generate command only after TM robot responded to our previous message.
 
 ```cpp
 struct YourHandler final : public tmr_listener::ListenerHandle {
   protected:
-    MessagePtr generate_cmd(MessageStatus const t_prev_response) override {
-      if (t_prev_response == MessageStatus::Responded) {
+    tmr_listener::MessagePtr generate_cmd(tmr_listener::MessageStatus const t_prev_response) override {
+      if (t_prev_response == tmr_listener::MessageStatus::Responded) {
         // generate command
       }
 
@@ -203,7 +203,7 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 
 #### 3. response_msg (...)
 
-The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need (currently available overloads: `TMSCTResponse` , `TMSTAResponse:: Subcmd00` , `TMSTAResponse:: Subcmd01` , `CPERRResponse` and one with no argument), those that are not overriden will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden.
+The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need (currently available overloads: `tmr_listener::TMSCTResponse` , `tmr_listener::TMSTAResponse::Subcmd00` , `tmr_listener::TMSTAResponse::Subcmd01` , `tmr_listener::CPERRResponse` and one with no argument), those that are not overriden will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden.
 
 ```cpp
 // this example overrides TMSCTResponse and the one with no argument
@@ -409,7 +409,7 @@ Notice the option `-v` , **this is needed** since tmr_listener will determine wh
 
 ### Contact
 
-Jacky Tseng (master branch) - jacky.tseng@gyro.com.tw
+Jacky Tseng (master branch, WIP/TMSVR, WIP/server_mock) - jacky.tseng@gyro.com.tw
 
 ### Reference
 

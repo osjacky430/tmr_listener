@@ -84,7 +84,7 @@ struct const_if {
 namespace tmr_listener {
 
 // clang-format off
-template <typename T> struct Variable;
+template <typename T> class Variable;
 template <typename T> struct Expression;
 // clang-format on
 

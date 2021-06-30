@@ -114,41 +114,18 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
 
 TEST(SpiritParse, CPERRResponseMatch) {
   using namespace tmr_listener;
+  using namespace std::string_literals;
 
-  {
-    constexpr auto response = "$CPERR,2,01,*49\r\n";
+  auto const test_cperr_msg_equal = [](auto const& t_string, auto const& t_err_code) {
+    auto const parsed = CPERRHeader::parse(t_string);
+    EXPECT_EQ(parsed.data_.err_, t_err_code);
+  };
 
-    auto const parsed = CPERRHeader::parse(response);
-    EXPECT_EQ(parsed.data_.err_, ErrorCode::BadArgument);
-  }
-
-  {
-    constexpr auto response = "$CPERR,2,02,*4A\r\n";
-
-    auto const parsed = CPERRHeader::parse(response);
-    EXPECT_EQ(parsed.data_.err_, ErrorCode::BadCheckSum);
-  }
-
-  {
-    constexpr auto response = "$CPERR,2,03,*4B\r\n";
-
-    auto const parsed = CPERRHeader::parse(response);
-    EXPECT_EQ(parsed.data_.err_, ErrorCode::BadHeader);
-  }
-
-  {
-    constexpr auto response = "$CPERR,2,04,*4C\r\n";
-
-    auto const parsed = CPERRHeader::parse(response);
-    EXPECT_EQ(parsed.data_.err_, ErrorCode::InvalidData);
-  }
-
-  {
-    constexpr auto response = "$CPERR,2,F1,*3F\r\n";
-
-    auto const parsed = CPERRHeader::parse(response);
-    EXPECT_EQ(parsed.data_.err_, ErrorCode::NotInListenNode);
-  }
+  test_cperr_msg_equal("$CPERR,2,01,*49\r\n"s, ErrorCode::BadArgument);
+  test_cperr_msg_equal("$CPERR,2,02,*4A\r\n"s, ErrorCode::BadCheckSum);
+  test_cperr_msg_equal("$CPERR,2,03,*4B\r\n"s, ErrorCode::BadHeader);
+  test_cperr_msg_equal("$CPERR,2,04,*4C\r\n"s, ErrorCode::InvalidData);
+  test_cperr_msg_equal("$CPERR,2,F1,*3F\r\n"s, ErrorCode::NotInListenNode);
 }
 
 TEST(SpiritParse, TMSVRContentMatch) {
