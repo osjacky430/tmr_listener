@@ -38,7 +38,6 @@ class TMRobotTCP {
   void stop() noexcept;
 
   bool is_connected() const noexcept { return this->is_connected_; }
-  auto &get_io_service() noexcept { return this->io_service_; }
 
   /**
    * @brief This function write the input value to TM server
@@ -110,6 +109,10 @@ class TMRobotTCP {
    * @brief This function handles reconnection when fail situation detected during read/write stage
    */
   void reconnect();
+
+  std::string print_ip_port() const noexcept {
+    return this->tm_robot_.address().to_string() + ':' + std::to_string(this->tm_robot_.port());
+  }
 };
 
 }  // namespace tmr_listener

@@ -1,5 +1,6 @@
 string id
 string[] item_list
-string[] value_list #
+string[] value_list # only used for write value
 ---
+string[] value_list # only used for read value
 string res

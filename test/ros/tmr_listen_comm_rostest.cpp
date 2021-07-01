@@ -6,19 +6,16 @@
 
 using namespace ::testing;
 
-class TMRServerTest : public Test {
+class ListenNodeServerTest : public Test {
  protected:
-  tmr_listener::fake_impl::TMRServer fake_server;
+  tmr_listener::fake_impl::ListenNodeServer fake_server;
 
-  void SetUp() override {
-    this->fake_server.start();
-    this->fake_server.wait_until_connected();
-  }
+  void SetUp() override { this->fake_server.start(); }
 
   void TearDown() override { this->fake_server.stop(); }
 };
 
-TEST_F(TMRServerTest, RecievedCPERRNotInListenNodeWillResetCurrentHandler) {
+TEST_F(ListenNodeServerTest, RecievedCPERRNotInListenNodeWillResetCurrentHandler) {
   using namespace tmr_listener;
   using namespace std::literals::chrono_literals;
 
@@ -30,7 +27,7 @@ TEST_F(TMRServerTest, RecievedCPERRNotInListenNodeWillResetCurrentHandler) {
   this->fake_server.response_ok_msg(ID{"expect_not_called"});  // expecting no response from client
 }
 
-TEST_F(TMRServerTest, ScriptExitCalledIfNoHandlerReturnAccept) {
+TEST_F(ListenNodeServerTest, ScriptExitCalledIfNoHandlerReturnAccept) {
   using namespace tmr_listener;
   using namespace std::literals::chrono_literals;
 

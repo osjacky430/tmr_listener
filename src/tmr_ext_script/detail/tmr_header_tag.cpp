@@ -60,7 +60,7 @@ ParseRule<TMSTATag::DataFormat>& TMSTATag::DataFormat::parsing_rule() {
 
   static symbols<char, int> const stat_map{std::array<std::string, 3>{"true", "false", "none"},
                                            std::array<int, 3>{0, 1, 2}};
-  static ParseRule<Subcmd00Resp> rule_00_ = "00," >> bool_ >> "," >> *(char_ - ",");
+  static ParseRule<Subcmd00Resp> rule_00_ = "00," >> bool_ >> "," >> *(char_ - ",*");
   static ParseRule<std::string> cmd       = +(char_ - ",");
   static ParseRule<Subcmd01Resp> rule_01_ = "01," >> cmd[at_c<0>(_val) = _1] >> ","  //
                                             >> stat_map[at_c<1>(_val) = static_cast_<TagNumberStatus>(qi::_1)];

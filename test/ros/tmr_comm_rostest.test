@@ -1,4 +1,5 @@
 <launch>
+  <node pkg="tmr_listener" type="tmr_eth_slave_node" name="tmr_eth_slave" output="screen" args="--ip=127.0.0.1"/>
   <node pkg="tmr_listener" type="fake_listener_node" name="fake_listener" output="screen"/>
-  <test test-name="test" pkg="tmr_listener" type="tmr_listen_comm_rostest"/>
+  <test test-name="test" pkg="tmr_listener" type="tmr_comm_rostest"/>
 </launch>

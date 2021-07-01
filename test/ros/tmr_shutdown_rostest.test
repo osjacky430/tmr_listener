@@ -1,3 +1,4 @@
 <launch>
-  <test test-name="close" pkg="tmr_listener" type="tmr_listener_close_rostest.py"/>
+  <test test-name="listener_close" pkg="tmr_listener" type="tmr_listener_close_rostest.py"/>
+  <test test-name="eth_close" pkg="tmr_listener" type="tmr_eth_close_rostest.py"/>
 </launch>

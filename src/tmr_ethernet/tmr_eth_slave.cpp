@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include <boost/date_time.hpp>
 #include <boost/thread/scoped_thread.hpp>
 
 #include "tmr_ethernet/tmr_eth_rw.hpp"
@@ -56,20 +57,17 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
   using namespace std::string_literals;
   if (not this->comm_.is_connected()) {
     ROS_ERROR_STREAM("TM robot is not connected, make sure the robot arm is powered on");
-    t_resp.res = "TM robot is not connected, make sure the robot arm is powered on"s;
     return false;
   }
 
   bool const is_read = t_req.value_list.empty();
   if (not is_read and t_req.value_list.size() != t_req.item_list.size()) {
     ROS_ERROR_STREAM("the size of item list must equal to the size of value list for write operation");
-    t_resp.res = "the size of item list must equal to the size of value list for write operation"s;
     return false;
   }
 
   if (t_req.id.empty()) {
     ROS_ERROR_STREAM("Empty ID found, @todo it will become auto generated if not entered in the future"s);
-    t_resp.res = "Empty ID found, @todo it will become auto generated if not entered in the future"s;
     return false;
   }
 
@@ -97,14 +95,18 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
 
   boost::unique_lock<boost::mutex> lock{this->rx_buffer_mutex_};
   auto const tm_responded = [this]() { return this->responded_; };
-  this->response_signal_.wait(lock, tm_responded);
+  while (not this->response_signal_.timed_wait(lock, boost::posix_time::microsec(100), tm_responded)) {
+    if (not ros::ok() or ros::isShuttingDown()) {
+      return false;
+    }
+  }
   this->responded_ = false;
 
   if (this->server_response_.mode_ == Mode::ServerResponse) {
     ROS_DEBUG_STREAM_NAMED("tmsvr_response", this->server_response_.raw_content_);
     t_resp.res = this->server_response_.raw_content_;  // possible reasons: response write request, or error happened
   } else if (is_request_read(this->server_response_.mode_)) {
-    t_req.value_list = [](std::string const& t_raw_content) {
+    t_resp.value_list = [](std::string const& t_raw_content) {
       auto const parsed = TMSVRPacket::DataFrame::parse_raw_content(t_raw_content);
       std::vector<std::string> ret_val;
       ret_val.reserve(parsed.size());
@@ -122,19 +124,10 @@ void TMRobotEthSlave::start() noexcept {
   while (not ros::ok()) {
   }
 
-  this->sigterm_handler_.async_wait([this](auto t_err, auto t_sig_num) { this->sigterm_handler(t_err, t_sig_num); });
   auto thread = boost::scoped_thread<>{boost::thread{[&comm = this->comm_] { comm.start_tcp_comm(); }}};
   ros::spin();
-}
 
-void TMRobotEthSlave::sigterm_handler(boost::system::error_code const t_err, int const /**/) noexcept {
-  if (!t_err) {  // NOLINT, boost pre c++11 safe bool idiom
-    this->responded_ = true;
-    this->response_signal_.notify_all();
-
-    ros::shutdown();
-    this->comm_.stop();
-  }
+  this->comm_.stop();
 }
 
 }  // namespace tmr_listener

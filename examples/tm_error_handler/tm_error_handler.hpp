@@ -65,6 +65,7 @@ class TMErrorHandler final : public tmr_listener::ListenerHandle {
     return t_state;
   }
 
+  tmr_listener::Variable<int> var_listener{"var_listener"};
   tmr_listener::Variable<float> payload_{"payload"};
   tmr_listener::Variable<std::array<float, 6>> targetP1{"targetP1"};
   tmr_listener::Variable<std::array<float, 6>> targetP2{"targetP2"};
@@ -84,7 +85,9 @@ class TMErrorHandler final : public tmr_listener::ListenerHandle {
     if (t_prev_response == MessageStatus::Responded) {
       switch (this->state_) {
         case HandlerState::ChangePayload:
-          return TMSCT << ID{"ChangePayload"} << declare(this->payload_, 0.0f) << ChangeLoad(this->payload_) << End();
+          // variable used without "declare" is considered to be project variable
+          return TMSCT << ID{"ChangePayloadAndVarListener"} << declare(this->payload_, 0.0f)
+                       << ChangeLoad(this->payload_) << (this->var_listener = 30001) << End();
         case HandlerState::MoveToHome: {
           auto const slot_num = (std::abs(this->running_mission_) / 100) % 10;
 

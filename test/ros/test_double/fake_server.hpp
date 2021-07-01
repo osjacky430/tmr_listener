@@ -2,14 +2,9 @@
 #define FAKE_SERVER_HPP_
 
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/format.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/next_prior.hpp>
-#include <boost/thread/scoped_thread.hpp>
 
-#include <chrono>
 #include <iostream>
 
 #include "tmr_ext_script/tmr_motion_function.hpp"
@@ -42,41 +37,56 @@ class TMRConnection : public boost::enable_shared_from_this<TMRConnection> {
   }
 };
 
-struct wait_response_t {
-  std::chrono::milliseconds wait_time_;
-};
+static constexpr struct wait_response_t {
+} WAIT_FOREVER;
 
-static const wait_response_t WAIT_FOREVER{std::chrono::milliseconds(0)};
-
-class TMRServer {
-  using Content = Expression<std::string>;
-
-  static constexpr auto LISTEN_PORT = 5890;
+class TMRobotServerComm {
+  bool is_connected_ = false;
 
   std::string write_buffer_;
   TMRConnection::this_ptr connection_;
 
-  bool is_connected_ = false;
-
-  boost::condition_variable connection_signal_;
-  boost::mutex connection_mtx_;
-
   boost::asio::io_service io_service_;
-  boost::asio::ip::tcp::endpoint server_{boost::asio::ip::tcp::v4(), LISTEN_PORT};
+  boost::asio::ip::tcp::endpoint server_;
   boost::asio::ip::tcp::acceptor acceptor_{io_service_};
 
-  boost::asio::io_service::work work_{io_service_};
-  boost::scoped_thread<> running_thread_;
+ public:
+  explicit TMRobotServerComm(unsigned short const t_port) noexcept : server_{boost::asio::ip::tcp::v4(), t_port} {}
 
-  void handle_accept(boost::system::error_code const& t_err, TMRConnection::this_ptr t_connection) noexcept;
+  /**
+   * @brief This function starts async accept connection request, it runs io_service in the background
+   */
+  void start() {
+    this->acceptor_.open(this->server_.protocol());
+    this->acceptor_.set_option(boost::asio::socket_base::reuse_address(true));
+    this->acceptor_.bind(this->server_);
+    this->acceptor_.listen();
 
-  std::string write(std::string, wait_response_t) noexcept;
+    auto new_connection = TMRConnection::create(io_service_);
+    this->acceptor_.accept(new_connection->get_socket());  // blocking
 
-  void write(std::string) noexcept;
+    this->connection_   = new_connection;
+    this->is_connected_ = true;
+  }
+
+  /**
+   * @brief This function closes the socket, and acceptor. It also stops io service and reset the socket ptr in order
+   *        to stop the server fully.
+   */
+  void stop();
+
+  void blocking_write(std::string);
+
+  std::string blocking_read();
+};
+
+class ListenNodeServer {
+  using Content = Expression<std::string>;
+
+  static constexpr auto LISTENER_PORT = 5890;
+  TMRobotServerComm comm_{LISTENER_PORT};
 
  public:
-  TMRServer() = default;
-
   /**
    * @brief This function writes enter-listen-node message to client and wait for its response for amount of time
    *        specified in t_tag
@@ -87,21 +97,21 @@ class TMRServer {
    *
    * @todo Implement timeout, or take timeout variable away, just use it for tag dispatch
    */
-  std::string enter_listen_node(std::string t_str, wait_response_t t_tag) noexcept;
+  std::string enter_listen_node(std::string t_str, wait_response_t t_tag);
 
   /**
    * @brief This function writes enter-listen-node message to client, this function doesn't wait for client response
    *
    * @param t_str Listen node message
    */
-  void enter_listen_node(std::string t_str) noexcept;
+  void enter_listen_node(std::string t_str);
 
   /**
    * @brief This function writes TMSCT OK message to the client
    *
    * @param t_id   ID of the message
    */
-  void response_ok_msg(tmr_listener::ID const& t_id) noexcept;
+  void response_ok_msg(tmr_listener::ID const& t_id);
 
   /**
    * @brief
@@ -113,22 +123,11 @@ class TMRServer {
    *
    * @param t_err   @ref tmr_listener::ErrorCode
    */
-  void send_error(tmr_listener::ErrorCode t_err) noexcept;
+  void send_error(tmr_listener::ErrorCode t_err);
 
-  /**
-   * @brief This function starts async accept connection request, it runs io_service in the background
-   */
-  void start();
+  void start() { this->comm_.start(); }
 
-  /**
-   * @brief This function closes the socket, and acceptor. It also stops io service and reset the socket ptr in order
-   *        to stop the server fully.
-   */
-  void stop() noexcept;
-
-  void wait_until_connected() noexcept;
-
-  bool is_connected() const noexcept { return this->is_connected_; }
+  void stop() { this->comm_.stop(); }
 };
 
 }  // namespace fake_impl

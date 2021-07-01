@@ -1,5 +1,5 @@
-#ifndef tmr_listener_HPP_
-#define tmr_listener_HPP_
+#ifndef TMR_LISTENER_HPP_
+#define TMR_LISTENER_HPP_
 
 #include <boost/shared_ptr.hpp>
 #include <type_traits>
@@ -33,9 +33,9 @@ struct TMRPluginManagerBase {
    * @param  t_input  Enter node message sent from TM robot listen node
    * @return TMTaskHandler that accepted the test
    *
-   * @note   This function doesn't catch any exception. Implementer should handle exception within the function
-   *         . Also, empty shared_ptr is not checked, implementer should return their own default handler if non is
-   *         matched.
+   * @note   This function doesn't catch any exception. Implementer should handle exception within the function.
+   *         Implementer should return their own default handler if non is matched, returning empty shared_ptr will
+   *         result in exception thrown by TMRListener after calling this function.
    */
   virtual TMTaskHandler find_task_handler(std::string const &t_input) const = 0;
 

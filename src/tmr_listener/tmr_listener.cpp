@@ -51,7 +51,7 @@ void TMRobotListener::PacketVisitor::operator()(CPERRPacket const &t_packet) {
 }
 
 /**
- * @note  Maybe I will implement TMSTAPacket service in the future, by then, these if looks even more redundant cause it
+ * @note  Maybe I will implement TMSTAPacket service in the future, by then, these ifs look even more redundant cause it
  *        can only prevent us from using null pointer. Not like the else part can be used for other situation. For the
  *        situation metioned above, we can only determine the decision via id, where service have specific ID created
  *        by us
@@ -98,7 +98,12 @@ void TMRobotListener::PacketVisitor::operator()(TMSCTPacket const &t_tmsct) {
       auto const response_content = boost::get<std::string>(server_response);
       ROS_INFO_STREAM("In Listener node, node message: " << response_content);
 
-      auto const find_result  = this->plugin_manager_->find_task_handler(response_content);
+      auto const find_result = this->plugin_manager_->find_task_handler(response_content);
+      if (not find_result) {
+        ROS_FATAL_STREAM("plugin_manager return null pointer in find_task_handler, exit program");
+        throw std::runtime_error("plugin_manager return null pointer in find_task_handler");
+      }
+
       auto const response_cmd = find_result->generate_request();
       if (not response_cmd->has_script_exit()) {  // may be default handler, reset immediately
         this->current_task_handler_ = find_result;

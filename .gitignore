@@ -1,5 +1,5 @@
 build.sh
+run_tests_pretty_output.py
 
 .vscode
-
 msg/TMREthernet.msg

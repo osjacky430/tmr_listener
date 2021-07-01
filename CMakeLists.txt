@@ -46,6 +46,22 @@ find_package(Boost REQUIRED)
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
+if (DEFINED TM_ETHERNET_SLAVE_XML OR EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/msg/TMREthernet.msg)
+  set(TM_ETHERNET_MSG TMREthernet.msg)
+
+  if (DEFINED TM_ETHERNET_SLAVE_XML)
+    execute_process(
+      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
+              --msg-dir=${CMAKE_CURRENT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
+  endif ()
+
+  if (result)
+    message(FATAL_ERROR "Generating TMEthernet.msg failed: ${result}")
+  endif ()
+
+  add_message_files(FILES ${TM_ETHERNET_MSG})
+endif ()
+
 ## Generate messages in the 'msg' folder
 add_message_files(FILES JsonData.msg JsonDataArray.msg)
 

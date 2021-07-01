@@ -32,6 +32,15 @@ function (enable_sanitizers project_name)
       endif ()
     endif ()
 
+    option(ENABLE_SANITIZER_THREAD "Enable thread sanitizer" FALSE)
+    if (ENABLE_SANITIZER_THREAD)
+      if ("address" IN_LIST SANITIZERS OR "leak" IN_LIST SANITIZERS)
+        message(WARNING "Thread sanitizer does not work with Address and Leak sanitizer enabled")
+      else ()
+        list(APPEND SANITIZERS "thread")
+      endif ()
+    endif ()
+
     string(REPLACE ";" "," LIST_OF_SANITIZERS "${SANITIZERS}")
     # This required cmake version greater than 3.12
     # list(

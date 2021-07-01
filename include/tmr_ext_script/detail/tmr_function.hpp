@@ -108,7 +108,7 @@ struct MotionFnCallPrinter {
 
 struct SubCmdCallPrinter {
   auto operator()(std::string const& t_name, std::string const& t_input) const noexcept {
-    return t_name + ',' + t_input;
+    return t_input.empty() ? t_name : t_name + ',' + t_input;
   }
 };
 

@@ -176,7 +176,7 @@ TEST(ExpressionTest, BinaryOperator) {
   }
 }
 
-TEST(TMMsgGen, StringMatch) {
+TEST(TMMsgGen, TMSCTStringMatch) {
   using namespace tmr_listener;
   using namespace motion_function;
   using namespace prototype;
@@ -210,7 +210,24 @@ TEST(TMMsgGen, StringMatch) {
   }
 }
 
-TEST(TM_Msg_Gen, TMSVR_Msg_String_Match) {
+TEST(TMMsgGen, TMSTAMsgStringMatch) {
+  using namespace tmr_listener;
+  using namespace motion_function;
+  using namespace prototype;
+  using namespace std::string_literals;
+
+  {
+    auto const command = TMSTA << InExtScriptCtlMode() << End();
+    EXPECT_EQ(command->to_str(), "$TMSTA,2,00,*41\r\n");
+  }
+
+  {
+    auto const command = TMSTA << QueueTagDone(15) << End();
+    EXPECT_EQ(command->to_str(), "$TMSTA,5,01,15,*6F\r\n");
+  }
+}
+
+TEST(TMMsgGen, TMSVRMsgStringMatch) {
   using namespace tmr_listener;
   using namespace std::string_literals;
 

@@ -20,6 +20,8 @@ A package that handles TM robot listen node and TM Ethernet Slave functionality.
 -   [TM Robot Ethernet Slave](#tm-robot-ethernet-slave)
     -   [Communication mode](#communication-mode)
     -   [Data Table](#data-table)
+    -   [Read / Write Request](#Read-/-Write-Request)
+    -   [Exported Data Table](#Exported-Data-Table-XML)
 -   [Unit Test](#Unit-Test)
 -   [TODO](#TODO)
 -   [Contact](#contact)
@@ -63,7 +65,8 @@ catkin build tmr_listener
 3.  run tmr_listener:
 
 ```sh
-roslaunch tmr_listener tmr_listener.launch
+roslaunch tmr_listener tmr_listener.launch  # for listen node
+roslaucnh tmr_listener tmr_eth_slave.launch # for ethernet slave
 ```
 
 -   Required Arguments:
@@ -75,7 +78,7 @@ roslaunch tmr_listener tmr_listener.launch
 
 In order to use `tmr_listener` , the running TMFlow project must contain the listen node, and can be reached by the control flow. 
 
-The implementation of `tmr_listener` is composed of three parts: (1) TCP/IP comm (via `boost::asio` ) (2) plugin manager (via `pluginlib` ), and (3) message generation (self implementation) and parsing (via `boost:: Spirit` ). 
+The implementation of `tmr_listener` is composed of three parts: (1) TCP/IP comm (via `boost::asio` ) (2) plugin manager (via `pluginlib` ), and (3) message generation (self implementation) and parsing (via `boost::Spirit` ). 
 
 Normally, one would only need to implement plugin for specific task (see [creating your own listener handle](#Creating-your-own-listener-handle)). `tmr_listener` also allows user to implement their own plugin manager for finer configuration (see next section).
 
@@ -108,6 +111,8 @@ class RTLibPluginManager final : public TMRPluginManagerBase {
 
 ```
 
+Beware: `tmr_listener::TMRobotListener` will not handle any of the exception raised inside `find_task_handler(std::string const&) const`. Therefore, **it is forbidden to throw exception without catching it inside the function.** Exception will be thrown if detected nullptr returned.
+
 In order to use your own plugin manager implementation, pass it to the constructor of `tmr_listener:: TMRobotListener` : 
 
 ```cpp
@@ -124,8 +129,6 @@ int main(int argc, char** argv) {
 }
 
 ```
-
-Beware: `tmr_listener::TMRobotListener` will not handle any of the exception raised inside `find_task_handler(std::string const&) const` , nor will it check the return value. Therefore, **it is forbidden to return empty shared_ptr / nullptr, or throw exception without catching it inside the function.**
 
 ### Creating your own listener handle
 
@@ -304,7 +307,11 @@ Under construction...
 
 ## TM Robot Ethernet Slave
 
-TM robot ethernet slave provides us a convinient way to read/write variables (global, predfined, and user defined variables). This package has full supports for read/write request and periodically updated data table. Users only need to make sure the item listed in data table is configured correctly.
+TM robot ethernet slave provides us a convinient way to read/write variables (global, predfined, and user defined variables). This package has full supports for read/write request and periodically updated data table. Users only need to make sure the item listed in data table is configured correctly and run the following command:
+
+```sh
+roslaunch tmr_listener tmr_eth_slave.launch # this will run tmr_eth_slave_node and tmr_eth_exported_dt_node
+```
 
 ### Communication Mode
 
@@ -346,7 +353,7 @@ void parsed_data_cb(tmr_listener::JsonDataArray::ConstPtr& t_msg) {
 
 ### Read / Write Request
 
-This package provides service, `/tm_ethernet_slave/tmsvr_cmd` , to read/write variables. For read operation, the `EthernetSlaveCmdRequest::value_list` must be left empty, since the read result is stored in it; as for write operation, `value_list.size() == item_list.size()` must hold, and the value of `item_list[i]` is `value_list[i]` .
+This package provides service, `/tm_ethernet_slave/tmsvr_cmd` , to read/write variables. For read operation, the `EthernetSlaveCmdRequest::value_list` must be left empty, ~~since the read result is stored in it~~ (**this is absurdly wrong, I'm getting fooled by the `MReq& req` in roscpp service call, LOL**); as for write operation, `value_list.size() == item_list.size()` must hold, and the value of `item_list[i]` is `value_list[i]` . (@todo I forgot the reason to not use an array of msg with item/value string instead of two separate string array)
 
 ```cpp
 // write operation
@@ -374,7 +381,21 @@ if (not ros::service::call("/tmr_eth_slave/tmsvr_cmd", cmd)) {
 
 ```
 
-### Unit Test
+### Exported Data Table XML
+
+**(Not tested yet, worked on my machine though)**
+
+If the data table you are going to use to receive data periodically is not going to change that frequently, you can let tmr_listener generate the message file for you. All you need to do is to export the data table, see the **Operation Interface** - **System Setting** - **Import/Export** in Software-Manual-TMFlow. The exported file is in XML format, then build tmr_listener, specifying the path to the exported xml:
+
+```cmake
+catkin build tmr_listener -DTM_ETHERNET_SLAVE_XML=path/to/your/xml/file
+```
+
+This command will generate `TMREthernet.msg` under `msg` directory, to recieve the data, subscribe to this topic `/tmr_eth_slave/exported_data_table`, thats is all!
+
+(**Note: Everytime the data table is changed and you still want to use this feature, remember to rebuild the package, otherwise the node will end immediately once it detect mismatched message**)
+
+## Unit Test
 
 To run unit test, copy paste the following lines to the terminal:
 
@@ -386,7 +407,7 @@ catkin build -v tmr_listener --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test
 
 Notice the option `-v` , **this is needed** since tmr_listener will determine whether the test is success by verbose output (for normal unit test, this is not needed, but because we are testing code that can't even compile, the only thing we can depend on is the result output by the compiler).
 
-### TODO
+## TODO
 
 -   General
     -   More Unit test
@@ -401,17 +422,19 @@ Notice the option `-v` , **this is needed** since tmr_listener will determine wh
         -   load plugin dynamically
         -   listener services
 -   TM external script language 
+    -   Command as expression, so that `bool res = Vision_IsJobAvailable("job1")` is valid declaration 
     -   Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
     -   consider function accepting types that can be implicitly converted to the desired type
     -   TM functions, and project variables
     -   MUST disable user construct Expression from string, only internally usable
     -   Reply if tm message not yet respond is bugged since the response is not queued, fix it in the future
+    -   Consider API versioning
 
-### Contact
+## Contact
 
 Jacky Tseng (master branch, WIP/TMSVR, WIP/server_mock) - jacky.tseng@gyro.com.tw
 
-### Reference
+## Reference
 
 1.  [TM expression editor and listen node reference manual](https://assets.omron.com/m/1d1932319ce3e3b3/original/TM-Expression-Editor-Manual.pdf)
 2.  [pluginlib tutorial](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin)
@@ -420,6 +443,7 @@ Jacky Tseng (master branch, WIP/TMSVR, WIP/server_mock) - jacky.tseng@gyro.com.t
 5.  [boost asio for tcp socket programming](https://www.boost.org/doc/libs/1_58_0/doc/html/boost_asio.html)
 6.  [cpp starter project](https://github.com/lefticus/cpp_starter_project)
 
-### Notes
+## Notes
 
 -   [Memory leak issue due to plugin lib](https://github.com/ros/class_loader/issues/131)
+-   [undefined behavior in boost::format](https://svn.boost.org/trac10/ticket/11632)

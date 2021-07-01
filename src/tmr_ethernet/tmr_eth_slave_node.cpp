@@ -3,9 +3,9 @@
 
 #include <ros/ros.h>
 
-int main(int argc, char **argv) {
-  ros::init(argc, argv, "tmr_ethernet_slave");
-  ros::NodeHandle nh{"/tmr_ethernet_slave"};
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "tmr_eth_slave");
+  ros::NodeHandle nh{"/tmr_eth_slave"};
 
   using namespace boost::program_options;
   auto const common_opt = tmr_listener::common_option();
@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
 
   auto const ip = opt_map["ip"].as<std::string>();
 
-  tmr_listener::TMRobotEthSlave eth{ip};
+  tmr_listener::TMRobotEthSlave eth{ip, nh};
   eth.start();
 
   return EXIT_SUCCESS;

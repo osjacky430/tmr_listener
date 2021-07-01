@@ -21,7 +21,7 @@ class TMRobotEthSlave {
 
   TMRobotTCP comm_;
 
-  ros::NodeHandle private_nh_{"~"};
+  ros::NodeHandle private_nh_;
   ros::Publisher raw_data_table_pub_{private_nh_.advertise<std_msgs::String>("raw_data_table", 1)};
   ros::Publisher processed_data_table_pub_{private_nh_.advertise<tmr_listener::JsonDataArray>("parsed_data_table", 1)};
   ros::ServiceServer tmsvr_cmd_srv_{private_nh_.advertiseService("tmsvr_cmd", &TMRobotEthSlave::send_tmsvr_cmd, this)};
@@ -30,7 +30,6 @@ class TMRobotEthSlave {
   typename TMSVRPacket::DataFrame server_response_;
   boost::condition_variable response_signal_;
   boost::mutex rx_buffer_mutex_;
-  boost::asio::signal_set sigterm_handler_{comm_.get_io_service(), SIGINT};
 
   void parse_input_msg(std::string const& t_input);
 
@@ -45,23 +44,16 @@ class TMRobotEthSlave {
   bool send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSlaveCmdResponse& t_resp);
 
  public:
-  explicit TMRobotEthSlave(std::string const& t_ip) noexcept
+  explicit TMRobotEthSlave(std::string const& t_ip, ros::NodeHandle t_nh = ros::NodeHandle{"/tmr_eth_slave"}) noexcept
     : comm_{TMRobotTCP::Callback{[this](auto&& t_ph) { this->parse_input_msg(std::forward<decltype(t_ph)>(t_ph)); }},
-            ETHERNET_SLAVE_PORT, t_ip} {}
+            ETHERNET_SLAVE_PORT, t_ip},
+      private_nh_{t_nh} {}
 
   /**
    * @brief This function is the entry point to the TCP/IP connection, it initiates the thread loop and runs io services
    *        in the background
    */
   void start() noexcept;
-
-  /**
-   * @brief Since the service might be waiting for TM server response forever, we need to take care of SIGINT manually
-   *        these two things happened at the same time
-   *
-   * @param t_err Error code
-   */
-  void sigterm_handler(boost::system::error_code t_err, int /* unused */) noexcept;
 };
 
 }  // namespace tmr_listener

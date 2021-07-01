@@ -30,10 +30,12 @@ void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) {
 
   if (t_err) {  // NOLINT boost pre c++11 safe bool idiom
     ROS_ERROR_STREAM_THROTTLE_NAMED(1.0, "tm_socket_connection",
-                                    "Connection error, reason: " << t_err.message() << ", retrying...");
+                                    this->print_ip_port() << " Connection error, reason: "  //
+                                                          << t_err.message() << ", retrying...");
     this->listener_.async_connect(this->tm_robot_, [this](auto t_error) { this->handle_connection(t_error); });
   } else {
-    ROS_INFO_STREAM_NAMED("tm_socket_connection", "Connection success, waiting for server response");
+    ROS_INFO_STREAM_NAMED("tm_socket_connection", this->print_ip_port()
+                                                    << " Connection success, waiting for server response");
 
     this->is_connected_ = true;
     auto const callback = [this](auto t_error, auto t_tx_byte_num) { this->handle_read(t_error, t_tx_byte_num); };
@@ -68,8 +70,8 @@ void TMRobotTCP::handle_read(boost::system::error_code const &t_err, size_t cons
     auto const callback = [this](auto t_error, auto t_tx_byte_num) { this->handle_read(t_error, t_tx_byte_num); };
     boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE, callback);
   } else {
-    ROS_ERROR_STREAM_NAMED("tm_listener_node", "Read Error: " << t_err.message());
-    ROS_ERROR_STREAM_NAMED("tm_socket_connection", "Read Error detected, reconnecting...");
+    ROS_ERROR_STREAM_NAMED("tm_listener_node", this->print_ip_port() << " Read Error: " << t_err.message());
+    ROS_ERROR_STREAM_NAMED("tm_socket_connection", this->print_ip_port() << " Read Error detected, reconnecting...");
 
     this->reconnect();
   }
@@ -85,8 +87,8 @@ void TMRobotTCP::handle_write(boost::system::error_code const &t_err, size_t con
       this->cb_.msg_sent_(t_byte_writtened);
     }
   } else {
-    ROS_ERROR_STREAM_NAMED("tm_listener_node", "Write Error: " << t_err.message());
-    ROS_ERROR_STREAM_NAMED("tm_socket_connection", "Write Error detected, reconnecting...");
+    ROS_ERROR_STREAM_NAMED("tm_listener_node", this->print_ip_port() << " Write Error: " << t_err.message());
+    ROS_ERROR_STREAM_NAMED("tm_socket_connection", this->print_ip_port() << " Write Error detected, reconnecting...");
 
     this->reconnect();
   }
@@ -101,10 +103,12 @@ void TMRobotTCP::reconnect() {
 }
 
 void TMRobotTCP::stop() noexcept {
-  this->is_connected_ = false;
-  boost::system::error_code ignore_error_code;
-  this->listener_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_error_code);
-  this->listener_.close(ignore_error_code);
+  this->io_service_.dispatch([this]() {
+    this->is_connected_ = false;
+    boost::system::error_code ignore_error_code;
+    this->listener_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_error_code);
+    this->listener_.close(ignore_error_code);
+  });
 }
 
 void TMRobotTCP::start_tcp_comm() {
@@ -113,7 +117,8 @@ void TMRobotTCP::start_tcp_comm() {
   try {
     this->io_service_.run();
   } catch (std::exception &e) {
-    ROS_ERROR_STREAM_COND_NAMED(ros::ok(), "tm_listener_connection", "Exception: " << e.what());
+    ROS_ERROR_STREAM_COND_NAMED(ros::ok(), "tm_listener_connection",
+                                this->print_ip_port() << " Exception: " << e.what());
   }
 }
 

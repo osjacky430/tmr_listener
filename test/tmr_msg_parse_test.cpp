@@ -112,6 +112,38 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
   }
 }
 
+TEST(SpiritParse, TMSTAResponseMatch) {
+  using namespace tmr_listener;
+  using namespace std::string_literals;
+
+  {
+    constexpr auto response = "$TMSTA,29,00,true,UltrasonicFail,-12131,*5B\r\n";
+
+    auto const parsed = TMSTAHeader::parse(response);
+    auto const cmd    = boost::get<detail::TMSTATag::DataFormat::Subcmd00Resp>(&parsed.data_.resp_);
+    ASSERT_TRUE(cmd != nullptr);
+
+    auto const script_result = boost::get<0>(*cmd);
+    EXPECT_TRUE(script_result);
+
+    auto const in_listen_node_msg = boost::get<1>(*cmd);
+    EXPECT_EQ(in_listen_node_msg, "UltrasonicFail,-12131");
+  }
+
+  {
+    constexpr auto response = "$TMSTA,10,01,08,true,*6D\r\n";
+    auto const parsed       = TMSTAHeader::parse(response);
+    auto const cmd          = boost::get<detail::TMSTATag::DataFormat::Subcmd01Resp>(&parsed.data_.resp_);
+    ASSERT_TRUE(cmd != nullptr);
+
+    auto const tag_number = boost::get<0>(*cmd);
+    EXPECT_EQ(tag_number, "08");
+
+    auto const tag_number_status = boost::get<1>(*cmd);
+    EXPECT_EQ(tag_number_status, TagNumberStatus::Complete);
+  }
+}
+
 TEST(SpiritParse, CPERRResponseMatch) {
   using namespace tmr_listener;
   using namespace std::string_literals;
