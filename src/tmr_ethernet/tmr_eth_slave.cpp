@@ -36,6 +36,7 @@ void TMRobotEthSlave::parse_input_msg(std::string const& t_input) {
     }(parsed_content);
     this->processed_data_table_pub_.publish(processed_data);
   } else {
+    boost::unique_lock<boost::mutex> const lock{this->rx_buffer_mutex_};
     this->server_response_ = parsed_data.data_;
     this->responded_       = true;
     this->response_signal_.notify_all();

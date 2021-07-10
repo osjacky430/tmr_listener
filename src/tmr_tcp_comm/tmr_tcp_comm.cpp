@@ -37,7 +37,7 @@ void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) {
     ROS_INFO_STREAM_NAMED("tm_socket_connection", this->print_ip_port()
                                                     << " Connection success, waiting for server response");
 
-    this->is_connected_ = true;
+    this->is_connected_.store(true);
     auto const callback = [this](auto t_error, auto t_tx_byte_num) { this->handle_read(t_error, t_tx_byte_num); };
     boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE, callback);
   }
@@ -104,7 +104,7 @@ void TMRobotTCP::reconnect() {
 
 void TMRobotTCP::stop() noexcept {
   this->io_service_.dispatch([this]() {
-    this->is_connected_ = false;
+    this->is_connected_.store(false);
     boost::system::error_code ignore_error_code;
     this->listener_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_error_code);
     this->listener_.close(ignore_error_code);

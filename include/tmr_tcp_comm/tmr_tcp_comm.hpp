@@ -6,6 +6,7 @@
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <string>
 
@@ -37,7 +38,7 @@ class TMRobotTCP {
    */
   void stop() noexcept;
 
-  bool is_connected() const noexcept { return this->is_connected_; }
+  bool is_connected() const noexcept { return this->is_connected_.load(); }
 
   /**
    * @brief This function write the input value to TM server
@@ -67,7 +68,7 @@ class TMRobotTCP {
   std::string output_buffer_;
 
   Callback cb_;
-  bool is_connected_ = false;
+  std::atomic_bool is_connected_{false};
 
   static constexpr auto MESSAGE_END_BYTE = "\r\n"; /* !< TM script message ends with this 2 bytes, \r\n */
 

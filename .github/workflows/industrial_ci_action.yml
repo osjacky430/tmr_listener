@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     env:
-      CCACHE_DIR: /github/home/.ccache
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
       CODACY_PROJ_TOK: ${{ secrets.CODACY_PROJECT_TOKEN }}
       AFTER_RUN_TARGET_TEST: "cd /root/target_ws && catkin build -v tmr_listener -j1 --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test"
     strategy:

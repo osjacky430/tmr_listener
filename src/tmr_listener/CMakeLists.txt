@@ -4,4 +4,4 @@ target_link_libraries(tmr_listener PUBLIC tmr_tcp_comm tmr_ext_script PRIVATE pr
 target_compile_options(tmr_listener PUBLIC "-Wfatal-errors")
 
 add_executable(tmr_listener_node tmr_listener_node.cpp)
-target_link_libraries(tmr_listener_node PUBLIC tmr_listener)
+target_link_libraries(tmr_listener_node PUBLIC tmr_listener project_options)
