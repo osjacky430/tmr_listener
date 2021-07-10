@@ -1,6 +1,6 @@
 # TM Robot Listener
 
-![GitHub Workflow Status](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Grade)
+[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=WIP%2FTMSVR&event=push)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Grade)
 
 A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave, but still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
 
@@ -447,3 +447,4 @@ Jacky Tseng (master branch, WIP/TMSVR, WIP/server_mock) - jacky.tseng@gyro.com.t
 
 -   [Memory leak issue due to plugin lib](https://github.com/ros/class_loader/issues/131)
 -   [undefined behavior in boost::format](https://svn.boost.org/trac10/ticket/11632)
+-   [gcc ubsan + asan log_path bug](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94328)
