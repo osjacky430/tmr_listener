@@ -78,7 +78,7 @@ struct FunctionSet {
     static_assert(not std::is_same<FindResult, EndType>::value, "Function signature not match");
 
     constexpr TargetFunctor function_call;
-    return Command<Tag>{function_call(PrintPolicy{}, this->name_.to_std_str(), t_arguments...)};
+    return Command<Tag, RetType>{function_call(PrintPolicy{}, this->name_.to_std_str(), t_arguments...)};
   }
 };
 

@@ -68,8 +68,8 @@ struct TMSCTTag {
      *
      * @note templated here because I wanted to handle the compile error myself
      */
-    template <typename Tag>
-    static void check(std::vector<std::string>& t_content_holder, Command<Tag> const& t_cmd) noexcept {
+    template <typename Tag, typename UType>
+    static void check(std::vector<std::string>& t_content_holder, Command<Tag, UType> const& t_cmd) noexcept {
       static_assert(std::is_same<Tag, TMSCTTag>::value, "This command cannot be used by TMSCT");
       t_content_holder.push_back(t_cmd.to_str());
     }

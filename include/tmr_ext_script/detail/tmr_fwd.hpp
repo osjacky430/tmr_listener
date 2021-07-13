@@ -7,7 +7,7 @@ namespace tmr_listener {
 template <typename Type> struct Expression;
 template <typename Type> class Variable;
 
-template <typename Tag> class Command;
+template <typename Tag, typename UType> class Command;
 template <typename Tag> class Header;
 template <typename Tag> class HeaderProductBuilder;
 // clang-format on

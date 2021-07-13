@@ -44,9 +44,8 @@ jobs:
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       NOT_TEST_BUILD: true
-      IMMEDIATE_TEST_OUTPUT: true
       DOCKER_SANITIZER_REPORT_DIR: /root/target_ws/src/tmr_listener/sanitizer_report
-      SANITIZER_REPORT_DIR: ${{ github.workspace }}/shared
+      HOST_SANITIZER_REPORT_DIR: ${{ github.workspace }}/shared
       BEFORE_INIT:
         'apt -y update && apt -y upgrade && apt -y install wget gnupg2 software-properties-common apt-transport-https &&
         wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg2 --dearmor - |
@@ -54,15 +53,15 @@ jobs:
         apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" &&
         apt -y update && apt -y install cmake'
       AFTER_BUILD_TARGET_WORKSPACE:
-        'mkdir -p /root/target_ws/src/tmr_listener/sanitizer_report && cd /root/target_ws &&
-        ${{ matrix.RT_FLAG }} catkin run_tests tmr_listener -j1 &&
-        echo "moveing directory /root/target_ws/src/tmr_listener/sanitizer_report to /shared" &&
-        mv /root/target_ws/src/tmr_listener/sanitizer_report/ /shared &&
-        echo "/shared contains: " && ls -lt /shared/sanitizer_report'
+        'mkdir -p $SANITIZER_REPORT_DIR && cd /root/target_ws &&
+        ${{ matrix.sanitizer_options }}_OPTIONS=log_path=$SANITIZER_REPORT_DIR/${{ matrix.sanitizer_options }}-$ROS_DISTRO.log:${{ matrix.RT_FLAG }} catkin run_tests tmr_listener -j1 &&
+        echo "moving directory $SANITIZER_REPORT_DIR to /shared" &&
+        mv $SANITIZER_REPORT_DIR/ /shared &&
+        echo "/shared " && ls -lt /shared/sanitizer_report'
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-16.04]
-        sanitizer_options: [TSAN, MSAN, ASAN, UBSAN]
+        sanitizer_options: [TSAN, ASAN, UBSAN]
         include:
           - os: ubuntu-16.04
             ROS_DISTRO: kinetic
@@ -71,28 +70,26 @@ jobs:
             ROS_REPO: main
 
           - sanitizer_options: TSAN
-            RT_FLAG: TSAN_OPTIONS="detect_deadlocks=0:log_path=$SANITIZER_REPORT_DIR/tsan-$ROS_DISTRO.log"
-          - sanitizer_options: MSAN
-            RT_FLAG: MSAN_OPTIONS="log_path=$SANITIZER_REPORT_DIR/msan-$ROS_DISTRO.log"
+            RT_FLAG: detect_deadlocks=0:suppressions=/root/target_ws/src/tmr_listener/tool/sanitizer/tsan.supp
           - sanitizer_options: ASAN
-            RT_FLAG: ASAN_OPTIONS="detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:log_path=$SANITIZER_REPORT_DIR/asan-$ROS_DISTRO.log"
+            RT_FLAG: detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:check_initialization_order=1
           - sanitizer_options: UBSAN
-            RT_FLAG: UBSAN_OPTIONS="log_path=$SANITIZER_REPORT_DIR/ubsan-$ROS_DISTRO.log"
+            RT_FLAG: ""
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.ROS_DISTRO }}-${{ matrix.ROS_REPO }}-${{ matrix.sanitizer_options }}
-      - run: mkdir ${{ env.SANITIZER_REPORT_DIR }}
+      - run: mkdir ${{ env.HOST_SANITIZER_REPORT_DIR }}
       - uses: ros-industrial/industrial_ci@master
         env:
           ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
           CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON -DENABLE_${{ matrix.sanitizer_options }}=ON
           ADDITIONAL_DEBS: "ros-${{ matrix.ROS_DISTRO }}-rosbash"
-          DOCKER_RUN_OPTS: " -e SANITIZER_REPORT_DIR=${{ env.DOCKER_SANITIZER_REPORT_DIR }} -v ${{ env.SANITIZER_REPORT_DIR }}:/shared"
-      - run: ls -lt ${{ env.SANITIZER_REPORT_DIR }}/sanitizer_report && sudo chmod -R a+r ${{ env.SANITIZER_REPORT_DIR }}/sanitizer_report
+          DOCKER_RUN_OPTS: "-e SANITIZER_REPORT_DIR=${{ env.DOCKER_SANITIZER_REPORT_DIR }} -v ${{ env.HOST_SANITIZER_REPORT_DIR }}:/shared"
+      - run: ls -lt ${{ env.HOST_SANITIZER_REPORT_DIR }}/sanitizer_report && sudo chmod -R a+r ${{ env.HOST_SANITIZER_REPORT_DIR }}/sanitizer_report
       - uses: actions/upload-artifact@v2
         with:
           name: sanitizer-report
-          path: ${{ env.SANITIZER_REPORT_DIR }}
+          path: ${{ env.HOST_SANITIZER_REPORT_DIR }}

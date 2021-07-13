@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(tmr_listener)
+project(tmr_listener VERSION 0.1.0)
+
+configure_file(${CMAKE_SOURCE_DIR}/include/version.hpp.in ${CMAKE_SOURCE_DIR}/include/version.hpp @ONLY)
+
+if (POLICY CMP0069)
+  cmake_policy(SET CMP0069 NEW) # for IPO
+endif ()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(StandardProjectSetting)

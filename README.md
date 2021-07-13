@@ -439,7 +439,7 @@ Jacky Tseng (master branch, WIP/TMSVR, WIP/server_mock) - jacky.tseng@gyro.com.t
 1.  [TM expression editor and listen node reference manual](https://assets.omron.com/m/1d1932319ce3e3b3/original/TM-Expression-Editor-Manual.pdf)
 2.  [pluginlib tutorial](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin)
 3.  [the performance benefits of final classes](https://devblogs.microsoft.com/cppblog/the-performance-benefits-of-final-classes/)
-4.  [Professional CMake - A practical guide, P122. ~ P126.](https://crascit.com/professional-cmake/)
+4.  [Professional CMake - A practical guide](https://crascit.com/professional-cmake/)
 5.  [boost asio for tcp socket programming](https://www.boost.org/doc/libs/1_58_0/doc/html/boost_asio.html)
 6.  [cpp starter project](https://github.com/lefticus/cpp_starter_project)
 
@@ -448,3 +448,4 @@ Jacky Tseng (master branch, WIP/TMSVR, WIP/server_mock) - jacky.tseng@gyro.com.t
 -   [Memory leak issue due to plugin lib](https://github.com/ros/class_loader/issues/131)
 -   [undefined behavior in boost::format](https://svn.boost.org/trac10/ticket/11632)
 -   [gcc ubsan + asan log_path bug](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94328)
+-   [asan comes with lsan](https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer)

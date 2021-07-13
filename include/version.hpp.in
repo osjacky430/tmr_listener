@@ -1,0 +1,18 @@
+#ifndef TMR_LISTENER_VERSION_HPP_
+#define TMR_LISTENER_VERSION_HPP_
+
+namespace tmr_listener {
+
+static constexpr auto TMR_LISTENER_VERSION_STRING() noexcept { return "@tmr_listener_VERSION@"; }
+
+static constexpr auto TMR_LISTENER_VERSION_MAJOR() noexcept { return @tmr_listener_VERSION_MAJOR@ + 0; }
+
+static constexpr auto TMR_LISTENER_VERSION_MINOR() noexcept { return @tmr_listener_VERSION_MINOR@ + 0; }
+
+static constexpr auto TMR_LISTENER_VERSION_PATCH() noexcept { return @tmr_listener_VERSION_PATCH@ + 0; }
+
+static constexpr auto TMR_LISTENER_VERSION_TWEAK() noexcept { return @tmr_listener_VERSION_TWEAK@ + 0; }
+
+}  // namespace tmr_listener
+
+#endif

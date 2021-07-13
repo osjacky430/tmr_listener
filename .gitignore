@@ -3,3 +3,5 @@ run_tests_pretty_output.py
 
 .vscode
 msg/TMREthernet.msg
+
+include/version.hpp

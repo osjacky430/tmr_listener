@@ -176,6 +176,21 @@ TEST(ExpressionTest, BinaryOperator) {
   }
 }
 
+TEST(TMMsgGen, CommandAsExpression) {
+  using namespace tmr_listener;
+  using namespace motion_function;
+  using namespace std::string_literals;
+
+  // the point here is to make sure the type of expression for the motion function is correct
+  auto const change_base_command = ChangeBase("RobotBase"s);
+  static_assert(std::is_same<decltype(change_base_command.as_expression()), Expression<bool>>::value, "Type not match");
+  EXPECT_EQ(change_base_command.as_expression().to_str(), R"(ChangeBase("RobotBase"))"s);
+
+  auto const wait_queue_tag = WaitQueueTag(1);
+  static_assert(std::is_same<decltype(wait_queue_tag.as_expression()), Expression<int>>::value, "Type not match");
+  EXPECT_EQ(wait_queue_tag.as_expression().to_str(), "WaitQueueTag(1)"s);
+}
+
 TEST(TMMsgGen, TMSCTStringMatch) {
   using namespace tmr_listener;
   using namespace motion_function;
