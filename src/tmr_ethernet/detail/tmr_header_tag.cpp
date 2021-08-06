@@ -29,17 +29,17 @@ ParseRule<TMSVRJsonData>& TMSVRJsonData::parsing_rule() noexcept {
 namespace tmr_listener {
 namespace detail {
 
-ParseRule<TMSVRTag::DataFormat>& TMSVRTag::DataFormat::parsing_rule() noexcept {
+ParseRule<TMSVRTag::DataFrame>& TMSVRTag::DataFrame::parsing_rule() noexcept {
   static ParseRule<std::string> const id_rule = +(char_ - ",");
   static ParseRule<Mode> const mode_rule      = int_[_val = static_cast_<Mode>(boost::spirit::qi::_1)];
 
   static ParseRule<std::string> const raw_content_rule = +(char_ - ",*");
 
-  static ParseRule<DataFormat> rule = id_rule >> ',' >> mode_rule >> ',' >> raw_content_rule;
+  static ParseRule<DataFrame> rule = id_rule >> ',' >> mode_rule >> ',' >> raw_content_rule;
   return rule;
 }
 
-TMSVRTag::DataFormat::Data TMSVRTag::DataFormat::parse_raw_content(std::string t_raw_content) {
+TMSVRTag::DataFrame::Data TMSVRTag::DataFrame::parse_raw_content(std::string t_raw_content) {
   using JsonArray = std::vector<TMSVRJsonData>;
 
   static ParseRule<JsonArray> const data_rule = '[' >> *(TMSVRJsonData::parsing_rule() >> *lit(',')) >> ']';
@@ -67,8 +67,8 @@ void TMSVRTag::BuildRule::check(std::vector<std::string>& t_content_holder, TMSV
 }
 
 std::string TMSVRTag::assemble(std::vector<std::string> const& t_content) noexcept {
-  auto const id      = t_content[0];
-  auto const mode    = t_content[1];
+  auto const id      = t_content.at(0);
+  auto const mode    = t_content.at(1);
   auto const content = std::vector<std::string>{t_content.begin() + 2, t_content.end()};
   return id + ',' + mode + ",[" + boost::algorithm::join(content, ",") + ']';
 }
@@ -77,4 +77,4 @@ std::string TMSVRTag::assemble(std::vector<std::string> const& t_content) noexce
 }  // namespace tmr_listener
 
 BOOST_FUSION_ADAPT_STRUCT(tmr_listener::TMSVRJsonData, item_, value_)
-BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSVRTag::DataFormat, id_, mode_, raw_content_)
+BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSVRTag::DataFrame, id_, mode_, raw_content_)

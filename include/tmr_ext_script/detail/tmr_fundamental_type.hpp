@@ -46,9 +46,9 @@ class FundamentalType {
   using underlying_t = Type;
 
   constexpr FundamentalType() = default;
-  constexpr FundamentalType(operating_t const& t_val) : val_(t_val) {}     // NOLINT
-  constexpr FundamentalType(Type const& t_val) : val_(t_val) {}            // NOLINT
-  constexpr FundamentalType(Variable<Type> const& t_val) : val_(t_val) {}  // NOLINT
+  constexpr FundamentalType(operating_t const& t_val) : val_(t_val) {}                           // NOLINT
+  constexpr FundamentalType(Type const& t_val) noexcept(noexcept(Type(t_val))) : val_(t_val) {}  // NOLINT
+  constexpr FundamentalType(Variable<Type> const& t_val) : val_(t_val) {}                        // NOLINT
 
   std::string to_str() const noexcept {
     if (auto const val = boost::get<Variable<Type>>(&this->val_)) {

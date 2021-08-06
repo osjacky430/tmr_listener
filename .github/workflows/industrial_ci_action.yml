@@ -70,11 +70,11 @@ jobs:
             ROS_REPO: main
 
           - sanitizer_options: TSAN
-            RT_FLAG: detect_deadlocks=0:suppressions=/root/target_ws/src/tmr_listener/tool/sanitizer/tsan.supp
+            RT_FLAG: detect_deadlocks=0:suppressions=/root/target_ws/src/tmr_listener/tool/sanitizer/tsan.supp:exitcode=0
           - sanitizer_options: ASAN
-            RT_FLAG: detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:check_initialization_order=1
+            RT_FLAG: detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:check_initialization_order=1:exitcode=0
           - sanitizer_options: UBSAN
-            RT_FLAG: ""
+            RT_FLAG: exitcode=0
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2

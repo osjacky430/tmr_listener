@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "tmr_utility/tmr_parser.hpp"
+#include "version.hpp"
 
 namespace tmr_listener {
 
@@ -27,7 +28,28 @@ inline auto calculate_checksum(std::string const& t_data) {
 /**
  * @brief Utility class for tag dispatch
  */
-struct ScriptExit {};
+struct ScriptExit {
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+  enum class Result { ScriptFail, ScriptPass = 1 };
+
+  struct WithPriority {
+    Result result_ = Result::ScriptPass;
+    explicit constexpr WithPriority(Result const t_result) noexcept : result_{t_result} {}
+  };
+#endif
+};
+
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+
+struct StopAndClearBuffer {
+  enum class Option { ClearCurrentPacket = 0, ClearAndExitCurrent = 1, ClearAllPacket = 2 };
+  struct WithPriority {
+    Option option_ = Option::ClearCurrentPacket;
+    explicit constexpr WithPriority(Option const t_option) noexcept : option_{t_option} {}
+  };
+};
+
+#endif
 
 /**
  * @brief Utility class for tag dispatch
@@ -60,8 +82,13 @@ struct MessageBase {
   MessageBase& operator=(MessageBase&&) /*unused*/ = default;
 
   virtual bool empty() const noexcept           = 0;
+  virtual std::size_t cmd_size() const noexcept = 0;
   virtual std::string to_str() const noexcept   = 0;
   virtual bool has_script_exit() const noexcept = 0;
+
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+  virtual bool use_priority_cmd() const noexcept = 0;
+#endif
 
   virtual ~MessageBase() = default;
 };
@@ -72,15 +99,15 @@ class Message final : public MessageBase {
   bool scriptExit_ = false;
   bool ended_      = false;
 
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+  bool is_priority_ = false;
+#endif
+
   std::vector<std::string> content_;
 
-  /**
-   * @brief This function is getter function to check if the command list is empty or not
-   *
-   * @return true   Command list is empty
-   * @return false  Command list is not empty
-   */
   bool empty() const noexcept override { return this->content_.empty(); }
+
+  std::size_t cmd_size() const noexcept override { return this->content_.size(); }
 
   /**
    * @brief This function converts appended commands to string to send to TM listen node server
@@ -99,13 +126,11 @@ class Message final : public MessageBase {
     return result + "*" + calculate_checksum(result) + "\r\n";
   }
 
-  /**
-   * @brief This function returns if the command contains script exit
-   *
-   * @return true
-   * @return false
-   */
   bool has_script_exit() const noexcept override { return this->scriptExit_; }
+
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+  bool use_priority_cmd() const noexcept override { return this->is_priority_; }
+#endif
 };
 
 /**
@@ -114,8 +139,13 @@ class Message final : public MessageBase {
 template <>
 struct Message<void> final : public MessageBase {
   bool empty() const noexcept override { return true; }
+  std::size_t cmd_size() const noexcept override { return 0; }
   std::string to_str() const noexcept override { return ""; }
   bool has_script_exit() const noexcept override { return false; }
+
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+  bool use_priority_cmd() const noexcept override { return false; }
+#endif
 };
 
 template <typename Impl>
@@ -125,6 +155,22 @@ struct MessageBuilder {
   Message<Impl> result_;
 
  public:
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+  [[gnu::warn_unused_result]] auto operator<<(ScriptExit::WithPriority const t_script_exit) noexcept {
+    Impl::BuildRule::check(this->result_.content_, t_script_exit);
+    this->result_.scriptExit_  = true;
+    this->result_.is_priority_ = true;
+    return boost::make_shared<Message<Impl>>(this->result_);
+  }
+
+  [[gnu::warn_unused_result]] auto operator<<(StopAndClearBuffer::WithPriority const t_stop_clear_buffer) noexcept {
+    Impl::BuildRule::check(this->result_.content_, t_stop_clear_buffer);
+    this->result_.ended_       = true;
+    this->result_.is_priority_ = true;
+    return boost::make_shared<Message<Impl>>(this->result_);
+  }
+#endif
+
   /**
    * @brief operator<< for implementation of fluent interface
    *
@@ -148,7 +194,7 @@ struct MessageBuilder {
    * @param t_exit  ScriptExit instance, the struct is merely used for tag dispatch
    * @return share pointer of the result
    */
-  auto operator<<(ScriptExit /*unused*/) noexcept {
+  [[gnu::warn_unused_result]] auto operator<<(ScriptExit /*unused*/) noexcept {
     Impl::BuildRule::check(this->result_.content_, ScriptExit{});
     this->result_.scriptExit_ = true;
     return boost::make_shared<Message<Impl>>(this->result_);
@@ -160,7 +206,7 @@ struct MessageBuilder {
    * @param t_end  End instance, the struct is merely used for tag dispatch
    * @return share pointer of the result
    */
-  auto operator<<(End /*unused*/) noexcept {
+  [[gnu::warn_unused_result]] auto operator<<(End /*unused*/) noexcept {
     this->result_.ended_ = true;
     return boost::make_shared<Message<Impl>>(this->result_);
   }
@@ -208,7 +254,7 @@ struct Header {
    * @class @class This class holds the information of the format of the packet, and its parsing rule
    */
   struct Packet {
-    using DataFrame = typename Impl::DataFormat;
+    using DataFrame = typename Impl::DataFrame;
 
     std::size_t length_ = 0;
     DataFrame data_{};

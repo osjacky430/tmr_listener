@@ -34,6 +34,7 @@ class ListenerHandle {
 
   virtual void response_msg(TMSTAResponse::Subcmd00 const& /*unused*/) {}
   virtual void response_msg(TMSTAResponse::Subcmd01 const& /*unused*/) {}
+  virtual void response_msg(TMSTAResponse::DataMsg const& /*unused*/) {}
   virtual void response_msg(TMSCTResponse const& /*unused*/) {}
   virtual void response_msg(CPERRResponse const& /*unused*/) {}
   virtual void response_msg() {}
@@ -55,14 +56,14 @@ class ListenerHandle {
  public:
   /**
    * @brief This function parses the message TM sent when entered listen node, and check if the handler is the one to
-   *        handle the task
+   *        handle the task, by calling start_task, which is implemented by the user
    *
    * @param t_data  message sent from TM when entered listener mode
    *
    * @return Decision::Accept   informs listener to use current handler to send message to TM
    * @return Decision::Ignore   informs listener not to use current handler
    */
-  Decision start_task_handling(std::string const& t_data) noexcept;
+  Decision start_task_handling(std::string const& t_data);
 
   /**
    * @brief This function parses the messages sent from TM, after parsing the messages, it will call one of the
@@ -71,7 +72,7 @@ class ListenerHandle {
    * @param t_packet  message sent from TM
    */
   template <typename T>
-  void handle_response(T const& t_packet) noexcept {
+  void handle_response(T const& t_packet) {
     this->responded_ = MessageStatus::Responded;
     this->response_msg(t_packet);
     this->response_msg();
@@ -80,7 +81,7 @@ class ListenerHandle {
   /**
    * @brief This function is called when the connection is lost due to external reasons (e.g. TM robot forced shutdown),
    *        it is suggested to override this function to reset all states, otherwise this handler will continue execute
-   *        things that is not yet finished last time
+   *        things that is not yet finished last time if it is chosen by tmr_listener again
    *
    * @note  Connection lost is not exactly equal to ErrorCode::NotInListenNode
    */

@@ -2,6 +2,7 @@
 
 #include "tmr_ethernet/tmr_eth_rw.hpp"
 #include "tmr_ext_script/tmr_motion_function.hpp"
+#include "tmr_ext_script/tmr_parameterized_object.hpp"
 
 TEST(ChecksumTest, ChecksumStringMatch) {
   using namespace tmr_listener;
@@ -207,7 +208,7 @@ TEST(TMMsgGen, TMSCTStringMatch) {
     EXPECT_EQ(command->to_str(), "$TMSTA,5,01,88,*6B\r\n");
   }
 
-  {
+  {  // building command in single step
     Variable<std::array<float, 6>> targetP1{"targetP1"};
     Variable<std::array<float, 6>> targetP2{"targetP2"};
 
@@ -216,6 +217,24 @@ TEST(TMMsgGen, TMSCTStringMatch) {
                                << declare(targetP2, std::array<float, 6>{90, -35, 125, 0, 90, 0})
                                << PTP("JPP"s, targetP2, 10, 200, 10, false) << QueueTag(2) << End();
     EXPECT_EQ(command->to_str(),
+              "$TMSCT,176,2,float[] targetP1={205,-35,125,0,90,0}\r\n"
+              "PTP(\"JPP\",targetP1,10,200,0,false)\r\n"
+              "QueueTag(1)\r\n"
+              "float[] targetP2={90,-35,125,0,90,0}\r\n"
+              "PTP(\"JPP\",targetP2,10,200,10,false)\r\n"
+              "QueueTag(2),*54\r\n");
+  }
+
+  {  // building command multistepped
+    Variable<std::array<float, 6>> targetP1{"targetP1"};
+    Variable<std::array<float, 6>> targetP2{"targetP2"};
+
+    auto command = TMSCT << ID{"2"} << declare(targetP1, std::array<float, 6>{205, -35, 125, 0, 90, 0});
+    command << PTP("JPP"s, targetP1, 10, 200, 0, false) << QueueTag(1);
+    command << declare(targetP2, std::array<float, 6>{90, -35, 125, 0, 90, 0});
+    command << PTP("JPP"s, targetP2, 10, 200, 10, false) << QueueTag(2);
+    auto const result = command << End();
+    EXPECT_EQ(result->to_str(),
               "$TMSCT,176,2,float[] targetP1={205,-35,125,0,90,0}\r\n"
               "PTP(\"JPP\",targetP1,10,200,0,false)\r\n"
               "QueueTag(1)\r\n"

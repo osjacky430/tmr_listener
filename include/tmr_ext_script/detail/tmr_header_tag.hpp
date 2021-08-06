@@ -21,7 +21,7 @@ namespace detail {
 struct TMSCTTag {
   static constexpr auto NAME() noexcept { return "$TMSCT"; }
 
-  struct DataFormat {
+  struct DataFrame {
     struct FunctionCall {
       std::string name_;
       std::string args_;
@@ -53,12 +53,13 @@ struct TMSCTTag {
     std::string id_;
     Data cmd_;
 
-    static ParseRule<DataFormat>& parsing_rule();
+    static ParseRule<DataFrame>& parsing_rule();
   };
 
   struct BuildRule {
     static void check(std::vector<std::string>& t_content_holder, ScriptExit /**/) noexcept {
-      t_content_holder.emplace_back("ScriptExit()");
+      using namespace std::string_literals;
+      t_content_holder.emplace_back("ScriptExit()"s);
     }
 
     /**
@@ -83,6 +84,26 @@ struct TMSCTTag {
     static void check(std::vector<std::string>& t_content_holder, Expression<Type> const& t_expr) noexcept {
       t_content_holder.push_back(t_expr.to_str());
     }
+
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+    static void check(std::vector<std::string>& t_content_holder, ScriptExit::WithPriority const t_exit) noexcept {
+      using namespace std::string_literals;
+      t_content_holder.emplace_back(t_exit.result_ == ScriptExit::Result::ScriptPass ? "ScriptExit(1)"s
+                                                                                     : "ScriptExit(0)"s);
+    }
+
+    static void check(std::vector<std::string>& t_content_holder,
+                      StopAndClearBuffer::WithPriority const t_stop_clear_buffer) noexcept {
+      using namespace std::string_literals;
+      if (t_stop_clear_buffer.option_ == StopAndClearBuffer::Option::ClearCurrentPacket) {
+        t_content_holder.emplace_back("StopAndClearBuffer(0)"s);
+      } else if (t_stop_clear_buffer.option_ == StopAndClearBuffer::Option::ClearAndExitCurrent) {
+        t_content_holder.emplace_back("StopAndClearBuffer(1)"s);
+      } else {
+        t_content_holder.emplace_back("StopAndClearBuffer(2)"s);
+      }
+    }
+#endif
   };
 
   /**
@@ -133,14 +154,15 @@ struct TMSCTTag {
 struct TMSTATag {
   static constexpr auto NAME() noexcept { return "$TMSTA"; }
 
-  struct DataFormat {
-    using Subcmd00Resp = boost::tuple<bool, std::string>;
-    using Subcmd01Resp = boost::tuple<std::string, TagNumberStatus>;
+  struct DataFrame {
+    using Subcmd00Resp  = boost::tuple<bool, std::string>;
+    using Subcmd01Resp  = boost::tuple<std::string, TagNumberStatus>;
+    using SubcmdDataMsg = boost::tuple<int, std::string>;
 
-    using Response = boost::variant<Subcmd00Resp, Subcmd01Resp>;
+    using Response = boost::variant<Subcmd00Resp, Subcmd01Resp, SubcmdDataMsg>;
     Response resp_;
 
-    static ParseRule<TMSTATag::DataFormat>& parsing_rule();
+    static ParseRule<TMSTATag::DataFrame>& parsing_rule();
   };
 
   struct BuildRule {
@@ -219,18 +241,18 @@ struct TMSTATag::create_builder_error_msg<T, std::enable_if_t<tmr_mt_helper::is_
 struct CPERRTag {
   static constexpr auto NAME() noexcept { return "$CPERR"; }
 
-  struct DataFormat {
+  struct DataFrame {
     ErrorCode err_;
 
-    static ParseRule<DataFormat>& parsing_rule() noexcept;
+    static ParseRule<DataFrame>& parsing_rule() noexcept;
   };
 };
 
 }  // namespace detail
 }  // namespace tmr_listener
 
-BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSCTTag::DataFormat, id_, cmd_)
-BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSTATag::DataFormat, resp_)
-BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::CPERRTag::DataFormat, err_)
+BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSCTTag::DataFrame, id_, cmd_)
+BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSTATag::DataFrame, resp_)
+BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::CPERRTag::DataFrame, err_)
 
 #endif

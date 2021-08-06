@@ -4,7 +4,7 @@
 
 namespace tmr_listener {
 
-Decision ListenerHandle::start_task_handling(std::string const& t_data) noexcept {
+Decision ListenerHandle::start_task_handling(std::string const& t_data) {
   auto const ret_val = this->start_task(t_data);
   this->responded_   = ret_val == Decision::Accept ? MessageStatus::Responded : MessageStatus::NotYetRespond;
 

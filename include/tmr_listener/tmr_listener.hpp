@@ -4,12 +4,14 @@
 #include <boost/shared_ptr.hpp>
 #include <type_traits>
 
+#include "tmr_listener/SubCmdDataMsg.h"
 #include "tmr_listener/tmr_listener_handle.hpp"
 #include "tmr_tcp_comm/tmr_tcp_comm.hpp"
 #include "tmr_utility/tmr_parser.hpp"
 
 #include <pluginlib/class_loader.h>
-#include <ros/ros.h>
+#include <ros/node_handle.h>
+#include <ros/publisher.h>
 
 namespace tmr_listener {
 
@@ -120,14 +122,15 @@ class TMRobotListener {
    * @param t_ip_addr The ip address of the TM robot
    * @param t_plugin_manager  The ListenerHandle plugin manager, default uses plugin lib to load plugins
    */
-  explicit TMRobotListener(std::string const &t_ip_addr,
+  explicit TMRobotListener(std::string t_ip_addr, ros::NodeHandle t_nh = ros::NodeHandle{"~"},
                            TMRPluginManagerBasePtr t_plugin_manager = boost::make_shared<RTLibPluginManager>()) noexcept
     : tcp_comm_{TMRobotTCP::Callback{
                   [this](auto &&t_ph) { this->receive_tm_msg_callback(std::forward<decltype(t_ph)>(t_ph)); },
                   [this](auto &&t_ph) { this->finished_transfer_callback(std::forward<decltype(t_ph)>(t_ph)); },
                   [this]() { this->disconnected_callback(); }},
-                LISTENER_PORT, t_ip_addr},
-      plugin_manager_{std::move(t_plugin_manager)} {}
+                LISTENER_PORT, std::move(t_ip_addr)},
+      plugin_manager_{std::move(t_plugin_manager)},
+      subcmd_data_pub_{t_nh.advertise<SubCmdDataMsg>("subcmd_90_99", 5)} {}
 
   /**
    * @brief This function is the entry point to the TCP/IP connection, it initiates the thread loop and runs io services
@@ -141,6 +144,8 @@ class TMRobotListener {
   TMRobotTCP tcp_comm_;                    /*!< TM TCP communication object */
   TMRPluginManagerBasePtr plugin_manager_; /*!< TM plugin manager holder */
   TMTaskHandler current_task_handler_{};   /*!< plugin that is currently handling incoming packet */
+
+  ros::Publisher subcmd_data_pub_;
 
   /**
    * @brief This function parses the message sent by TM robot, once entered listen node, it will initiate
@@ -170,8 +175,6 @@ class TMRobotListener {
    *        ListenData
    */
   class PacketVisitor;
-  // struct InListenNodeVisitor
-  // struct OutListenNodeVisitor
 };
 
 }  // namespace tmr_listener

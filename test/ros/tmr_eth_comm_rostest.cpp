@@ -8,15 +8,17 @@
 #include <ros/ros.h>
 
 using namespace ::testing;
+using namespace tmr_listener;
+using namespace std::string_literals;
 
 class EthernetServerTest : public Test {
  protected:
   static constexpr auto ETHERNET_SERVER_PORT = 5891;
-  tmr_listener::fake_impl::TMRobotServerComm fake_server{ETHERNET_SERVER_PORT};
+  fake_impl::TMRobotServerComm fake_server{ETHERNET_SERVER_PORT};
 
   auto create_io_thread(std::string& t_resp, std::string const& t_to_client) {
     return boost::thread([&, this]() mutable {
-      t_resp = this->fake_server.blocking_read();  //  must be $TMSVR,27,Q3,13,[{"Item":"TCP_Mass"}],*3C\r\n
+      t_resp = this->fake_server.blocking_read();
       this->fake_server.blocking_write(t_to_client);
     });
   }
@@ -33,9 +35,6 @@ class EthernetServerTest : public Test {
  *            with the rest of the input same and expect a success result
  */
 TEST_F(EthernetServerTest, ServiceReturnFailIfNotConnected) {
-  using namespace tmr_listener;
-  using namespace std::string_literals;
-
   // fail: not connected
   EthernetSlaveCmd cmd;
   cmd.request = []() {  // read the value "TCP_Mass"
@@ -64,9 +63,6 @@ TEST_F(EthernetServerTest, ServiceReturnFailIfNotConnected) {
 }
 
 TEST_F(EthernetServerTest, ServiceReturnFailIfEmptyID) {
-  using namespace tmr_listener;
-  using namespace std::string_literals;
-
   this->fake_server.start();
 
   // fail: no id specified
@@ -92,9 +88,6 @@ TEST_F(EthernetServerTest, ServiceReturnFailIfEmptyID) {
 }
 
 TEST_F(EthernetServerTest, ServiceReturnFailIfItemListAndValueListMismatched) {
-  using namespace tmr_listener;
-  using namespace std::string_literals;
-
   this->fake_server.start();
 
   // fail: item list and value list mismatched
@@ -129,9 +122,6 @@ TEST_F(EthernetServerTest, ServiceReturnFailIfItemListAndValueListMismatched) {
 }
 
 TEST_F(EthernetServerTest, ServiceReturnFailIfInsertEmptyString) {
-  using namespace tmr_listener;
-  using namespace std::string_literals;
-
   this->fake_server.start();
 
   EthernetSlaveCmd cmd;

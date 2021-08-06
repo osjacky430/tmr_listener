@@ -1,5 +1,7 @@
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/thread/scoped_thread.hpp>
 #include <boost/variant.hpp>
+#include <ros/ros.h>
 
 #include <functional>
 #include <numeric>
@@ -22,17 +24,19 @@ class TMRobotListener::PacketVisitor final : public boost::static_visitor<> {
    *       is handled by the caller. Viewed another way: ownership transferring APIs are relatively rare compared to
    *       pointer-passing APIs, so the default is "no ownership transfer."
    */
-  TMRobotTCP *tcp_comm_;
+  TMRobotTCP *const tcp_comm_;
   TMTaskHandler &current_task_handler_;
   TMRPluginManagerBase const *const plugin_manager_;
+  ros::Publisher const &sub_cmd_pub_;
 
  public:
-  explicit PacketVisitor(TMRobotTCP *t_tcp_comm, TMTaskHandler &t_current_task_handler_,
-                         TMRPluginManagerBase const *const t_plugin_manager)
+  explicit PacketVisitor(TMRobotTCP *const t_tcp_comm, TMTaskHandler &t_current_task_handler_,
+                         TMRPluginManagerBase const *const t_plugin_manager, ros::Publisher const &t_pub)
     : boost::static_visitor<>(),
       tcp_comm_{t_tcp_comm},
       current_task_handler_{t_current_task_handler_},
-      plugin_manager_{t_plugin_manager} {}
+      plugin_manager_{t_plugin_manager},
+      sub_cmd_pub_{t_pub} {}
 
   template <typename T>
   void operator()(T const & /*unused*/) {
@@ -50,12 +54,6 @@ void TMRobotListener::PacketVisitor::operator()(CPERRPacket const &t_packet) {
   }
 }
 
-/**
- * @note  Maybe I will implement TMSTAPacket service in the future, by then, these ifs look even more redundant cause it
- *        can only prevent us from using null pointer. Not like the else part can be used for other situation. For the
- *        situation metioned above, we can only determine the decision via id, where service have specific ID created
- *        by us
- */
 template <>
 void TMRobotListener::PacketVisitor::operator()(TMSTAPacket const &t_packet) {
   boost::apply_visitor(*this, t_packet.data_.resp_);
@@ -75,6 +73,20 @@ void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::Subcmd01
     TMSTAResponse::Subcmd01 resp{boost::get<0>(t_packet), boost::get<1>(t_packet)};
     this->current_task_handler_->handle_response(resp);
   }
+}
+
+template <>
+void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::SubcmdDataMsg const &t_packet) {
+  auto const &plugins             = this->plugin_manager_->get_all_plugins();
+  auto const send_subcmd_data_msg = [t_packet](auto &&t_plugin) {
+    t_plugin->handle_response(TMSTAResponse::DataMsg{boost::get<0>(t_packet), boost::get<1>(t_packet)});
+  };
+  std::for_each(plugins.begin(), plugins.end(), send_subcmd_data_msg);
+
+  SubCmdDataMsg msg;
+  msg.channel = boost::get<0>(t_packet);
+  msg.value   = boost::get<1>(t_packet);
+  this->sub_cmd_pub_.publish(msg);
 }
 
 /**
@@ -126,7 +138,7 @@ namespace tmr_listener {
 TMTaskHandlerArray_t RTLibPluginManager::load_plugins() {
   using boost::adaptors::transformed;
 
-  auto const plugin_transformer = [this](auto const &t_name) { return class_loader_.createInstance(t_name); };
+  auto const plugin_transformer = [this](auto const &t_name) { return this->class_loader_.createInstance(t_name); };
   auto const plugin_names       = ros::param::param("/tmr_listener/listener_handles", std::vector<std::string>{});
   ROS_DEBUG_STREAM_NAMED("tmr_plugin_manager", "plugin num: " << plugin_names.size());
 
@@ -178,13 +190,20 @@ void TMRobotListener::receive_tm_msg_callback(std::string const &t_input) noexce
   ROS_INFO_STREAM("Received: " << ::strip_crlf(t_input));
 
   auto const result = parse(t_input);
-  auto visitor      = PacketVisitor{&this->tcp_comm_, this->current_task_handler_, this->plugin_manager_.get()};
+  auto visitor      = PacketVisitor{&this->tcp_comm_, this->current_task_handler_,  //
+                               this->plugin_manager_.get(), this->subcmd_data_pub_};
   boost::apply_visitor(visitor, result);
 }
 
 void TMRobotListener::finished_transfer_callback(size_t const /*t_byte_writtened*/) noexcept {
   if (this->current_task_handler_) {
     auto const cmd = this->current_task_handler_->generate_request();
+
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+    ROS_WARN_COND_NAMED(cmd->use_priority_cmd() and cmd->cmd_size() > 1, "tm_listen_node",
+                        "Priority command will ignore all motion functions in the same packet");
+#endif
+
     if (cmd->has_script_exit()) {
       this->current_task_handler_.reset();
     }

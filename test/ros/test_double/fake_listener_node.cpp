@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
   using namespace tmr_listener;
 
   using TestMockPluginManager = InLibraryTMRPluginManager<PluginExpectationSetter>;
-  TMRobotListener t{"127.0.0.1"s, boost::make_shared<TestMockPluginManager>()};
+  TMRobotListener t{"127.0.0.1"s, nh, boost::make_shared<TestMockPluginManager>()};
   t.start();
 
   return EXIT_SUCCESS;

@@ -15,7 +15,7 @@ namespace detail {
 struct TMSVRTag {
   static constexpr auto NAME() { return "$TMSVR"; }
 
-  struct DataFormat {
+  struct DataFrame {
     using DataTableFormat = TMSVRJsonData;  // @todo: extend to string, and possibly, binary mode
     using Data            = std::vector<DataTableFormat>;
 
@@ -23,7 +23,7 @@ struct TMSVRTag {
     Mode mode_{};
     std::string raw_content_;
 
-    static ParseRule<DataFormat>& parsing_rule() noexcept;
+    static ParseRule<DataFrame>& parsing_rule() noexcept;
 
     static Data parse_raw_content(std::string t_raw_content);
   };

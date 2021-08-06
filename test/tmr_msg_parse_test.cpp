@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "tmr_ethernet/tmr_eth_slave.hpp"
+#include "tmr_listener/tmr_listener.hpp"
 #include "tmr_listener/tmr_listener_handle.hpp"
 
 TEST(SpiritParse, TMSCTClientRequestTest) {
@@ -10,18 +11,18 @@ TEST(SpiritParse, TMSCTClientRequestTest) {
 
     auto const p = TMSCTHeader::parse(test_str);
 
-    auto const client_request = boost::get<detail::TMSCTTag::DataFormat::ClientRequest>(&p.data_.cmd_);
+    auto const client_request = boost::get<detail::TMSCTTag::DataFrame::ClientRequest>(&p.data_.cmd_);
     ASSERT_EQ(client_request->size(), 2);
     EXPECT_EQ(p.length_, 50);
     EXPECT_EQ(p.data_.id_, "ChangePayload");
 
-    auto const var = boost::get<detail::TMSCTTag::DataFormat::VariableDecl>(&client_request->at(0));
+    auto const var = boost::get<detail::TMSCTTag::DataFrame::VariableDecl>(&client_request->at(0));
     ASSERT_TRUE(var != nullptr);
     EXPECT_EQ(var->type_, "float");
     EXPECT_EQ(var->name_, "payload");
     EXPECT_EQ(var->val_, "0");
 
-    auto const var_2 = boost::get<detail::TMSCTTag::DataFormat::FunctionCall>(&client_request->at(1));
+    auto const var_2 = boost::get<detail::TMSCTTag::DataFrame::FunctionCall>(&client_request->at(1));
     ASSERT_TRUE(var_2 != nullptr);
     EXPECT_EQ(var_2->name_, "ChangeLoad");
     EXPECT_EQ(var_2->args_, "payload");
@@ -39,29 +40,29 @@ TEST(SpiritParse, TMSCTClientRequestTest) {
 
     auto const p = TMSCTHeader::parse(test_str);
 
-    auto const client_request = boost::get<detail::TMSCTTag::DataFormat::ClientRequest>(&p.data_.cmd_);
+    auto const client_request = boost::get<detail::TMSCTTag::DataFrame::ClientRequest>(&p.data_.cmd_);
     ASSERT_TRUE(client_request != nullptr);
     ASSERT_EQ(client_request->size(), 5);
     EXPECT_EQ(p.length_, 169);
     EXPECT_EQ(p.data_.id_, "MoveToHome");
 
-    auto const var = boost::get<detail::TMSCTTag::DataFormat::FunctionCall>(&client_request->at(0));
+    auto const var = boost::get<detail::TMSCTTag::DataFrame::FunctionCall>(&client_request->at(0));
     ASSERT_TRUE(var != nullptr);
     EXPECT_EQ(var->name_, "PTP");
     EXPECT_EQ(var->args_, R"("CPP",Point["Safety_Back"].Value,100,200,100,true)");
 
-    auto const var_2 = boost::get<detail::TMSCTTag::DataFormat::FunctionCall>(&client_request->at(1));
+    auto const var_2 = boost::get<detail::TMSCTTag::DataFrame::FunctionCall>(&client_request->at(1));
     ASSERT_TRUE(var_2 != nullptr);
     EXPECT_EQ(var_2->name_, "QueueTag");
     EXPECT_EQ(var_2->args_, "1");
 
-    auto const var_3 = boost::get<detail::TMSCTTag::DataFormat::VariableDecl>(&client_request->at(2));
+    auto const var_3 = boost::get<detail::TMSCTTag::DataFrame::VariableDecl>(&client_request->at(2));
     ASSERT_TRUE(var_3 != nullptr);
     EXPECT_EQ(var_3->type_, "float[]");
     EXPECT_EQ(var_3->name_, "targetP2");
     EXPECT_EQ(var_3->val_, "{90, -35, 125, 0, 90, 0}");
 
-    auto const var_4 = boost::get<detail::TMSCTTag::DataFormat::FunctionCall>(&client_request->at(3));
+    auto const var_4 = boost::get<detail::TMSCTTag::DataFrame::FunctionCall>(&client_request->at(3));
     ASSERT_TRUE(var_4 != nullptr);
     EXPECT_EQ(var_4->name_, "PTP");
     EXPECT_EQ(var_4->args_, R"("JPP",targetP2,100,200,100,true)");
@@ -76,10 +77,10 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
     constexpr auto response = "$TMSCT,9,4,ERROR;1,*02\r\n";
 
     auto const parsed = TMSCTHeader::parse(response);
-    auto const cmd    = boost::get<detail::TMSCTTag::DataFormat::ServerResponse>(&parsed.data_.cmd_);
+    auto const cmd    = boost::get<detail::TMSCTTag::DataFrame::ServerResponse>(&parsed.data_.cmd_);
     ASSERT_TRUE(cmd != nullptr);
 
-    auto const script_result = boost::get<detail::TMSCTTag::DataFormat::ScriptResult>(cmd);
+    auto const script_result = boost::get<detail::TMSCTTag::DataFrame::ScriptResult>(cmd);
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_EQ(script_result->abnormal_lines_.size(), 1);
     EXPECT_EQ(script_result->abnormal_lines_.at(0), 1);
@@ -89,10 +90,10 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
     constexpr auto response = "$TMSCT,4,1,OK,*5C\r\n";
 
     auto const parsed = TMSCTHeader::parse(response);
-    auto const cmd    = boost::get<detail::TMSCTTag::DataFormat::ServerResponse>(&parsed.data_.cmd_);
+    auto const cmd    = boost::get<detail::TMSCTTag::DataFrame::ServerResponse>(&parsed.data_.cmd_);
     ASSERT_TRUE(cmd != nullptr);
 
-    auto const script_result = boost::get<detail::TMSCTTag::DataFormat::ScriptResult>(cmd);
+    auto const script_result = boost::get<detail::TMSCTTag::DataFrame::ScriptResult>(cmd);
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_TRUE(script_result->abnormal_lines_.empty());
   }
@@ -101,10 +102,10 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
     constexpr auto response = "$TMSCT,4,1,OK;1;2,*5C\r\n";
 
     auto const parsed = TMSCTHeader::parse(response);
-    auto const cmd    = boost::get<detail::TMSCTTag::DataFormat::ServerResponse>(&parsed.data_.cmd_);
+    auto const cmd    = boost::get<detail::TMSCTTag::DataFrame::ServerResponse>(&parsed.data_.cmd_);
     ASSERT_TRUE(cmd != nullptr);
 
-    auto const script_result = boost::get<detail::TMSCTTag::DataFormat::ScriptResult>(cmd);
+    auto const script_result = boost::get<detail::TMSCTTag::DataFrame::ScriptResult>(cmd);
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_EQ(script_result->abnormal_lines_.size(), 2);
     EXPECT_EQ(script_result->abnormal_lines_.at(0), 1);
@@ -120,7 +121,7 @@ TEST(SpiritParse, TMSTAResponseMatch) {
     constexpr auto response = "$TMSTA,29,00,true,UltrasonicFail,-12131,*5B\r\n";
 
     auto const parsed = TMSTAHeader::parse(response);
-    auto const cmd    = boost::get<detail::TMSTATag::DataFormat::Subcmd00Resp>(&parsed.data_.resp_);
+    auto const cmd    = boost::get<detail::TMSTATag::DataFrame::Subcmd00Resp>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
     auto const script_result = boost::get<0>(*cmd);
@@ -133,7 +134,7 @@ TEST(SpiritParse, TMSTAResponseMatch) {
   {
     constexpr auto response = "$TMSTA,10,01,08,true,*6D\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<detail::TMSTATag::DataFormat::Subcmd01Resp>(&parsed.data_.resp_);
+    auto const cmd          = boost::get<detail::TMSTATag::DataFrame::Subcmd01Resp>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
     auto const tag_number = boost::get<0>(*cmd);
@@ -141,6 +142,36 @@ TEST(SpiritParse, TMSTAResponseMatch) {
 
     auto const tag_number_status = boost::get<1>(*cmd);
     EXPECT_EQ(tag_number_status, TagNumberStatus::Complete);
+  }
+
+  {
+    constexpr auto response = "$TMSTA,14,90,Hello World,*73\r\n";
+    auto const parsed       = TMSTAHeader::parse(response);
+    auto const cmd          = boost::get<detail::TMSTATag::DataFrame::SubcmdDataMsg>(&parsed.data_.resp_);
+    ASSERT_TRUE(cmd != nullptr);
+
+    EXPECT_EQ(boost::get<0>(*cmd), 90);
+    EXPECT_EQ(boost::get<1>(*cmd), "Hello World");
+  }
+
+  {
+    constexpr auto response = "$TMSTA,10,91,123.456,*7E\r\n";
+    auto const parsed       = TMSTAHeader::parse(response);
+    auto const cmd          = boost::get<detail::TMSTATag::DataFrame::SubcmdDataMsg>(&parsed.data_.resp_);
+    ASSERT_TRUE(cmd != nullptr);
+
+    EXPECT_EQ(boost::get<0>(*cmd), 91);
+    EXPECT_EQ(boost::get<1>(*cmd), "123.456");
+  }
+
+  {
+    constexpr auto response = "$TMSTA,67,90,{-248.7316,-154.6399,-130.5106,-0.04263335,-0.6727331,0.8938164},*52\r\n";
+    auto const parsed       = TMSTAHeader::parse(response);
+    auto const cmd          = boost::get<detail::TMSTATag::DataFrame::SubcmdDataMsg>(&parsed.data_.resp_);
+    ASSERT_TRUE(cmd != nullptr);
+
+    EXPECT_EQ(boost::get<0>(*cmd), 90);
+    EXPECT_EQ(boost::get<1>(*cmd), "{-248.7316,-154.6399,-130.5106,-0.04263335,-0.6727331,0.8938164}");
   }
 }
 
@@ -203,7 +234,7 @@ TEST(SpiritParse, TMSVRContentMatch) {
     EXPECT_EQ(parse_as<int>(parsed.at(6).value_), 0);   // Camera_Light
     EXPECT_EQ(parse_as<int>(parsed.at(7).value_), 0);   // Error_Code
 
-    // actually, I'm quite surprise these double precision floating point comparisons will pass
+    // actually, I'm quite surprised that these double precision floating point comparisons will pass
     EXPECT_EQ((parse_as<double, 6>(parsed.at(8).value_)),  // Joint_Angle
               (std::array<double, 6>{89.4597, -35.00033, 125.000435, -0.000126898289, 90.0, 0.0005951971}));
 

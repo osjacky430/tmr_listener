@@ -1,11 +1,12 @@
 #include <boost/program_options.hpp>  // IWYU pragma: keep
+#include <ros/ros.h>
 
 #include "../src/tmr_cmd_line_option.hpp"
 #include "tmr_listener/tmr_listener.hpp"
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "tmr_listener");
-  ros::NodeHandle nh{"/tmr_listener"};  // /tm_robot_manager
+  ros::NodeHandle nh{"/tmr_listener"};
 
   using namespace boost::program_options;
   auto const common_opt = tmr_listener::common_option();

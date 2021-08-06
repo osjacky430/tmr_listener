@@ -11,6 +11,7 @@
 #include "tmr_ext_script/detail/tmr_header_tag.hpp"
 #include "tmr_prototype/tmr_header.hpp"
 #include "tmr_variable.hpp"
+#include "version.hpp"
 
 namespace tmr_listener {
 
@@ -38,6 +39,17 @@ struct TMSTAResponse {
     }
 
     friend bool operator!=(Subcmd01 const& t_lhs, Subcmd01 const& t_rhs) noexcept { return !(t_lhs == t_rhs); }
+  };
+
+  struct DataMsg {
+    int cmd_;
+    std::string data_;
+
+    friend bool operator==(DataMsg const& t_lhs, DataMsg const& t_rhs) noexcept {
+      return t_lhs.cmd_ == t_rhs.cmd_ and t_lhs.data_ == t_rhs.data_;
+    }
+
+    friend bool operator!=(DataMsg const& t_lhs, DataMsg const& t_rhs) noexcept { return !(t_lhs == t_rhs); }
   };
 };
 
@@ -83,7 +95,7 @@ constexpr auto CPERR = CPERRHeader{};
 namespace motion_function {
 
 // clang-format off
-#define TMR_MOTION_FUNC(name, ret_type, ...)  constexpr tmr_listener::detail::TMSTCFuncSet<ret_type, __VA_ARGS__> name { #name } 
+#define TMR_MOTION_FUNC(name, ret_type, ...)  constexpr tmr_listener::detail::TMSTCFuncSet<ret_type, __VA_ARGS__> name { #name }
 #define TMR_SUBCMD(name, subcmd, ...)         constexpr tmr_listener::detail::TMSTAFuncSet<__VA_ARGS__> name { #subcmd }
 #define SIGNATURE(...)                        tmr_listener::detail::Function<__VA_ARGS__>
 #define RETURN_TYPE(type)                     type
@@ -430,7 +442,7 @@ TMR_MOTION_FUNC(PVTExit, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
  *                           Y, Z, RX, RY, RZ for Cartesian mode
  *          Target velocity: float[] (syntax 1), or 7th - 12th float (syntax 2): joint speed for Joint mode, Vx, Vy, Vz,
  *                           Wx, Wy, Wz for Cartesian mode
- *          float: duration (s)
+ *          float: duration (second for version == 1.82, millisecond for version <= 1.80)
  */
 TMR_MOTION_FUNC(PVTPoint, RETURN_TYPE(bool), SIGNATURE(std::array<float, 6>, std::array<float, 6>, float),
                 SIGNATURE(float, float, float, float, float, float, float, float, float, float, float, float, float));
@@ -448,6 +460,66 @@ TMR_MOTION_FUNC(PVTPause, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
  * @details bool PVTMotion() (1)
  */
 TMR_MOTION_FUNC(PVTResume, RETURN_TYPE(bool), SIGNATURE(TMR_VOID));
+
+#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+
+/**
+ * @brief Set the present vision job in the current project in execution to queue up with motion commands.
+ *
+ * @details bool Vision_DoJob(string t_vision_job_name) (1)
+ *
+ *          string: Vision job name
+ *
+ * @note  To use this motion function, user should uncheck the "start at initial position" checkbox to disable "move to
+ *        initial position". Also, the vision job called should be created in the first place to use this motion
+ *        function.
+ */
+TMR_MOTION_FUNC(Vision_DoJob, RETURN_TYPE(bool), SIGNATURE(std::string));
+
+/**
+ * @brief Set the present vision job in the current project in execution, by moving to the initial position in PTP, to
+ *        queue up with motion commands.
+ *
+ * @details bool Vision_DoJob_PTP(string t_vision_job_name, int t_speed_percentage, int t_time_to_top_speed,
+ *                                bool t_smart_pose)
+ *
+ *          string: Vision job name
+ *          int: The speed setting in percentage
+ *          int: The time interval to accelerate to top speed in ms
+ *          bool: true to use the pose of the robot determined by smart pose
+ *                false to use the pose of the robot recorded taught in vision job
+ *
+ * @note  same as Vision_DoJob
+ */
+TMR_MOTION_FUNC(Vision_DoJob_PTP, RETURN_TYPE(bool), SIGNATURE(std::string, int, int, bool));
+
+/**
+ * @brief Set the present vision job in the current project in execution, by moving to the initial position in Line, to
+ *        queue up with motion commands.
+ *
+ * @details bool Vision_DoJob_Line(string t_vision_job_name, int t_speed_percentage)                         (1)
+ *          bool Vision_DoJob_Line(string t_vision_job_name, int t_speed_velocity, int t_time_to_top_speed)  (2)
+ *
+ *          1) string: Vision job name
+ *             int: The speed setting in percentage
+ *          2) string: Vision job name
+ *             int: The speed setting in velocity (mm/s)
+ *             int: The time interval to accelerate to top speed in ms
+ *
+ * @note  same as Vision_DoJob
+ */
+TMR_MOTION_FUNC(Vision_DoJob_Line, RETURN_TYPE(bool), SIGNATURE(std::string, int), SIGNATURE(std::string, int, int));
+
+/**
+ * @brief Check if the vision job in the current project present and valid
+ *
+ * @details bool Vision_IsJobAvailable(string t_vision_job_name)
+ *
+ *          string: Vision job name
+ */
+TMR_MOTION_FUNC(Vision_IsJobAvailable, RETURN_TYPE(bool), SIGNATURE(std::string));
+
+#endif
 
 TMR_SUBCMD(InExtScriptCtlMode, 00, SIGNATURE(TMR_VOID));
 TMR_SUBCMD(QueueTagDone, 01, SIGNATURE(int));

@@ -1,38 +1,69 @@
 # TM Robot Listener
 
-[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=WIP%2FTMSVR&event=push)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Grade)
+[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=WIP%2FTMSVR&event=push)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Grade) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge/wip/tmsvr)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/overview/wip/tmsvr)
 
 A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave, but still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
 
 ## Table of Contents
 
--   [About the Project](#about-the-project)
-    -   [Built With](#built-with)
--   [Getting Started](#getting-started)
-    -   [Prerequisite](#Prerequisite)
-    -   [Instal and run](#Instal-and-run)
--   [TM robot listener](#TM-robot-listener)
-    -   [Custom plugin manager](#Custom-plugin-manager)
-    -   [Creating your own listener handle](#Creating-your-own-listener-handle)
-    -   [Generate tm external script language](#Generate-tm-external-script-language)
-    -   [Verify your handler works](#Verifiy-your-handler-works)
-    -   [Using listen service](#Using-Listen-Service)
--   [TM Robot Ethernet Slave](#tm-robot-ethernet-slave)
-    -   [Communication mode](#communication-mode)
-    -   [Data Table](#data-table)
-    -   [Read / Write Request](#Read-/-Write-Request)
-    -   [Exported Data Table](#Exported-Data-Table-XML)
--   [Unit Test](#Unit-Test)
--   [TODO](#TODO)
--   [Contact](#contact)
--   [Reference](#Reference)
--   [Notes](#Notes)
+- [TM Robot Listener](#tm-robot-listener)
+  - [Table of Contents](#table-of-contents)
+  - [About the Project](#about-the-project)
+    - [Built with](#built-with)
+  - [Getting Started](#getting-started)
+    - [Prerequisite](#prerequisite)
+    - [Install and run](#install-and-run)
+  - [TM robot listener](#tm-robot-listener-1)
+    - [Custom plugin manager](#custom-plugin-manager)
+    - [Creating your own listener handle](#creating-your-own-listener-handle)
+      - [1. tmr_listener::MessagePtr generate_cmd (tmr_listener::MessageStatus const t_prev_response)](#1-tmr_listenermessageptr-generate_cmd-tmr_listenermessagestatus-const-t_prev_response)
+      - [2. tmr_listener:: Decision start_task (std::string const& t_data)](#2-tmr_listener-decision-start_task-stdstring-const-t_data)
+      - [3. response_msg (...)](#3-response_msg-)
+    - [Generate tm external script language](#generate-tm-external-script-language)
+    - [Verify your handler works](#verify-your-handler-works)
+    - [Using Listen Service](#using-listen-service)
+  - [TM Robot Ethernet Slave](#tm-robot-ethernet-slave)
+    - [Communication Mode](#communication-mode)
+    - [Data table](#data-table)
+    - [Read / Write Request](#read--write-request)
+    - [Exported Data Table XML](#exported-data-table-xml)
+  - [Unit Test](#unit-test)
+  - [TODO](#todo)
+  - [Contact](#contact)
+  - [Reference](#reference)
+  - [Notes](#notes)
 
 ## About the Project
 
 TM robot provides listen node in TMFlow where user can control the robot arm via sending TM external script when the control flow enters it. This node provides better scalability due to the fact that one can't copy TMFlow project from one robot arm to the other without doing furthur adjustment. 
 
-However, the implementation of the official ros package fail to met the expectation / scalability because the choice of the interface, end user can never know whether the control flow enters listen node or not without polling the service. [Not to mention that it suggest user to create a project with only a listen node](https://github.com/TechmanRobotInc/tmr_ros1/#-tmflow-listen-node-setup), which makes the package more or less useless since it can't integrate with existing project that uses TMFlow heavily.
+However, the implementation of [the official ros package](https://github.com/TechmanRobotInc/tmr_ros1) has several drawbacks: 
+
+1.  End user can never know whether the control flow enters listen node or not without polling the service.
+
+2.  Command can't be stacked for TMSCT since some of them were implemented as individual services, you would never want to stack command using service `send_script`, unless you are fine with this:
+
+    ```c++
+    std::string const cmd = "float[ targetP1= {0,0,90,0,90,0}\r\n"  // wrong here, missing right bracket
+                            "PTP(”JPP”,targetP,10,200,0,false)\r\n"   // wrong here, I accidentally enter the wrong name
+                            "QueueTag(1)\r" // wrong here, no line feed
+                            "foat[] targetP2 = { 0, 90, 0, 90, 0, 0 }\r\n"  // wrong here, float not foat
+                            "PTP(”JPP”, targetP2, 10, 200, false)\r\n"  // wrong here, I accidentally remove 4-th parameter
+                            "QueueTag(2)\n" // wrong here, no carriage return
+    ```
+
+3.  No Parameterized Objects, no Variable, those can only be sent via string, which is error-prone
+
+4.  No compile time check, i.e. it is extremely easy for user to make such mistake:
+
+    ```c++
+    std::string cmd = "PTP(\"JPP\",0,0,90,0,90,0,200,0,false)"; // wrong here, I accidentally remove 8-th parameter, 35
+    // enjoy your happy debug time
+    ```
+
+5.  Script sending and response recieving is implemented separately, this means that if there are different nodes sending script command and subscribing to the response topic, user might get confused cause they are recieving responses they didn't send, which makes it relatively difficult to debug (ID is of no help under such circumstances). The only way to mitigate the situation is to limit the use to single ros package, or to ensure only one node is communicating to TMSVR at a time.
+
+`tmr_listener` is therefore here to overcome these drawbacks (point 1, 2, 4 and 5), while offering more functionality (point 3). The tutorial will give you a brief idea how this is done.
 
 ### Built with
 
@@ -59,10 +90,17 @@ git clone https://github.com/osjacky430/tmr_listener # for github user
 2.  build the package:
 
 ```sh
-catkin build tmr_listener
+catkin build tmr_listener (Additional build options)
 ```
 
-3.  run tmr_listener:
+Build options for `tmr_listener`:
+
+- `-DTMR_ENABLE_TESTING`: to enable unit test code building, set `-DTMR_ENABLE_TESTING=ON`, default to `OFF`
+- `-DENABLE_IPO`: to enable link-time optimization, a.k.a Inter-Procedural Optization, set `-DENABLE_IPO=ON`, default to `OFF`
+- `-DTMR_TMFLOW_VERSION`: to compile `tmr_listener` that support specific version of TMFlow, set `-DTMR_TMFLOW_VERSION=<TMFlow version>`, default to `1.82.0000`, i.e., the code is built as if explicitly pass `-DTMR_TMFLOW_VERSION=1.82.0000` to `catkin build`
+- `-DTM_ETHERNET_SLAVE_XML`: see section [Exported Data Table XML](#exported-data-table-xml) for more detail
+
+1.  run tmr_listener:
 
 ```sh
 roslaunch tmr_listener tmr_listener.launch  # for listen node
@@ -206,7 +244,18 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 
 #### 3. response_msg (...)
 
-The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need (currently available overloads: `tmr_listener::TMSCTResponse` , `tmr_listener::TMSTAResponse::Subcmd00` , `tmr_listener::TMSTAResponse::Subcmd01` , `tmr_listener::CPERRResponse` and one with no argument), those that are not overriden will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden.
+The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need, currently available overloads: 
+
+```cpp
+void response_msg(tmr_listener::TMSCTResponse const&);            //  get called when user send correct TMSCT command
+void response_msg(tmr_listener::TMSTAResponse::Subcmd00 const&);  //  get called when user send correct TMSTA,XX,00, ...
+void response_msg(tmr_listener::TMSTAResponse::Subcmd01 const&);  //  get called when user send correct TMSTA,XX,01, ...
+void response_msg(tmr_listener::TMSTAResponse::DataMsg const&);   //  get called when TM send TMSTA,XX,9X,...
+void response_msg(tmr_listener::CPERRResponse const&);            //  get called when user send incorrect packet, or other error
+void response_msg();                                              //  get called every time packet is received
+```
+
+those that are not overriden will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden:
 
 ```cpp
 // this example overrides TMSCTResponse and the one with no argument
@@ -232,6 +281,8 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 };
 
 ```
+
+Note: `response_msg(TMSTAResponse::DataMsg const&)` is a bit different from other overloads,**`tmr_listener` will call this function for each plugin** whenever TM robot sends Subcmd 90 ~ 99. For those who doesn't implement a plugin, but also want to receive data from Subcmd 90 ~ 99, subscribe to topic `/tmr_listener/subcmd_90_99`
 
 ### Generate tm external script language
 
@@ -303,7 +354,13 @@ This will establish the connection between netcat and tmr_listener, the only thi
 
 ### Using Listen Service
 
-Under construction...
+Current `tmr_listener` implementation makes the listen service kind of redundant:
+
+1. For `TMSTA SubCmd 00`, `tmr_listener` can take on this responsibility, as the library behaves similarly to listen node once entered (one listen node to one listen node handler), this is relatively easy, and can be implemented readily once there is a need.
+2. For `TMSTA SubCmd 01`, this is totally unusable because user not aware of listen node handler doesn't have any single information about motion tag.
+3. Last but not least, `TMSTA SubCmd 90...99`, since the user is in full passive mode. Service is definitely not the ideal way of implementing it.
+
+Due to the reasons above, I am not intended to implement any listen services now, feel free to give me ideas if you find services useful in your case.
 
 ## TM Robot Ethernet Slave
 
@@ -353,7 +410,7 @@ void parsed_data_cb(tmr_listener::JsonDataArray::ConstPtr& t_msg) {
 
 ### Read / Write Request
 
-This package provides service, `/tm_ethernet_slave/tmsvr_cmd` , to read/write variables. For read operation, the `EthernetSlaveCmdRequest::value_list` must be left empty, ~~since the read result is stored in it~~ (**this is absurdly wrong, I'm getting fooled by the `MReq& req` in roscpp service call, LOL**); as for write operation, `value_list.size() == item_list.size()` must hold, and the value of `item_list[i]` is `value_list[i]` . (@todo I forgot the reason to not use an array of msg with item/value string instead of two separate string array)
+This package provides service, `/tm_ethernet_slave/tmsvr_cmd` , to read/write variables. For read operation, the `EthernetSlaveCmdRequest::value_list` must be left empty, ~~since the read result is stored in it~~ (**this is absurdly wrong, I'm fooled by the `MReq& req` in roscpp service call**); as for write operation, `value_list.size() == item_list.size()` must hold, and the value of `item_list[i]` is `value_list[i]` . (@todo I forgot the reason to not use an array of msg with item/value string instead of two separate string array)
 
 ```cpp
 // write operation
@@ -391,7 +448,7 @@ If the data table you are going to use to receive data periodically is not going
 catkin build tmr_listener -DTM_ETHERNET_SLAVE_XML=path/to/your/xml/file
 ```
 
-This command will generate `TMREthernet.msg` under `msg` directory, to recieve the data, subscribe to this topic `/tmr_eth_slave/exported_data_table`, thats is all!
+This command will generate `TMREthernet.msg` under `msg` directory, to recieve the data, subscribe to this topic `/tmr_eth_slave/exported_data_table`, that is all!
 
 (**Note: Everytime the data table is changed and you still want to use this feature, remember to rebuild the package, otherwise the node will end immediately once it detect mismatched message**)
 

@@ -1,10 +1,62 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(tmr_listener VERSION 0.1.0)
+project(tmr_listener VERSION 0.2.0)
 
+#####################################################################
+#     Check if all plugins are built under same TMFlow version      #
+#####################################################################
+set(${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX 1.82)
+
+if (NOT DEFINED TMR_TMFLOW_VERSION)
+  set(TMR_TMFLOW_VERSION ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX}
+      CACHE STRING "User-specified target TMFlow version" FORCE)
+elseif (${TMR_TMFLOW_VERSION} VERSION_GREATER ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX})
+  message(FATAL_ERROR "Target version is greater than max supported"
+                      " version ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX}.")
+endif ()
+
+# __TMR_TMFLOW_VERSION is internally used by tmr_listener
+if (NOT DEFINED __TMR_TMFLOW_VERSION)
+  set(__TMR_TMFLOW_VERSION ${TMR_TMFLOW_VERSION}
+      CACHE INTERNAL "The version of TMFlow that TMR Listener is built with initially" FORCE)
+else ()
+  if (NOT ${__TMR_TMFLOW_VERSION} VERSION_EQUAL ${TMR_TMFLOW_VERSION})
+    message(
+      FATAL_ERROR "TMR Listener is built with TMFlow version ${__TMR_TMFLOW_VERSION} initially."
+                  "To built with other version, you must call \"catkin clean tmr_listener\" and rebuild all plugins")
+  endif ()
+endif ()
+# unset user specified TMFlow version so that user doesn't need to rebuild if specified wrong version previously
+
+string(REPLACE "." ";" __TMR_TMRFLOW_VERSION_COMPONENT ${__TMR_TMFLOW_VERSION})
+set(${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION ${__TMR_TMFLOW_VERSION})
+list(GET __TMR_TMRFLOW_VERSION_COMPONENT 0 ${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAJOR)
+list(GET __TMR_TMRFLOW_VERSION_COMPONENT 1 ${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MINOR)
 configure_file(${CMAKE_SOURCE_DIR}/include/version.hpp.in ${CMAKE_SOURCE_DIR}/include/version.hpp @ONLY)
 
+#############################################################
+#       Generate custom ethernet message if specified       #
+#############################################################
+if (DEFINED TM_ETHERNET_SLAVE_XML OR EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/msg/TMREthernet.msg)
+  set(TM_ETHERNET_MSG TMREthernet.msg)
+
+  if (DEFINED TM_ETHERNET_SLAVE_XML)
+    execute_process(
+      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
+              --msg-dir=${CMAKE_CURRENT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
+  endif ()
+
+  if (result)
+    message(FATAL_ERROR "Generating TMEthernet.msg failed: ${result}")
+  endif ()
+
+  add_message_files(FILES ${TM_ETHERNET_MSG})
+endif ()
+
+# INTERPROCEDURAL_OPTIMIZATION is enforced when enabled. This policy takes effect whenever the IPO property is enabled.
+# The OLD behavior for this policy is to add IPO flags only for Intel compiler on Linux. The NEW behavior for this policy
+# is to add IPO flags for the current compiler or produce an error if CMake does not know the flags.
 if (POLICY CMP0069)
-  cmake_policy(SET CMP0069 NEW) # for IPO
+  cmake_policy(SET CMP0069 NEW)
 endif ()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -52,27 +104,11 @@ find_package(Boost REQUIRED)
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-if (DEFINED TM_ETHERNET_SLAVE_XML OR EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/msg/TMREthernet.msg)
-  set(TM_ETHERNET_MSG TMREthernet.msg)
-
-  if (DEFINED TM_ETHERNET_SLAVE_XML)
-    execute_process(
-      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
-              --msg-dir=${CMAKE_CURRENT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
-  endif ()
-
-  if (result)
-    message(FATAL_ERROR "Generating TMEthernet.msg failed: ${result}")
-  endif ()
-
-  add_message_files(FILES ${TM_ETHERNET_MSG})
-endif ()
-
 ## Generate messages in the 'msg' folder
-add_message_files(FILES JsonData.msg JsonDataArray.msg)
+add_message_files(FILES JsonData.msg JsonDataArray.msg SubCmdDataMsg.msg)
 
 ## Generate services in the 'srv' folder
-add_service_files(FILES ListenerCmd.srv EthernetSlaveCmd.srv)
+add_service_files(FILES EthernetSlaveCmd.srv)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -154,8 +190,8 @@ catkin_package(
 
 ## Mark cpp header files for installation
 # need to make sure this is done right, come back to this later
-install(DIRECTORY include/tmr_listener include/tmr_utility include/tmr_ext_script
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..)
+# install(DIRECTORY include/tmr_listener include/tmr_utility include/tmr_ext_script
+#         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/..)
 
 include(StaticAnalyzers)
 
