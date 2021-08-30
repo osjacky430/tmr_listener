@@ -30,7 +30,7 @@ with section("format"):
 
   # If a positional argument group contains more than this many arguments, then
   # force it to a vertical layout.
-  max_pargs_hwrap = 6
+  max_pargs_hwrap = 7
 
   # If a candidate layout is wrapped horizontally but it exceeds this many
   # lines, then reject the layout.
@@ -44,7 +44,7 @@ with section("format"):
   line_ending = u'unix'
 
   # How wide to allow formatted cmake files
-  line_width = 120
+  line_width = 140
 
   # If a statement is wrapped to more than one line, than dangle the closing
   # parenthesis on its own line.
@@ -192,10 +192,37 @@ with section("misc"):
 with section("parse"):
 
   # Specify structure for custom cmake functions
-  additional_commands = { u'foo': { u'flags': [u'BAR', u'BAZ'],
-              u'kwargs': { u'DEPENDS': u'*',
-                           u'HEADERS': u'*',
-                           u'SOURCES': u'*'}}}
+  additional_commands = { 
+    u'add_profiler_report': { 
+      u'kwargs': {
+        u'ADD_PROF_DIR_MACRO': u'*',
+        u'DEPEND': u'*',
+        u'DISPLAY': u'*',
+        u'EXE_TARGET': u'*',
+        u'OUTPUT_FORMAT': u'*',
+        u'EXTRA_OPTIONS': u'*',
+        u'CPUPROFILE_FREQUENCY': u'*',
+        u'EXE_COMMAND': u'*'
+      }
+    },
+    u'catkin_add_gcov_report': {
+      u'kwargs': {
+        u'REPORT_NAME': u'*',
+        u'GCOV_EXCLUDE': u'*',
+        u'EXCLUDE_SRC': u'*',
+        u'EXTRA_OPTIONS': u'*',
+        u'TARGET_DEPEND': u'*'
+      }
+    },
+    u'catkin_package': {
+      u'kwargs': {
+        u'INCLUDE_DIRS': u'*',
+        u'LIBRARIES': u'*',
+        u'CATKIN_DEPENDS': u'*',
+        u'DEPENDS': u'*'
+      }
+    }
+  }
 
   # Specify property tags.
   proptags = []

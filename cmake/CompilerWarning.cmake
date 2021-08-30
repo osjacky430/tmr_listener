@@ -50,9 +50,8 @@ function (set_project_warnings project_name)
     set(MSVC_WARNINGS ${MSVC_WARNINGS} /WX)
   endif ()
 
-  set(GCC_WARNINGS
-      ${CLANG_WARNINGS} -Wlogical-op # warn about logical operations being used where bitwise were probably wanted
-      -Wuseless-cast # warn if you perform a cast to the same type
+  set(GCC_WARNINGS ${CLANG_WARNINGS} -Wlogical-op # warn about logical operations being used where bitwise were probably wanted
+                   -Wuseless-cast # warn if you perform a cast to the same type
   )
 
   if (MSVC)
@@ -61,15 +60,15 @@ function (set_project_warnings project_name)
     set(PROJECT_WARNINGS ${CLANG_WARNINGS})
   elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.1)
-      set(GCC_WARNINGS
-          ${GCC_WARNINGS} -Wnull-dereference # warn if a null dereference is detected
-          -Wmisleading-indentation # warn if indentation implies blocks where blocks do not exist
-          -Wduplicated-cond # warn if if / else chain has duplicated conditions
+      set(GCC_WARNINGS ${GCC_WARNINGS} -Wnull-dereference # warn if a null dereference is detected
+                       -Wmisleading-indentation # warn if indentation implies blocks where blocks do not exist
       )
     endif ()
 
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.1)
-      set(GCC_WARNINGS ${GCC_WARNINGS} -Wduplicated-branches) # warn if if / else branches have duplicated code
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0) # see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83591
+      set(GCC_WARNINGS ${GCC_WARNINGS} -Wduplicated-cond # warn if if / else chain has duplicated conditions
+                       -Wduplicated-branches # warn if if / else branches have duplicated code
+      )
     endif ()
 
     set(PROJECT_WARNINGS ${GCC_WARNINGS})

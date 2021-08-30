@@ -7,25 +7,20 @@ project(tmr_listener VERSION 0.2.0)
 set(${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX 1.82)
 
 if (NOT DEFINED TMR_TMFLOW_VERSION)
-  set(TMR_TMFLOW_VERSION ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX}
-      CACHE STRING "User-specified target TMFlow version" FORCE)
+  set(TMR_TMFLOW_VERSION ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX} CACHE STRING "User-specified target TMFlow version" FORCE)
 elseif (${TMR_TMFLOW_VERSION} VERSION_GREATER ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX})
-  message(FATAL_ERROR "Target version is greater than max supported"
-                      " version ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX}.")
+  message(FATAL_ERROR "Target version is greater than max supported" " version ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX}.")
 endif ()
 
 # __TMR_TMFLOW_VERSION is internally used by tmr_listener
 if (NOT DEFINED __TMR_TMFLOW_VERSION)
-  set(__TMR_TMFLOW_VERSION ${TMR_TMFLOW_VERSION}
-      CACHE INTERNAL "The version of TMFlow that TMR Listener is built with initially" FORCE)
+  set(__TMR_TMFLOW_VERSION ${TMR_TMFLOW_VERSION} CACHE INTERNAL "The version of TMFlow that TMR Listener is built with initially" FORCE)
 else ()
   if (NOT ${__TMR_TMFLOW_VERSION} VERSION_EQUAL ${TMR_TMFLOW_VERSION})
-    message(
-      FATAL_ERROR "TMR Listener is built with TMFlow version ${__TMR_TMFLOW_VERSION} initially."
-                  "To built with other version, you must call \"catkin clean tmr_listener\" and rebuild all plugins")
+    message(FATAL_ERROR "TMR Listener is built with TMFlow version ${__TMR_TMFLOW_VERSION} initially."
+                        "To built with other version, you must call \"catkin clean tmr_listener\" and rebuild all plugins")
   endif ()
 endif ()
-# unset user specified TMFlow version so that user doesn't need to rebuild if specified wrong version previously
 
 string(REPLACE "." ";" __TMR_TMRFLOW_VERSION_COMPONENT ${__TMR_TMFLOW_VERSION})
 set(${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION ${__TMR_TMFLOW_VERSION})
@@ -40,9 +35,8 @@ if (DEFINED TM_ETHERNET_SLAVE_XML OR EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/msg/TMRE
   set(TM_ETHERNET_MSG TMREthernet.msg)
 
   if (DEFINED TM_ETHERNET_SLAVE_XML)
-    execute_process(
-      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
-              --msg-dir=${CMAKE_CURRENT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
+    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
+                            --msg-dir=${CMAKE_CURRENT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
   endif ()
 
   if (result)
@@ -149,15 +143,7 @@ generate_messages()
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS
-  include
-  LIBRARIES
-  tmr_listener
-  CATKIN_DEPENDS
-  roscpp
-  message_runtime
-  pluginlib #  DEPENDS system_lib
+catkin_package(INCLUDE_DIRS include LIBRARIES tmr_listener CATKIN_DEPENDS roscpp message_runtime pluginlib #  DEPENDS system_lib
 )
 
 #############
@@ -215,12 +201,8 @@ if (TMR_ENABLE_TESTING)
   add_subdirectory(test)
 
   if (ENABLE_COVERAGE)
-    # cmake-format: off
     catkin_add_gcov_report(
-      OUTPUT_DIR "coverage.xml"
-      GCOV_EXCLUDE ".*test.*"
-      EXCLUDE_SRC "${PROJECT_SOURCE_DIR}/src/tmr_cmd_line_option.hpp"
+      REPORT_NAME "coverage.xml" GCOV_EXCLUDE ".*test.*" EXCLUDE_SRC "${PROJECT_SOURCE_DIR}/src/tmr_cmd_line_option.hpp"
       EXTRA_OPTIONS --xml-pretty --exclude-unreachable-branches --exclude-throw-branches)
-    # cmake-format: on
   endif ()
 endif ()

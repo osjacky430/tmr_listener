@@ -1,12 +1,11 @@
-# TM Robot Listener
+# TM Robot Listener <!-- omit in toc -->
 
 [![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=WIP%2FTMSVR&event=push)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Grade) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge/wip/tmsvr)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/overview/wip/tmsvr)
 
-A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave, but still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
+A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave, and still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
 
 ## Table of Contents
 
-- [TM Robot Listener](#tm-robot-listener)
   - [Table of Contents](#table-of-contents)
   - [About the Project](#about-the-project)
     - [Built with](#built-with)
@@ -41,7 +40,7 @@ However, the implementation of [the official ros package](https://github.com/Tec
 
 1.  End user can never know whether the control flow enters listen node or not without polling the service.
 
-2.  Command can't be stacked for TMSCT since some of them were implemented as individual services, you would never want to stack command using service `send_script`, unless you are fine with this:
+2.  Command can't be stacked for TMSCT since some of them are implemented as individual services, you would never want to stack command using service `send_script`, unless you are fine with this:
 
     ```c++
     std::string const cmd = "float[ targetP1= {0,0,90,0,90,0}\r\n"  // wrong here, missing right bracket
@@ -61,9 +60,9 @@ However, the implementation of [the official ros package](https://github.com/Tec
     // enjoy your happy debug time
     ```
 
-5.  Script sending and response recieving is implemented separately, this means that if there are different nodes sending script command and subscribing to the response topic, user might get confused cause they are recieving responses they didn't send, which makes it relatively difficult to debug (ID is of no help under such circumstances). The only way to mitigate the situation is to limit the use to single ros package, or to ensure only one node is communicating to TMSVR at a time.
+5.  Script sending and response recieving are implemented separately, this means that if there are different nodes sending script command and subscribing to the response topic, user might get confused cause they will recieve responses that they didn't send, which makes it relatively difficult to debug (ID is of no help under such circumstances). The only way to mitigate the situation is to limit the use to single ros package, or to ensure only one node is communicating to TM listen node at a time.
 
-`tmr_listener` is therefore here to overcome these drawbacks (point 1, 2, 4 and 5), while offering more functionality (point 3). The tutorial will give you a brief idea how this is done.
+To overcome the drawbacks mentioned above while offering more functionality, we need to implement it in a different way. See README.md under `tmr_listener/src` for more detail. The tutorial will guide you through this library, both listen node and ethernet service, and also showcase how the drawbacks are overcomed.
 
 ### Built with
 
@@ -95,10 +94,10 @@ catkin build tmr_listener (Additional build options)
 
 Build options for `tmr_listener`:
 
-- `-DTMR_ENABLE_TESTING`: to enable unit test code building, set `-DTMR_ENABLE_TESTING=ON`, default to `OFF`
-- `-DENABLE_IPO`: to enable link-time optimization, a.k.a Inter-Procedural Optization, set `-DENABLE_IPO=ON`, default to `OFF`
-- `-DTMR_TMFLOW_VERSION`: to compile `tmr_listener` that support specific version of TMFlow, set `-DTMR_TMFLOW_VERSION=<TMFlow version>`, default to `1.82.0000`, i.e., the code is built as if explicitly pass `-DTMR_TMFLOW_VERSION=1.82.0000` to `catkin build`
-- `-DTM_ETHERNET_SLAVE_XML`: see section [Exported Data Table XML](#exported-data-table-xml) for more detail
+-   `-DTMR_ENABLE_TESTING`: to enable unit test code building, set `-DTMR_ENABLE_TESTING=ON`, default to `OFF`
+-   `-DENABLE_IPO`: to enable link-time optimization, a.k.a Inter-Procedural Optization, set `-DENABLE_IPO=ON`, default to `OFF`
+-   `-DTMR_TMFLOW_VERSION`: to compile `tmr_listener` that support specific version of TMFlow, set `-DTMR_TMFLOW_VERSION=<TMFlow version>`, default to `1.82.0000`, i.e., the code is built as if explicitly pass `-DTMR_TMFLOW_VERSION=1.82.0000` to `catkin build`
+-   `-DTM_ETHERNET_SLAVE_XML`: see section [Exported Data Table XML](#exported-data-table-xml) for more detail
 
 1.  run tmr_listener:
 
@@ -356,9 +355,9 @@ This will establish the connection between netcat and tmr_listener, the only thi
 
 Current `tmr_listener` implementation makes the listen service kind of redundant:
 
-1. For `TMSTA SubCmd 00`, `tmr_listener` can take on this responsibility, as the library behaves similarly to listen node once entered (one listen node to one listen node handler), this is relatively easy, and can be implemented readily once there is a need.
-2. For `TMSTA SubCmd 01`, this is totally unusable because user not aware of listen node handler doesn't have any single information about motion tag.
-3. Last but not least, `TMSTA SubCmd 90...99`, since the user is in full passive mode. Service is definitely not the ideal way of implementing it.
+1.  For `TMSTA SubCmd 00`, `tmr_listener` can take on this responsibility, as the library behaves similarly to listen node once entered (one listen node to one listen node handler), this is relatively easy, and can be implemented readily once there is a need.
+2.  For `TMSTA SubCmd 01`, this is totally unusable because user not aware of listen node handler doesn't have any single information about motion tag.
+3.  Last but not least, `TMSTA SubCmd 90...99`, since the user is in full passive mode. Service is definitely not the ideal way of implementing it.
 
 Due to the reasons above, I am not intended to implement any listen services now, feel free to give me ideas if you find services useful in your case.
 

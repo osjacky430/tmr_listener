@@ -4,73 +4,69 @@ on: [push, pull_request]
 
 jobs:
   industrial_ci:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     continue-on-error: true
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
-      CODACY_PROJ_TOK: ${{ secrets.CODACY_PROJECT_TOKEN }}
       IMMEDIATE_TEST_OUTPUT: true
-      AFTER_RUN_TARGET_TEST: "cd /root/target_ws && catkin build -v tmr_listener -j1 --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test"
-      ADDITIONAL_DEBS: ros-${{ matrix.env.ROS_DISTRO }}-rosbash
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      ADDITIONAL_DEBS: "ros-$ROS_DISTRO-rosbash curl git"
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-16.04]
+        ROS: [kinetic, melodic]
         include:
-          - os: ubuntu-16.04
+          - ROS: kinetic
             env:
               ROS_DISTRO: kinetic
-              CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON
-          - os: ubuntu-18.04
+          - ROS: melodic
             env:
               ROS_DISTRO: melodic
               ROS_REPO: main
-              CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON -DENABLE_COVERAGE=ON
-              BEFORE_INIT: "apt -y update && apt -y upgrade && apt -y install curl git"
+              COVERAGE_REPORT_NAME: coverage.xml
+              COVERAGE_REPORT_DIR: /root/target_ws/build/${{ github.event.repository.name }}/$COVERAGE_REPORT_NAME
+              CMAKE_ARGS: "-DENABLE_COVERAGE=ON -DCOVERAGE_REPORT_NAME=$COVERAGE_REPORT_NAME"
               AFTER_INSTALL_TARGET_DEPENDENCIES: "pip install gcovr"
-              DOCKER_RUN_OPTS: "$(bash <(curl -s https://codecov.io/env)) -e CODACY_PROJECT_TOKEN=$CODACY_PROJ_TOK"
-              AFTER_SCRIPT: "bash <(curl -s https://codecov.io/bash) -f /root/target_ws/build/tmr_listener/coverage.xml && bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r /root/target_ws/build/tmr_listener/coverage.xml"
+              DOCKER_RUN_OPTS: "$(bash <(curl -s https://codecov.io/env)) -e CODACY_PROJECT_TOKEN -e COVERAGE_REPORT_NAME -e COVERAGE_REPORT_DIR"
+              AFTER_SCRIPT:
+                'bash <(curl -s https://codecov.io/bash) -f $(eval "echo $COVERAGE_REPORT_DIR") &&
+                bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r $COVERAGE_REPORT_DIR'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
+          key: ccache-${{ matrix.ROS }}-${{ matrix.env.ROS_REPO }}
       - uses: ros-industrial/industrial_ci@master
         env: ${{ matrix.env }}
 
   run-sanitizer:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     continue-on-error: true
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       NOT_TEST_BUILD: true
-      DOCKER_SANITIZER_REPORT_DIR: /root/target_ws/src/tmr_listener/sanitizer_report
+      DOCKER_SANITIZER_REPORT_DIR: /root/target_ws/src/${{ github.event.repository.name }}/sanitizer_report
       HOST_SANITIZER_REPORT_DIR: ${{ github.workspace }}/shared
-      BEFORE_INIT:
-        'apt -y update && apt -y upgrade && apt -y install wget gnupg2 software-properties-common apt-transport-https &&
-        wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg2 --dearmor - |
+      ADDITIONAL_DEBS: "ros-${{ matrix.ROS_DISTRO }}-rosbash software-properties-common wget apt-transport-https"
+      AFTER_INIT: # download and install latest cmake
+        'wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg2 --dearmor - |
         tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null &&
         apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" &&
         apt -y update && apt -y install cmake'
       AFTER_BUILD_TARGET_WORKSPACE:
-        'mkdir -p $SANITIZER_REPORT_DIR && cd /root/target_ws &&
-        ${{ matrix.sanitizer_options }}_OPTIONS=log_path=$SANITIZER_REPORT_DIR/${{ matrix.sanitizer_options }}-$ROS_DISTRO.log:${{ matrix.RT_FLAG }} catkin run_tests tmr_listener -j1 &&
-        echo "moving directory $SANITIZER_REPORT_DIR to /shared" &&
-        mv $SANITIZER_REPORT_DIR/ /shared &&
-        echo "/shared " && ls -lt /shared/sanitizer_report'
+        "mkdir -p $SANITIZER_REPORT_DIR && cd /root/target_ws &&
+        ${{ matrix.sanitizer_options }}_OPTIONS=log_path=$SANITIZER_REPORT_DIR/${{ matrix.sanitizer_options }}-$ROS_DISTRO.log:${{ matrix.RT_FLAG }} catkin run_tests ${{ github.event.repository.name }} &&
+        mv $SANITIZER_REPORT_DIR/ /shared"
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-16.04]
+        ROS_DISTRO: [kinetic, melodic]
         sanitizer_options: [TSAN, ASAN, UBSAN]
         include:
-          - os: ubuntu-16.04
-            ROS_DISTRO: kinetic
-          - os: ubuntu-18.04
-            ROS_DISTRO: melodic
+          - ROS_DISTRO: melodic
             ROS_REPO: main
 
           - sanitizer_options: TSAN
-            RT_FLAG: detect_deadlocks=0:suppressions=/root/target_ws/src/tmr_listener/tool/sanitizer/tsan.supp:exitcode=0
+            RT_FLAG: detect_deadlocks=0:suppressions=/root/target_ws/src/${{ github.event.repository.name }}/tool/sanitizer/tsan.supp:exitcode=0
           - sanitizer_options: ASAN
             RT_FLAG: detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:check_initialization_order=1:exitcode=0
           - sanitizer_options: UBSAN
@@ -85,10 +81,9 @@ jobs:
       - uses: ros-industrial/industrial_ci@master
         env:
           ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
-          CMAKE_ARGS: -DTMR_ENABLE_TESTING=ON -DENABLE_${{ matrix.sanitizer_options }}=ON
-          ADDITIONAL_DEBS: "ros-${{ matrix.ROS_DISTRO }}-rosbash"
+          CMAKE_ARGS: -DENABLE_${{ matrix.sanitizer_options }}=ON
           DOCKER_RUN_OPTS: "-e SANITIZER_REPORT_DIR=${{ env.DOCKER_SANITIZER_REPORT_DIR }} -v ${{ env.HOST_SANITIZER_REPORT_DIR }}:/shared"
-      - run: ls -lt ${{ env.HOST_SANITIZER_REPORT_DIR }}/sanitizer_report && sudo chmod -R a+r ${{ env.HOST_SANITIZER_REPORT_DIR }}/sanitizer_report
+      - run: sudo chmod -R a+r ${{ env.HOST_SANITIZER_REPORT_DIR }}/sanitizer_report # kinda hack
       - uses: actions/upload-artifact@v2
         with:
           name: sanitizer-report
