@@ -7,8 +7,9 @@ from std_msgs.msg import String
 try:
     from tmr_listener.msg import TMREthernet
 except ImportError:
-    raise ImportError('TMREthernet msg not generated, if you are not using exported data table,'
-                      'then you can ignore this error message completely. See README.md')
+    print('TMREthernet msg not generated, if you are not using exported data table,'
+          'then you can ignore this error message completely. See README.md')
+    exit(0)
 
 pub = rospy.Publisher(
     '/tmr_eth_slave/exported_data_table', TMREthernet, queue_size=1)

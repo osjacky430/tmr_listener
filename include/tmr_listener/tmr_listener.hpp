@@ -11,7 +11,6 @@
 
 #include <pluginlib/class_loader.h>
 #include <ros/node_handle.h>
-#include <ros/publisher.h>
 
 namespace tmr_listener {
 
@@ -122,30 +121,35 @@ class TMRobotListener {
    * @param t_ip_addr The ip address of the TM robot
    * @param t_plugin_manager  The ListenerHandle plugin manager, default uses plugin lib to load plugins
    */
-  explicit TMRobotListener(std::string t_ip_addr, ros::NodeHandle t_nh = ros::NodeHandle{"~"},
-                           TMRPluginManagerBasePtr t_plugin_manager = boost::make_shared<RTLibPluginManager>()) noexcept
-    : tcp_comm_{TMRobotTCP::Callback{
-                  [this](auto &&t_ph) { this->receive_tm_msg_callback(std::forward<decltype(t_ph)>(t_ph)); },
-                  [this](auto &&t_ph) { this->finished_transfer_callback(std::forward<decltype(t_ph)>(t_ph)); },
-                  [this]() { this->disconnected_callback(); }},
-                LISTENER_PORT, std::move(t_ip_addr)},
-      plugin_manager_{std::move(t_plugin_manager)},
-      subcmd_data_pub_{t_nh.advertise<SubCmdDataMsg>("subcmd_90_99", 5)} {}
+  explicit TMRobotListener(
+    std::string t_ip_addr, ros::NodeHandle t_nh = ros::NodeHandle{"~"},
+    TMRPluginManagerBasePtr t_plugin_manager = boost::make_shared<RTLibPluginManager>()) noexcept;
 
   /**
-   * @brief This function is the entry point to the TCP/IP connection, it initiates the thread loop and runs io services
-   *        in the background
+   * @brief This function is the entry point to the TCP/IP connection, it initiates the thread loop and runs io
+   * services in the background
    */
   void start();
+
+  /**
+   * @note  explicitly defaulted to deal with incomplete type and unqiue_ptr
+   */
+  ~TMRobotListener();
 
  private:
   static constexpr auto TMR_INIT_MSG_ID = "0"; /* !< TM robot message id when first enter listen node */
 
+  /**
+   * @brief This class make suitable responses for each packet type. It is basically a static_visitor that operates on
+   *        ListenData
+   */
+  class PacketVisitor;
+  friend PacketVisitor;
+
   TMRobotTCP tcp_comm_;                    /*!< TM TCP communication object */
   TMRPluginManagerBasePtr plugin_manager_; /*!< TM plugin manager holder */
   TMTaskHandler current_task_handler_{};   /*!< plugin that is currently handling incoming packet */
-
-  ros::Publisher subcmd_data_pub_;
+  std::unique_ptr<PacketVisitor> visitor_; /*!< Packet visitor operator */
 
   /**
    * @brief This function parses the message sent by TM robot, once entered listen node, it will initiate
@@ -169,12 +173,6 @@ class TMRobotListener {
    * @brief This function gets called if disconnect event happened, see ListenerHandle::handle_disconnect
    */
   void disconnected_callback() noexcept;
-
-  /**
-   * @brief This class make suitable responses for each packet type. It is basically a static_visitor that operates on
-   *        ListenData
-   */
-  class PacketVisitor;
 };
 
 }  // namespace tmr_listener

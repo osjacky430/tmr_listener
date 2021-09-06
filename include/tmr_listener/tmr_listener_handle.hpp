@@ -6,6 +6,7 @@
 #include <string>
 
 #include "tmr_ext_script/tmr_motion_function.hpp"
+#include "tmr_ext_script/tmr_response.hpp"
 
 namespace tmr_listener {
 
@@ -20,10 +21,9 @@ class ListenerHandle {
  public:
   enum class MessageStatus { Responded, NotYetRespond };
 
- private:
+ private:  // don't expose virtual functions to derived class, only enable override
   MessageStatus responded_ = MessageStatus::NotYetRespond;
 
- protected:
   /**
    * @brief This function generates TM external script commands, this is left for end user to implement.
    *
@@ -71,8 +71,8 @@ class ListenerHandle {
    *
    * @param t_packet  message sent from TM
    */
-  template <typename T>
-  void handle_response(T const& t_packet) {
+  template <typename Packet>
+  void handle_response(Packet const& t_packet) {
     this->responded_ = MessageStatus::Responded;
     this->response_msg(t_packet);
     this->response_msg();

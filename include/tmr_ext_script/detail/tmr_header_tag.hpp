@@ -9,9 +9,12 @@
 #include <type_traits>
 #include <vector>
 
+#include "tmr_ext_script/tmr_response.hpp"
+
 #include "tmr_ext_script/detail/tmr_command.hpp"
 #include "tmr_ext_script/tmr_variable.hpp"
 #include "tmr_prototype/tmr_header.hpp"
+#include "tmr_utility/tmr_constexpr_string.hpp"
 #include "tmr_utility/tmr_mt_helper.hpp"
 #include "tmr_utility/tmr_parser.hpp"
 
@@ -19,39 +22,11 @@ namespace tmr_listener {
 namespace detail {
 
 struct TMSCTTag {
-  static constexpr auto NAME() noexcept { return "$TMSCT"; }
+  static constexpr ConstString NAME() noexcept { return {"$TMSCT"}; }
 
   struct DataFrame {
-    struct FunctionCall {
-      std::string name_;
-      std::string args_;
-
-      static ParseRule<FunctionCall>& parsing_rule() noexcept;
-    };
-
-    struct VariableDecl {
-      std::string type_;
-      std::string name_;
-      std::string val_;
-
-      static ParseRule<VariableDecl>& parsing_rule() noexcept;
-    };
-
-    struct ScriptResult {
-      bool result_ = true;
-      std::vector<int> abnormal_lines_;
-
-      ScriptResult() noexcept = default;
-      static ParseRule<ScriptResult>& parsing_rule() noexcept;
-    };
-
-    using ServerResponse = boost::variant<ScriptResult, std::string>;
-    using ClientRequest  = std::vector<boost::variant<FunctionCall, VariableDecl>>;
-    using AvailableCmd   = boost::variant<ClientRequest, ServerResponse>;
-    using Data           = AvailableCmd;
-
-    std::string id_;
-    Data cmd_;
+    using ServerResponse = boost::variant<TMSCTResponse, TMSCTEnterNodeMsg>;
+    ServerResponse resp_;
 
     static ParseRule<DataFrame>& parsing_rule();
   };
@@ -142,7 +117,7 @@ struct TMSCTTag {
    * @note one line one command only, delimited by CRLF
    */
   static std::string assemble(std::vector<std::string> const& t_input) noexcept {
-    auto const id   = t_input.front();
+    auto const& id  = t_input.front();
     auto const data = std::vector<std::string>{std::next(t_input.begin()), t_input.end()};
     return id + ',' + boost::algorithm::join(data, "\r\n");
   }
@@ -152,14 +127,10 @@ struct TMSCTTag {
  * @brief Utility class for Header usage classification
  */
 struct TMSTATag {
-  static constexpr auto NAME() noexcept { return "$TMSTA"; }
+  static constexpr ConstString NAME() noexcept { return {"$TMSTA"}; }
 
   struct DataFrame {
-    using Subcmd00Resp  = boost::tuple<bool, std::string>;
-    using Subcmd01Resp  = boost::tuple<std::string, TagNumberStatus>;
-    using SubcmdDataMsg = boost::tuple<int, std::string>;
-
-    using Response = boost::variant<Subcmd00Resp, Subcmd01Resp, SubcmdDataMsg>;
+    using Response = boost::variant<TMSTAResponse::Subcmd00, TMSTAResponse::Subcmd01, TMSTAResponse::DataMsg>;
     Response resp_;
 
     static ParseRule<TMSTATag::DataFrame>& parsing_rule();
@@ -239,10 +210,10 @@ struct TMSTATag::create_builder_error_msg<T, std::enable_if_t<tmr_mt_helper::is_
  * @brief Utility class for Header usage classification
  */
 struct CPERRTag {
-  static constexpr auto NAME() noexcept { return "$CPERR"; }
+  static constexpr ConstString NAME() noexcept { return {"$CPERR"}; }
 
   struct DataFrame {
-    ErrorCode err_;
+    CPERRResponse resp_;
 
     static ParseRule<DataFrame>& parsing_rule() noexcept;
   };
@@ -251,8 +222,8 @@ struct CPERRTag {
 }  // namespace detail
 }  // namespace tmr_listener
 
-BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSCTTag::DataFrame, id_, cmd_)
+BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSCTTag::DataFrame, resp_)
 BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::TMSTATag::DataFrame, resp_)
-BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::CPERRTag::DataFrame, err_)
+BOOST_FUSION_ADAPT_STRUCT(tmr_listener::detail::CPERRTag::DataFrame, resp_)
 
 #endif

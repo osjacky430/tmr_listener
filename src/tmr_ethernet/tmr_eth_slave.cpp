@@ -52,7 +52,7 @@ void TMRobotEthSlave::parse_input_msg(std::string const& t_input) {
  *
  *          1) not connected
  *          2) bad request (item_list.size != value_list.size for write request, empty ID, or empty string element)
- *          3) ethernet slave node shutdown while the service is waiting for TM robot responde
+ *          3) ethernet slave node shutdown while the service is waiting for TM robot response
  */
 bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSlaveCmdResponse& t_resp) {
   using namespace std::string_literals;

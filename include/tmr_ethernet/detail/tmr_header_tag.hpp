@@ -7,13 +7,14 @@
 
 #include "tmr_ethernet/detail/tmr_fwd.hpp"
 #include "tmr_prototype/tmr_header.hpp"
+#include "tmr_utility/tmr_constexpr_string.hpp"
 #include "tmr_utility/tmr_parser.hpp"
 
 namespace tmr_listener {
 namespace detail {
 
 struct TMSVRTag {
-  static constexpr auto NAME() { return "$TMSVR"; }
+  static constexpr ConstString NAME() noexcept { return {"$TMSVR"}; }
 
   struct DataFrame {
     using DataTableFormat = TMSVRJsonData;  // @todo: extend to string, and possibly, binary mode

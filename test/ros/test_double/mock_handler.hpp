@@ -12,10 +12,7 @@
 namespace tmr_listener {
 
 template <std::size_t Idx>
-class HandlerMock : public ListenerHandle {
- public:
-  using ListenerHandle::response_msg;
-
+struct HandlerMock : public ListenerHandle {
 #if defined(MOCK_METHOD)
   MOCK_METHOD(MessagePtr, generate_cmd, (MessageStatus const), (override));
   MOCK_METHOD(Decision, start_task, (std::string const &), (override));

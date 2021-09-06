@@ -123,7 +123,7 @@ class TMErrorHandler final : public tmr_listener::ListenerHandle {
 
     if (this->state_ != HandlerState::Waiting and t_resp.id_ != "Waiting" and t_resp.id_ != "MoveToHome") {
       ++this->state_;
-    } else if (not t_resp.abnormal_line_.empty()) {
+    } else if (not t_resp.abnormal_lines_.empty()) {
       ROS_WARN_STREAM_NAMED("received_msg", "TMSCT warning or error!");
       this->state_ = HandlerState::Error;
     }

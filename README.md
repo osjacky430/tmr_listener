@@ -262,8 +262,6 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
   private:
     MessagePtr next_cmd_;
     int msg_count_ = 0;
-  protected:
-    using tmr_listener::ListenerHandle::response_mgs; // this is needed
 
     // Exit script if error happened
     void response_msg(tmr_listener::TMSCTResponse const& t_resp) override {
@@ -467,24 +465,20 @@ Notice the option `-v` , **this is needed** since tmr_listener will determine wh
 
 -   General
     -   More Unit test
-    -   Code coverage
-    -   Thread, and Exception safety
     -   Consider the case where user would like to run these two in one executable?
-    -   Consider comply to ros-industrial?
 -   Parser object
     -   Maybe I should adapt ros msg object as spirit parse data storage class
+    -   Fix that crappy parser, to many static variables, learn how to write spirit parser properly
 -   ROS interface
     -   More services
         -   load plugin dynamically
-        -   listener services
 -   TM external script language 
-    -   Command as expression, so that `bool res = Vision_IsJobAvailable("job1")` is valid declaration 
+    -   Command as expression, so that `bool res = Vision_IsJobAvailable("job1")` is valid declaration
     -   Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
     -   consider function accepting types that can be implicitly converted to the desired type
     -   TM functions, and project variables
     -   MUST disable user construct Expression from string, only internally usable
     -   Reply if tm message not yet respond is bugged since the response is not queued, fix it in the future
-    -   Consider API versioning
 
 ## Contact
 

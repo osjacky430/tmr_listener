@@ -94,14 +94,9 @@ struct MessageBase {
 };
 
 template <typename Tag>
-class Message final : public MessageBase {
- public:
+struct Message final : public MessageBase {
   bool scriptExit_ = false;
   bool ended_      = false;
-
-#if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
-  bool is_priority_ = false;
-#endif
 
   std::vector<std::string> content_;
 
@@ -121,7 +116,7 @@ class Message final : public MessageBase {
   std::string to_str() const noexcept override {
     auto const data_str = Tag::assemble(this->content_);
     auto const length   = data_str.size();
-    auto const result   = (boost::format("%s,%d,%s,") % Tag::NAME() % length % data_str).str();
+    auto const result   = Tag::NAME().to_std_str() + ',' + std::to_string(length) + ',' + data_str + ',';
 
     return result + "*" + calculate_checksum(result) + "\r\n";
   }
@@ -129,6 +124,8 @@ class Message final : public MessageBase {
   bool has_script_exit() const noexcept override { return this->scriptExit_; }
 
 #if CURRENT_TMFLOW_VERSION_GE(1, 82, 0000)
+  bool is_priority_ = false;
+
   bool use_priority_cmd() const noexcept override { return this->is_priority_; }
 #endif
 };
@@ -271,7 +268,8 @@ struct Header {
       using boost::spirit::qi::xdigit;
       using DF = DataFrame;
 
-      static ParseRule<Packet> rule = Impl::NAME() >> lit(',') >> int_ >> ',' >> DF::parsing_rule() >> ",*" >> +xdigit;
+      static ParseRule<Packet> rule = Impl::NAME().name_ >> lit(',') >> int_ >> ','  //
+                                      >> DF::parsing_rule() >> ",*" >> +xdigit;
       return rule;
     }
   };

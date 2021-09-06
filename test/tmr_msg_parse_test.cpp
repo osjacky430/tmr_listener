@@ -4,83 +4,13 @@
 #include "tmr_listener/tmr_listener.hpp"
 #include "tmr_listener/tmr_listener_handle.hpp"
 
-TEST(SpiritParse, TMSCTClientRequestTest) {
-  using namespace tmr_listener;
-  {
-    constexpr auto test_str = "$TMSCT,50,ChangePayload,float payload=0\r\nChangeLoad(payload),*6B";
-
-    auto const p = TMSCTHeader::parse(test_str);
-
-    auto const client_request = boost::get<detail::TMSCTTag::DataFrame::ClientRequest>(&p.data_.cmd_);
-    ASSERT_EQ(client_request->size(), 2);
-    EXPECT_EQ(p.length_, 50);
-    EXPECT_EQ(p.data_.id_, "ChangePayload");
-
-    auto const var = boost::get<detail::TMSCTTag::DataFrame::VariableDecl>(&client_request->at(0));
-    ASSERT_TRUE(var != nullptr);
-    EXPECT_EQ(var->type_, "float");
-    EXPECT_EQ(var->name_, "payload");
-    EXPECT_EQ(var->val_, "0");
-
-    auto const var_2 = boost::get<detail::TMSCTTag::DataFrame::FunctionCall>(&client_request->at(1));
-    ASSERT_TRUE(var_2 != nullptr);
-    EXPECT_EQ(var_2->name_, "ChangeLoad");
-    EXPECT_EQ(var_2->args_, "payload");
-
-    EXPECT_EQ(p.checksum_, "6B");
-  }
-
-  {
-    constexpr auto test_str =
-      "$TMSCT,169,MoveToHome,PTP(\"CPP\",Point[\"Safety_Back\"].Value,100,200,100,true)\r\n"
-      "QueueTag(1)\r\n"
-      "float[] targetP2 = {90, -35, 125, 0, 90, 0}\r\n"
-      "PTP(\"JPP\", targetP2, 100, 200, 100, true)\r\n"
-      "QueueTag(2, 1),*6A ";
-
-    auto const p = TMSCTHeader::parse(test_str);
-
-    auto const client_request = boost::get<detail::TMSCTTag::DataFrame::ClientRequest>(&p.data_.cmd_);
-    ASSERT_TRUE(client_request != nullptr);
-    ASSERT_EQ(client_request->size(), 5);
-    EXPECT_EQ(p.length_, 169);
-    EXPECT_EQ(p.data_.id_, "MoveToHome");
-
-    auto const var = boost::get<detail::TMSCTTag::DataFrame::FunctionCall>(&client_request->at(0));
-    ASSERT_TRUE(var != nullptr);
-    EXPECT_EQ(var->name_, "PTP");
-    EXPECT_EQ(var->args_, R"("CPP",Point["Safety_Back"].Value,100,200,100,true)");
-
-    auto const var_2 = boost::get<detail::TMSCTTag::DataFrame::FunctionCall>(&client_request->at(1));
-    ASSERT_TRUE(var_2 != nullptr);
-    EXPECT_EQ(var_2->name_, "QueueTag");
-    EXPECT_EQ(var_2->args_, "1");
-
-    auto const var_3 = boost::get<detail::TMSCTTag::DataFrame::VariableDecl>(&client_request->at(2));
-    ASSERT_TRUE(var_3 != nullptr);
-    EXPECT_EQ(var_3->type_, "float[]");
-    EXPECT_EQ(var_3->name_, "targetP2");
-    EXPECT_EQ(var_3->val_, "{90, -35, 125, 0, 90, 0}");
-
-    auto const var_4 = boost::get<detail::TMSCTTag::DataFrame::FunctionCall>(&client_request->at(3));
-    ASSERT_TRUE(var_4 != nullptr);
-    EXPECT_EQ(var_4->name_, "PTP");
-    EXPECT_EQ(var_4->args_, R"("JPP",targetP2,100,200,100,true)");
-
-    EXPECT_EQ(p.checksum_, "6A");
-  }
-}
-
 TEST(SpiritParse, TMSCTServerResponseTest) {
   using namespace tmr_listener;
   {
     constexpr auto response = "$TMSCT,9,4,ERROR;1,*02\r\n";
 
-    auto const parsed = TMSCTHeader::parse(response);
-    auto const cmd    = boost::get<detail::TMSCTTag::DataFrame::ServerResponse>(&parsed.data_.cmd_);
-    ASSERT_TRUE(cmd != nullptr);
-
-    auto const script_result = boost::get<detail::TMSCTTag::DataFrame::ScriptResult>(cmd);
+    auto const parsed        = TMSCTHeader::parse(response);
+    auto const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_EQ(script_result->abnormal_lines_.size(), 1);
     EXPECT_EQ(script_result->abnormal_lines_.at(0), 1);
@@ -89,11 +19,8 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
   {
     constexpr auto response = "$TMSCT,4,1,OK,*5C\r\n";
 
-    auto const parsed = TMSCTHeader::parse(response);
-    auto const cmd    = boost::get<detail::TMSCTTag::DataFrame::ServerResponse>(&parsed.data_.cmd_);
-    ASSERT_TRUE(cmd != nullptr);
-
-    auto const script_result = boost::get<detail::TMSCTTag::DataFrame::ScriptResult>(cmd);
+    auto const parsed        = TMSCTHeader::parse(response);
+    auto const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_TRUE(script_result->abnormal_lines_.empty());
   }
@@ -101,11 +28,9 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
   {
     constexpr auto response = "$TMSCT,4,1,OK;1;2,*5C\r\n";
 
-    auto const parsed = TMSCTHeader::parse(response);
-    auto const cmd    = boost::get<detail::TMSCTTag::DataFrame::ServerResponse>(&parsed.data_.cmd_);
-    ASSERT_TRUE(cmd != nullptr);
+    auto const parsed        = TMSCTHeader::parse(response);
+    auto const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
 
-    auto const script_result = boost::get<detail::TMSCTTag::DataFrame::ScriptResult>(cmd);
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_EQ(script_result->abnormal_lines_.size(), 2);
     EXPECT_EQ(script_result->abnormal_lines_.at(0), 1);
@@ -121,57 +46,51 @@ TEST(SpiritParse, TMSTAResponseMatch) {
     constexpr auto response = "$TMSTA,29,00,true,UltrasonicFail,-12131,*5B\r\n";
 
     auto const parsed = TMSTAHeader::parse(response);
-    auto const cmd    = boost::get<detail::TMSTATag::DataFrame::Subcmd00Resp>(&parsed.data_.resp_);
+    auto const cmd    = boost::get<TMSTAResponse::Subcmd00>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
-    auto const script_result = boost::get<0>(*cmd);
-    EXPECT_TRUE(script_result);
-
-    auto const in_listen_node_msg = boost::get<1>(*cmd);
-    EXPECT_EQ(in_listen_node_msg, "UltrasonicFail,-12131");
+    EXPECT_TRUE(cmd->entered_);
+    EXPECT_EQ(cmd->node_name_, "UltrasonicFail,-12131"s);
   }
 
   {
     constexpr auto response = "$TMSTA,10,01,08,true,*6D\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<detail::TMSTATag::DataFrame::Subcmd01Resp>(&parsed.data_.resp_);
+    auto const cmd          = boost::get<TMSTAResponse::Subcmd01>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
-    auto const tag_number = boost::get<0>(*cmd);
-    EXPECT_EQ(tag_number, "08");
-
-    auto const tag_number_status = boost::get<1>(*cmd);
-    EXPECT_EQ(tag_number_status, TagNumberStatus::Complete);
+    EXPECT_EQ(cmd->tag_number_, "08");
+    EXPECT_EQ(cmd->tag_stat_, TagNumberStatus::Complete);
   }
 
   {
     constexpr auto response = "$TMSTA,14,90,Hello World,*73\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<detail::TMSTATag::DataFrame::SubcmdDataMsg>(&parsed.data_.resp_);
+    auto const cmd          = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
-    EXPECT_EQ(boost::get<0>(*cmd), 90);
-    EXPECT_EQ(boost::get<1>(*cmd), "Hello World");
+    EXPECT_EQ(cmd->cmd_, 90);
+    EXPECT_EQ(cmd->data_, "Hello World"s);
   }
 
   {
     constexpr auto response = "$TMSTA,10,91,123.456,*7E\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<detail::TMSTATag::DataFrame::SubcmdDataMsg>(&parsed.data_.resp_);
+    auto const cmd          = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
-    EXPECT_EQ(boost::get<0>(*cmd), 91);
-    EXPECT_EQ(boost::get<1>(*cmd), "123.456");
+    EXPECT_EQ(cmd->cmd_, 91);
+    EXPECT_EQ(cmd->data_, "123.456"s);
   }
 
   {
     constexpr auto response = "$TMSTA,67,90,{-248.7316,-154.6399,-130.5106,-0.04263335,-0.6727331,0.8938164},*52\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<detail::TMSTATag::DataFrame::SubcmdDataMsg>(&parsed.data_.resp_);
+    auto const cmd          = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
-    EXPECT_EQ(boost::get<0>(*cmd), 90);
-    EXPECT_EQ(boost::get<1>(*cmd), "{-248.7316,-154.6399,-130.5106,-0.04263335,-0.6727331,0.8938164}");
+    EXPECT_EQ(cmd->cmd_, 90);
+    EXPECT_EQ(cmd->data_, "{-248.7316,-154.6399,-130.5106,-0.04263335,-0.6727331,0.8938164}"s);
   }
 }
 
@@ -181,7 +100,7 @@ TEST(SpiritParse, CPERRResponseMatch) {
 
   auto const test_cperr_msg_equal = [](auto const& t_string, auto const& t_err_code) {
     auto const parsed = CPERRHeader::parse(t_string);
-    EXPECT_EQ(parsed.data_.err_, t_err_code);
+    EXPECT_EQ(parsed.data_.resp_.err_, t_err_code);
   };
 
   test_cperr_msg_equal("$CPERR,2,01,*49\r\n"s, ErrorCode::BadArgument);

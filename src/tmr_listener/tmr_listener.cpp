@@ -7,6 +7,7 @@
 #include <numeric>
 
 #include "tmr_listener/tmr_listener.hpp"
+#include "tmr_utility/tmr_lambda_visitor.hpp"
 
 namespace {
 
@@ -18,7 +19,7 @@ inline auto strip_crlf(std::string const &t_input) noexcept {
 
 namespace tmr_listener {
 
-class TMRobotListener::PacketVisitor final : public boost::static_visitor<> {
+class TMRobotListener::PacketVisitor : public boost::static_visitor<> {
   /**
    * @note Every object passed as a raw pointer (or iterator) is assumed to be owned by the caller, so that its lifetime
    *       is handled by the caller. Viewed another way: ownership transferring APIs are relatively rare compared to
@@ -27,67 +28,60 @@ class TMRobotListener::PacketVisitor final : public boost::static_visitor<> {
   TMRobotTCP *const tcp_comm_;
   TMTaskHandler &current_task_handler_;
   TMRPluginManagerBase const *const plugin_manager_;
-  ros::Publisher const &sub_cmd_pub_;
+  ros::Publisher sub_cmd_pub_;
 
  public:
-  explicit PacketVisitor(TMRobotTCP *const t_tcp_comm, TMTaskHandler &t_current_task_handler_,
-                         TMRPluginManagerBase const *const t_plugin_manager, ros::Publisher const &t_pub)
+  explicit PacketVisitor(TMRobotListener *const t_tmr_listener, ros::Publisher const &t_pub)
     : boost::static_visitor<>(),
-      tcp_comm_{t_tcp_comm},
-      current_task_handler_{t_current_task_handler_},
-      plugin_manager_{t_plugin_manager},
+      tcp_comm_{&t_tmr_listener->tcp_comm_},
+      current_task_handler_{t_tmr_listener->current_task_handler_},
+      plugin_manager_{t_tmr_listener->plugin_manager_.get()},
       sub_cmd_pub_{t_pub} {}
 
   template <typename T>
-  void operator()(T const & /*unused*/) {
-    throw std::invalid_argument("Unimplemented or unknown header, please help report issues.");
-  }
-};
+  struct skip {
+    void operator()(T const & /*unused*/) const noexcept {}
+  };
 
-template <>
-void TMRobotListener::PacketVisitor::operator()(CPERRPacket const &t_packet) {
-  if (this->current_task_handler_) {
-    this->current_task_handler_->handle_response(CPERRResponse{t_packet.data_.err_});
-    if (t_packet.data_.err_ == ErrorCode::NotInListenNode) {
+  void poll_for_current_handler(TMSCTEnterNodeMsg const &t_resp) const;
+
+  void check_reset_needed(CPERRResponse const &t_resp) const noexcept {
+    if (t_resp.err_ == ErrorCode::NotInListenNode) {
       this->current_task_handler_.reset();
     }
   }
-}
 
-template <>
-void TMRobotListener::PacketVisitor::operator()(TMSTAPacket const &t_packet) {
-  boost::apply_visitor(*this, t_packet.data_.resp_);
-}
+  void broadcast_data_msg(TMSTAResponse::DataMsg const &t_resp) const noexcept {
+    auto const &plugins             = this->plugin_manager_->get_all_plugins();
+    auto const send_subcmd_data_msg = [t_resp](auto &&t_plugin) { t_plugin->handle_response(t_resp); };
+    std::for_each(plugins.begin(), plugins.end(), send_subcmd_data_msg);
 
-template <>
-void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::Subcmd00Resp const &t_packet) {
-  if (this->current_task_handler_) {
-    TMSTAResponse::Subcmd00 resp{boost::get<0>(t_packet), boost::get<1>(t_packet)};
-    this->current_task_handler_->handle_response(resp);
+    SubCmdDataMsg msg;
+    msg.channel = t_resp.cmd_;
+    msg.value   = t_resp.data_;
+    this->sub_cmd_pub_.publish(msg);
   }
-}
 
-template <>
-void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::Subcmd01Resp const &t_packet) {
-  if (this->current_task_handler_) {
-    TMSTAResponse::Subcmd01 resp{boost::get<0>(t_packet), boost::get<1>(t_packet)};
-    this->current_task_handler_->handle_response(resp);
+  template <typename T>
+  void operator()(T const &t_packet) const {
+    auto const default_skip = [](auto const & /* unused */) { /* skip the rest */ };
+    auto const to_visit     = as_variant(t_packet.data_.resp_);
+    if (this->current_task_handler_) {
+      auto const notifier = [this](auto const &t_resp) { this->current_task_handler_->handle_response(t_resp); };
+      auto const visitor  = make_lambda_visitor(notifier, skip<TMSCTEnterNodeMsg>{}, skip<TMSTAResponse::DataMsg>{});
+      boost::apply_visitor(visitor, to_visit);
+    } else {
+      auto const find_handler = [this](TMSCTEnterNodeMsg const &t_msg) { this->poll_for_current_handler(t_msg); };
+      auto const visitor      = make_lambda_visitor(find_handler, default_skip);
+      boost::apply_visitor(visitor, to_visit);
+    }
+
+    auto const cperr        = [this](CPERRResponse const &t_resp) { this->check_reset_needed(t_resp); };
+    auto const data_msg     = [this](TMSTAResponse::DataMsg const &t_resp) { this->broadcast_data_msg(t_resp); };
+    auto const post_process = make_lambda_visitor(cperr, data_msg, default_skip);
+    boost::apply_visitor(post_process, to_visit);
   }
-}
-
-template <>
-void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::SubcmdDataMsg const &t_packet) {
-  auto const &plugins             = this->plugin_manager_->get_all_plugins();
-  auto const send_subcmd_data_msg = [t_packet](auto &&t_plugin) {
-    t_plugin->handle_response(TMSTAResponse::DataMsg{boost::get<0>(t_packet), boost::get<1>(t_packet)});
-  };
-  std::for_each(plugins.begin(), plugins.end(), send_subcmd_data_msg);
-
-  SubCmdDataMsg msg;
-  msg.channel = boost::get<0>(t_packet);
-  msg.value   = boost::get<1>(t_packet);
-  this->sub_cmd_pub_.publish(msg);
-}
+};
 
 /**
  * @details Since TM robot sends TMSCT message only during listen node, we can assume that if there is no task handler
@@ -97,37 +91,24 @@ void TMRobotListener::PacketVisitor::operator()(TMSTAPacket::DataFrame::SubcmdDa
  *
  *          If there is no handler that is willing to handle the current listen node, then default_task_handler_ will
  *          generate the response, sending ScriptExit() immediately to TM robot.
- *
- * @note    TM robot will send OK message even after ScriptExit()
- *
- * @todo    I would like to take if else away from these operator()s
  */
-template <>
-void TMRobotListener::PacketVisitor::operator()(TMSCTPacket const &t_tmsct) {
-  auto const server_response = boost::get<TMSCTPacket::DataFrame::ServerResponse>(t_tmsct.data_.cmd_);
-  if (not this->current_task_handler_) {
-    if (t_tmsct.data_.id_ == TMRobotListener::TMR_INIT_MSG_ID) {
-      auto const response_content = boost::get<std::string>(server_response);
-      ROS_INFO_STREAM("In Listener node, node message: " << response_content);
+void TMRobotListener::PacketVisitor::poll_for_current_handler(TMSCTEnterNodeMsg const &t_resp) const {
+  if (t_resp.id_ == TMRobotListener::TMR_INIT_MSG_ID) {
+    ROS_INFO_STREAM("In Listener node, node message: " << t_resp.msg_);
 
-      auto const find_result = this->plugin_manager_->find_task_handler(response_content);
-      if (not find_result) {
-        ROS_FATAL_STREAM("plugin_manager return null pointer in find_task_handler, exit program");
-        throw std::runtime_error("plugin_manager return null pointer in find_task_handler");
-      }
-
-      auto const response_cmd = find_result->generate_request();
-      if (not response_cmd->has_script_exit()) {  // may be default handler, reset immediately
-        this->current_task_handler_ = find_result;
-      }
-
-      ROS_INFO_STREAM_NAMED("tm_listen_node", "Write msg: " << ::strip_crlf(response_cmd->to_str()));
-      this->tcp_comm_->write(response_cmd->to_str());
+    auto const find_result = this->plugin_manager_->find_task_handler(t_resp.msg_);
+    if (not find_result) {
+      ROS_FATAL_STREAM("plugin_manager return null pointer in find_task_handler, exit program");
+      throw std::runtime_error("plugin_manager return null pointer in find_task_handler");
     }
-  } else {
-    auto const response_content = boost::get<TMSCTPacket::DataFrame::ScriptResult>(server_response);
-    TMSCTResponse const resp{t_tmsct.data_.id_, response_content.result_, response_content.abnormal_lines_};
-    this->current_task_handler_->handle_response(resp);
+
+    auto const response_cmd = find_result->generate_request();
+    if (not response_cmd->has_script_exit()) {  // may be default handler, reset immediately
+      this->current_task_handler_ = find_result;
+    }
+
+    ROS_INFO_STREAM_NAMED("tm_listen_node", "Write msg: " << ::strip_crlf(response_cmd->to_str()));
+    this->tcp_comm_->write(response_cmd->to_str());
   }
 }
 
@@ -183,16 +164,26 @@ TMRobotListener::ListenData TMRobotListener::parse(std::string t_input) {
   return ret_val;
 }
 
+TMRobotListener::TMRobotListener(std::string t_ip_addr, ros::NodeHandle t_nh,
+                                 TMRPluginManagerBasePtr t_plugin_manager) noexcept
+  : tcp_comm_{TMRobotTCP::Callback{
+                [this](auto &&t_ph) { this->receive_tm_msg_callback(std::forward<decltype(t_ph)>(t_ph)); },
+                [this](auto &&t_ph) { this->finished_transfer_callback(std::forward<decltype(t_ph)>(t_ph)); },
+                [this]() { this->disconnected_callback(); }},
+              LISTENER_PORT, std::move(t_ip_addr)},
+    plugin_manager_{std::move(t_plugin_manager)},
+    visitor_{std::make_unique<PacketVisitor>(this, t_nh.advertise<SubCmdDataMsg>("subcmd_90_99", 5))} {}
+
+TMRobotListener::~TMRobotListener() = default;
+
 /**
  * @todo  We don't need to parse the input in one step, maybe parse the input in mulitple step, see TMSVR parsing
  */
 void TMRobotListener::receive_tm_msg_callback(std::string const &t_input) noexcept(noexcept(parse(t_input))) {
   ROS_INFO_STREAM("Received: " << ::strip_crlf(t_input));
 
-  auto const result = parse(t_input);
-  auto visitor      = PacketVisitor{&this->tcp_comm_, this->current_task_handler_,  //
-                               this->plugin_manager_.get(), this->subcmd_data_pub_};
-  boost::apply_visitor(visitor, result);
+  auto const &result = parse(t_input);
+  boost::apply_visitor(*this->visitor_, result);
 }
 
 void TMRobotListener::finished_transfer_callback(size_t const /*t_byte_writtened*/) noexcept {

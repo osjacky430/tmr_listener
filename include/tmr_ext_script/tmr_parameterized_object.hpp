@@ -23,9 +23,17 @@ namespace tmr_listener {
 
 /**
  * @brief Base class of Attribute
+ *
+ * @note  We are not using the struct polymoriphically, thus omit virtual destructor
+ * @note  We can't use `using AttributeOwner::AttributeOwner`in derived class due to gcc Bug 67054, which is fixed at
+ *        gcc 7.2, the workaround required default constructor of class `Variable`, which is deleted in our case, and
+ *        thus no viable.
  */
 struct AttributeOwner {
   std::string name_; /*!< Name of the attribute owner */
+
+ protected:
+  ~AttributeOwner() = default;  // prevent somebody doing stupid things
 };
 
 /**
@@ -130,7 +138,7 @@ template <>
 struct is_tcp_tool<HandCameraTag> : std::true_type {};
 
 template <typename T>
-struct TCPAttribute : AttributeOwner {
+struct TCPAttribute final : AttributeOwner {
   static constexpr auto IS_SYSTEM_TCP = std::is_same<T, NOTOOLTag>::value or std::is_same<T, HandCameraTag>::value;
   static_assert(is_tcp_tool<T>::value, "Not a valid tcp tool");
   static_assert(IS_SYSTEM_TCP or (T::TCP_NAME != "HandCamera" and T::TCP_NAME != "NOTOOL"), "Invalid tcp tool name");
@@ -181,7 +189,7 @@ struct TCPMapping {
  */
 constexpr auto TCP = Item<TCPMapping>{"TCP"};
 
-struct VPointAttribute : public AttributeOwner {
+struct VPointAttribute final : public AttributeOwner {
   explicit VPointAttribute(std::string const& t_str) noexcept : AttributeOwner{t_str} {}
 
   RW_ATTRIBUTE(Value, std::array<float, 6>);
@@ -220,7 +228,7 @@ struct [[deprecated("not implemented yet")]] ExternalModule{};
 constexpr struct SafetyTag { static constexpr auto IO_NAME = "Safety"; } Safety;
 
 template <typename T>
-struct IOAttribute : AttributeOwner {
+struct IOAttribute final : AttributeOwner {
   // static_assert()
   explicit IOAttribute(std::string const& t_str) noexcept : AttributeOwner{t_str} {}
 
@@ -265,7 +273,7 @@ struct IOMapping {
  */
 constexpr auto IO = Item<IOMapping>{"IO"};
 
-struct RobotAttribute : AttributeOwner {
+struct RobotAttribute final : AttributeOwner {
   explicit RobotAttribute(std::string const& t_str) noexcept : AttributeOwner{t_str} {}
 
   R_ATTRIBUTE(CoordRobot, std::array<float, 6>);
@@ -281,7 +289,10 @@ struct RobotAttribute : AttributeOwner {
 struct RobotMapping {
   template <typename T>
   auto apply_mapping(T const& t_map, int const t_index) const {
-    if (t_index != 0) throw std::invalid_argument{"The index of the robot fixed at 0"};
+    if (t_index != 0) {
+      throw std::invalid_argument{"The index of the robot fixed at 0"};
+    }
+
     auto const name = t_map.item_name_.to_std_str() + "[0].";
     return RobotAttribute{name};
   }
@@ -289,7 +300,7 @@ struct RobotMapping {
 
 constexpr auto Robot = Item<RobotMapping>{"Robot"};
 
-struct FTAttribute : AttributeOwner {
+struct FTAttribute final : AttributeOwner {
   explicit FTAttribute(std::string const& t_str) noexcept : AttributeOwner{t_str} {}
 
   R_ATTRIBUTE(X, float);

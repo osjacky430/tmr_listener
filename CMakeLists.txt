@@ -54,6 +54,7 @@ if (POLICY CMP0069)
 endif ()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(CCache)
 include(StandardProjectSetting)
 include(CatkinExtension)
 
