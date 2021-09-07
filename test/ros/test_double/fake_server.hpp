@@ -81,8 +81,6 @@ class TMRobotServerComm {
 };
 
 class ListenNodeServer {
-  using Content = Expression<std::string>;
-
   static constexpr auto LISTENER_PORT = 5890;
   TMRobotServerComm comm_{LISTENER_PORT};
 
@@ -114,16 +112,13 @@ class ListenNodeServer {
   void response_ok_msg(tmr_listener::ID const& t_id);
 
   /**
-   * @brief
-   */
-  void response_tmsta_msg(std::string t_subcmd) noexcept;
-
-  /**
    * @brief This function writes CPERR Error message to the client
    *
    * @param t_err   @ref tmr_listener::ErrorCode
    */
   void send_error(tmr_listener::ErrorCode t_err);
+
+  void send_tmsta_data_msg(int t_channel, std::string const& t_val);
 
   void start() { this->comm_.start(); }
 

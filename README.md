@@ -1,6 +1,6 @@
 # TM Robot Listener <!-- omit in toc -->
 
-[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=WIP%2FTMSVR&event=push)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Grade) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge/wip/tmsvr)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/overview/wip/tmsvr)
+[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=WIP%2FTMSVR&event=push)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![Build Status](https://app.travis-ci.com/osjacky430/tmr_listener.svg?branch=WIP%2FTMSVR)](https://app.travis-ci.com/osjacky430/tmr_listener) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Coverage) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge/wip/tmsvr)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/overview/wip/tmsvr) 
 
 A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave, and still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
 
@@ -98,6 +98,7 @@ Build options for `tmr_listener`:
 -   `-DENABLE_IPO`: to enable link-time optimization, a.k.a Inter-Procedural Optization, set `-DENABLE_IPO=ON`, default to `OFF`
 -   `-DTMR_TMFLOW_VERSION`: to compile `tmr_listener` that support specific version of TMFlow, set `-DTMR_TMFLOW_VERSION=<TMFlow version>`, default to `1.82.0000`, i.e., the code is built as if explicitly pass `-DTMR_TMFLOW_VERSION=1.82.0000` to `catkin build`
 -   `-DTM_ETHERNET_SLAVE_XML`: see section [Exported Data Table XML](#exported-data-table-xml) for more detail
+-   `-DENABLE_CACHE`: enable [`ccache`](https://ccache.dev/) to speed up compilation, default to `ON`, but will only warn if `ccache` is not found
 
 1.  run tmr_listener:
 

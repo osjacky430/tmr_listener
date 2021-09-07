@@ -2,6 +2,8 @@
 
 #include <boost/next_prior.hpp>
 
+using namespace std::string_literals;
+
 namespace {
 
 std::string extract_buffer_data(boost::asio::streambuf& t_buffer, std::size_t t_byte_to_extract) noexcept {
@@ -56,6 +58,8 @@ void TMRobotServerComm::stop() {
 namespace tmr_listener {
 namespace fake_impl {
 
+using Content = Expression<std::string>;
+
 std::string ListenNodeServer::enter_listen_node(std::string t_str, wait_response_t /*t_tag*/) {
   auto const enter_node_msg = TMSCT << ID{"0"} << Content{std::move(t_str)} << End();
   this->comm_.blocking_write(enter_node_msg->to_str());
@@ -74,6 +78,16 @@ void ListenNodeServer::enter_listen_node(std::string t_str) {
 void ListenNodeServer::response_ok_msg(tmr_listener::ID const& t_id) {
   auto const response = TMSCT << t_id << Content{"OK"} << End();
   this->comm_.blocking_write(response->to_str());
+}
+
+/**
+ * @note used to test if the listener handler publish recieved message on recieving TMSTA Subcmd 90 - 99
+ */
+void ListenNodeServer::send_tmsta_data_msg(int const t_channel, std::string const& t_val) {
+  auto const data     = std::to_string(t_channel) + ',' + t_val;
+  auto const result   = "$TMSTA," + std::to_string(data.size()) + ',' + data + ',';
+  auto const to_write = result + "*" + calculate_checksum(result) + "\r\n";
+  this->comm_.blocking_write(to_write);
 }
 
 void ListenNodeServer::send_error(tmr_listener::ErrorCode const t_err) {

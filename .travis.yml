@@ -10,15 +10,15 @@ env:
   global:
     - CCACHE_DIR=$HOME/.ccache
     - REPO_NAME=${TRAVIS_REPO_SLUG#*/}
-    - secure: gdkfzAIooVrd3agL4l0tJM9bl+DRNs5umc9478EvLWOyIaxKqpbPC8wk41Wh74+Qpp21qrQISP1rOt1LH23jN3FcsAUidjtRykKLjD1d8RjpS0BfHp5PLlvRufcgyuptuN3vVQHVLcCDuvqOF1+07AJ/XHUju8Wpc32dvC17akdrUJPGOvXrmXX7fhNbsslcZ0ExpmgGls9F+mQ05yghPARKKG8NclxldN069i8dx5vlwSecSI/QwUkfspaiU2JDogLkZAzRUYB/d4JoDgmbPOnT/iYHAHunDabmhqXkHg1kLaF9tp5Bowu290w72R0SNo/9D66aeArCf9yWHFJjJYinDP/rWH0hkD2Mu/qAvA3SSnrYWzX8JbkzurIo2Bk11trzcruSGC4QzAuqC3IzhdIoZ8eTZsI7Xdb7ULHBRXzCAN0cbqR89oj0XFUHKtzEVtLyHwl0klYMhBOrI2wAZfm9EyBF/+0GYQVLDeW6fpq+vYkoT03d7SK8iXRVxVpHAjnA4jgO6JUfYsYIa3I8yKSgi9KFyPEjYLB4D/AH7/JNr6wPIKDZBTxdxCq48oXvboKG2ILJfQbx6JKyQJzwKKqIU6zgs8X7E5HzCKZdpMGjRuKFwC7HcZjOpVlG1Gmyb3j7fnsb3yZ5WT36sQWVaCJJZ6abIwKG/gaJQxEXqJw=
+    - secure: SNUiapTPvwG9oijUgAOUxwtZpY37xKdsagHEjDXSUwk5lrlqriawRy8D/yf0qZuWYbzGXqShwfa/ZvU0/2Lxae1KeVggNmQigub4qfJIfVMoUIw0UNR9jlyBzlvDDpQJ98FeCnP7rVqGdoMR8b5/MweoPlq6YzAuiEa0jlzkzkskHS/+N9YZawQoTJls/vCChXU9k6D4U5NL4ZZXXzpEDDcewZTjZdZdbKMcQgno+/SkcSEmPziQ51NgsCAIeDHHQ1i/hM3VBf5AmiImB82UPB8UpLLp8lGEkHZlGFmwAb92R7IZvu8sQ3QY0Eu5lOkQFOG2As8wlShG6JA4HYgpoTlFYP/Q3+1zttxsfdNPKpklC1b68E5Ao0rXdx9l9S06h1abVI7LQI/lzFq6iKhB+eBw94CsroY/RNdiJbKnmXn8PmS0wy0cBVNICS6ERnAgLdxEKobRzDg/T8NgxKITMm5fJsFu+PQI8zY9xVOA59lUVLwr/AorPKeSt84YPyH14FMYq6uQL5+PpvqtKMGFNyIzU0EcGpGSHAmPrW1udBpCQDcMzvoG+fyDewlNHetGcZAidk/Op1sRxjsVy9Lxk7zUr8l88pvWLYDPCJKEKNA0EK7M8/3aqJsZlCWOXe16TwvnaliCv/kUdv40b16zUhByDVHlQDJ0DKMMEqOPAF8=
   matrix:
     - |-
       ROS_DISTRO=melodic ROS_REPO=main COVERAGE_REPORT_NAME=coverage.xml COVERAGE_REPORT_DIR=/root/target_ws/build/$REPO_NAME/$COVERAGE_REPORT_NAME
       ADDITIONAL_DEBS="ros-melodic-rosbash curl git"
       AFTER_INSTALL_TARGET_DEPENDENCIES="pip install gcovr" AFTER_SCRIPT="bash <(curl -s https://codecov.io/bash) -f $COVERAGE_REPORT_DIR && bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r $COVERAGE_REPORT_DIR"
-      DOCKER_RUN_OPTS="$(bash <(curl -s https://codecov.io/env)) -e CODACY_PROJECT_TOKEN -e COVERAGE_REPORT_NAME -e COVERAGE_REPORT_DIR" CMAKE_ARGS="-DENABLE_COVERAGE=ON -DCOVERAGE_REPORT_NAME=$COVERAGE_REPORT_NAME"
-    - |-
-      ROS_DISTRO=kinetic
+      DOCKER_RUN_OPTS="$(bash <(curl -s https://codecov.io/env)) -e CODACY_PROJECT_TOKEN -e COVERAGE_REPORT_NAME -e COVERAGE_REPORT_DIR" CMAKE_ARGS="-DTMR_ENABLE_TESTING=ON -DENABLE_COVERAGE=ON -DCOVERAGE_REPORT_NAME=$COVERAGE_REPORT_NAME"
+      AFTER_RUN_TARGET_TEST="cd /root/target_ws/build/$REPO_NAME && ctest -E _ctest --output-on-failure"
+    - ROS_DISTRO=kinetic CMAKE_ARGS="-DTMR_ENABLE_TESTING=ON" AFTER_RUN_TARGET_TEST="cd /root/target_ws/build/$REPO_NAME && ctest -E _ctest --output-on-failure" ADDITIONAL_DEBS="ros-kinetic-rosbash"
 install:
   - git clone --quiet --depth 1 https://github.com/ros-industrial/industrial_ci.git
     .industrial_ci -b master

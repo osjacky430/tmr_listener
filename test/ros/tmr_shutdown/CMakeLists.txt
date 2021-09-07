@@ -1,0 +1,1 @@
+add_rostest(tmr_shutdown_rostest.test)

@@ -11,6 +11,7 @@ jobs:
       IMMEDIATE_TEST_OUTPUT: true
       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       ADDITIONAL_DEBS: "ros-$ROS_DISTRO-rosbash curl git"
+      AFTER_RUN_TARGET_TEST: "cd /root/target_ws/build/$TARGET_REPO_NAME && ctest -E _ctest --output-on-failure" # exclude all test registered using catkin cmake function
     strategy:
       matrix:
         ROS: [kinetic, melodic]
@@ -18,13 +19,14 @@ jobs:
           - ROS: kinetic
             env:
               ROS_DISTRO: kinetic
+              CMAKE_ARGS: "-DTMR_ENABLE_TESTING=ON"
           - ROS: melodic
             env:
               ROS_DISTRO: melodic
               ROS_REPO: main
               COVERAGE_REPORT_NAME: coverage.xml
               COVERAGE_REPORT_DIR: /root/target_ws/build/${{ github.event.repository.name }}/$COVERAGE_REPORT_NAME
-              CMAKE_ARGS: "-DENABLE_COVERAGE=ON -DCOVERAGE_REPORT_NAME=$COVERAGE_REPORT_NAME"
+              CMAKE_ARGS: "-DTMR_ENABLE_TESTING=ON -DENABLE_COVERAGE=ON -DCOVERAGE_REPORT_NAME=$COVERAGE_REPORT_NAME"
               AFTER_INSTALL_TARGET_DEPENDENCIES: "pip install gcovr"
               DOCKER_RUN_OPTS: "$(bash <(curl -s https://codecov.io/env)) -e CODACY_PROJECT_TOKEN -e COVERAGE_REPORT_NAME -e COVERAGE_REPORT_DIR"
               AFTER_SCRIPT:
@@ -55,7 +57,7 @@ jobs:
         apt -y update && apt -y install cmake'
       AFTER_BUILD_TARGET_WORKSPACE:
         "mkdir -p $SANITIZER_REPORT_DIR && cd /root/target_ws &&
-        ${{ matrix.sanitizer_options }}_OPTIONS=log_path=$SANITIZER_REPORT_DIR/${{ matrix.sanitizer_options }}-$ROS_DISTRO.log:${{ matrix.RT_FLAG }} catkin run_tests ${{ github.event.repository.name }} &&
+        ${{ matrix.sanitizer_options }}_OPTIONS=log_path=$SANITIZER_REPORT_DIR/${{ matrix.sanitizer_options }}-$ROS_DISTRO.log:${{ matrix.RT_FLAG }} catkin run_tests ${{ github.event.repository.name }} -j1 &&
         mv $SANITIZER_REPORT_DIR/ /shared"
     strategy:
       matrix:
@@ -81,7 +83,7 @@ jobs:
       - uses: ros-industrial/industrial_ci@master
         env:
           ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
-          CMAKE_ARGS: -DENABLE_${{ matrix.sanitizer_options }}=ON
+          CMAKE_ARGS: "-DENABLE_${{ matrix.sanitizer_options }}=ON -DTMR_ENABLE_TESTING=ON"
           DOCKER_RUN_OPTS: "-e SANITIZER_REPORT_DIR=${{ env.DOCKER_SANITIZER_REPORT_DIR }} -v ${{ env.HOST_SANITIZER_REPORT_DIR }}:/shared"
       - run: sudo chmod -R a+r ${{ env.HOST_SANITIZER_REPORT_DIR }}/sanitizer_report # kinda hack
       - uses: actions/upload-artifact@v2

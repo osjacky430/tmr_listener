@@ -1,0 +1,4 @@
+add_executable(tmr_comm_rostest EXCLUDE_FROM_ALL tmr_eth_comm_rostest.cpp tmr_listen_comm_rostest.cpp)
+target_link_libraries(tmr_comm_rostest PRIVATE tmr_main_rostest tmr_listener tmr_listener_handle_mock fake_server)
+add_dependencies(tests tmr_comm_rostest)
+add_rostest(tmr_comm_rostest.test)

@@ -67,8 +67,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp message_generation pluginlib)
 
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED)
+# some of the components are used by catkin internally, but I don't want to pull in all
+# catkin dependencies to a target just for one or two components, plus it makes no sense.
+# Therefore, these components are found explicitly.
+find_package(Boost REQUIRED COMPONENTS system)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
