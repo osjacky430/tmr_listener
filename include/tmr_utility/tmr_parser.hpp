@@ -70,7 +70,7 @@ static inline std::array<T, N> parse_as(std::string const& t_str_to_parse) {
   std::array<T, N> ret_val;
   auto const& type_map = detail::get_tm_type_parser();
   qi::parse(t_str_to_parse.cbegin(), t_str_to_parse.cend(),
-            ('[' >> at_key<T>(type_map)[at(boost::phoenix::ref(ret_val), ref(i)++) = boost::spirit::_1] % ',' >> ']'));
+            ('[' >> at_key<T>(type_map)[at(boost::phoenix::ref(ret_val), ref(i)++) = qi::_1] % ',' >> ']'));
 
   if (N > i) {
     using namespace std::string_literals;

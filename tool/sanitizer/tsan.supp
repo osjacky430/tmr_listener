@@ -1,3 +1,4 @@
 called_from_lib:liblog4cxx.so*
 called_from_lib:libgtest.so*
 called_from_lib:libroscpp.so*
+called_from_lib:librosconsole.so*

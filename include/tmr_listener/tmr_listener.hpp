@@ -172,7 +172,7 @@ class TMRobotListener {
   /**
    * @brief This function gets called if disconnect event happened, see ListenerHandle::handle_disconnect
    */
-  void disconnected_callback() noexcept;
+  void disconnected_callback();
 };
 
 }  // namespace tmr_listener

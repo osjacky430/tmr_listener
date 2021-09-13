@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(tmr_listener VERSION 0.2.0)
+project(tmr_listener VERSION 0.3.0)
 
 #####################################################################
 #     Check if all plugins are built under same TMFlow version      #

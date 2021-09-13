@@ -205,9 +205,10 @@ void TMRobotListener::finished_transfer_callback(size_t const /*t_byte_writtened
   }
 }
 
-void TMRobotListener::disconnected_callback() noexcept {
+void TMRobotListener::disconnected_callback() {
+  auto const &plugins = this->plugin_manager_->get_all_plugins();
+  std::for_each(plugins.cbegin(), plugins.cend(), [](auto &&t_plugin) { t_plugin->handle_disconnect(); });
   if (this->current_task_handler_) {
-    this->current_task_handler_->handle_disconnect();
     this->current_task_handler_.reset();
   }
 }

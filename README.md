@@ -1,8 +1,8 @@
 # TM Robot Listener <!-- omit in toc -->
 
-[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=WIP%2FTMSVR&event=push)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![Build Status](https://app.travis-ci.com/osjacky430/tmr_listener.svg?branch=WIP%2FTMSVR)](https://app.travis-ci.com/osjacky430/tmr_listener) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/WIP/TMSVR/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Coverage) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge/wip/tmsvr)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/overview/wip/tmsvr) 
+[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=master)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![Build Status](https://app.travis-ci.com/osjacky430/tmr_listener.svg?branch=master)](https://app.travis-ci.com/osjacky430/tmr_listener) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/master/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Coverage) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener)
 
-A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave, and still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
+A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave by providing easy to use, hard to misuse interface, and still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
 
 ## Table of Contents
 
@@ -222,7 +222,7 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 
 ```
 
-#### 2. tmr_listener:: Decision start_task (std::string const& t_data)
+#### 2. tmr_listener::Decision start_task (std::string const& t_data)
 
 `start_task` takes data sent from TM robot on entering the listen node, and checks whether the listen node entered is the one it wants to handle. The messages passed are user-defined (see [tm expression editor and listen node](#Reference)), meaning there are various ways to do so. However, bear in mind that current tmr_listener only choose **one handler** when listen node is entered, the order of the plugin is decided by the ros param `listener_handles` :
 
@@ -244,7 +244,7 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 
 #### 3. response_msg (...)
 
-The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need, currently available overloads: 
+The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need, those that are not overriden will be ignored. Currently available overloads: 
 
 ```cpp
 void response_msg(tmr_listener::TMSCTResponse const&);            //  get called when user send correct TMSCT command
@@ -255,10 +255,9 @@ void response_msg(tmr_listener::CPERRResponse const&);            //  get called
 void response_msg();                                              //  get called every time packet is received
 ```
 
-those that are not overriden will be ignored. Remeber to pull the unoverriden response_msg to participate in overload resolution to prevent it get hidden:
+The following example overrides TMSCTResponse and the one with no argument:
 
 ```cpp
-// this example overrides TMSCTResponse and the one with no argument
 struct YourHandler final : public tmr_listener::ListenerHandle {
   private:
     MessagePtr next_cmd_;
@@ -280,7 +279,76 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 
 ```
 
-Note: `response_msg(TMSTAResponse::DataMsg const&)` is a bit different from other overloads,**`tmr_listener` will call this function for each plugin** whenever TM robot sends Subcmd 90 ~ 99. For those who doesn't implement a plugin, but also want to receive data from Subcmd 90 ~ 99, subscribe to topic `/tmr_listener/subcmd_90_99`
+Note: `response_msg(TMSTAResponse::DataMsg const&)` is a bit different from other overloads,**`tmr_listener` will call this function for each plugin** whenever TM robot sends Subcmd 90 ~ 99. For those that doesn't implement a plugin, but would also want to receive data from Subcmd 90 ~ 99, subscribe to topic `/tmr_listener/subcmd_90_99`
+
+#### 4. void handle_disconnect()
+
+This function should be easy to understand, user must make sure that all variables are set to reasonable states if disconnect happened, since your handler might be called again next time the project entered listen node:
+
+```cpp
+// This example analyzes the quality of vision job by executing it repeatedly at fixed pose.
+// The listen node executes vision job named "some_vision", then exit script, and expected the
+// result is sent via TMSTA 90-99, e.g.
+//      
+//      dummy_var = ListenSend("192.168.1.186", 91, GetString(Base["some_vision"].Value, 10)).
+//
+// The project flow would look like this (note: we don't need listen node in order to execute
+// vision job, this is just an example):
+// 
+//        ________                 _________          ______
+//       |        |               |         |        |      |
+//  ...  | Listen | ----------->  |   SET   | -----> | GOTO |
+//       |________|     pass      |_________|        |______|
+//           |         ________   (ListenSend)       (Listen)
+//           |        |        |
+//           -------> |  STOP  |
+//             fail   |________|
+//
+struct YourHandler final : public tmr_listener::ListenerHandle {
+  std::vector<std::array<float, 6>> vision_bases_;
+  std::size_t recorded_count_ = 0;
+
+  static constexpr std::size_t MAX_RECORDING = 150; 
+
+  tmr_listener::Decision start_task(std::string const& t_data) override {
+    auto const start_handle = t_data == "Listen1";
+    if (start_handle) {
+      return tmr_listener::Decision::Accept;  // start handling if the message sent is "Listen1"
+    }
+
+    return tmr_listener::Decision::Ignore;
+  }
+
+  tmr_listener::MessagePtr generate_cmd(tmr_listener::ListenerHandle::MessageStatus t_prev_response) {
+    using namespace tmr_listener;
+    using namespace tmr_listener::motion_function;
+    if (t_prev_response == ListenerHandle::MessageStatus::Responded) {
+      auto ret_val = TMSCT << ID{"random"s};
+      if (++this->recorded_count_ > MAX_RECORDING) {
+        this->recorded_count_ = 0;
+        return ret_val << ScriptExit::WithPriority{ScriptExit::Result::ScriptFail}; // fail on purpose, in order to stop the project
+      }
+
+      return ret_val << Vision_DoJob("some_vision"s) << ScriptExit{};
+    }
+
+    return dummy_command_list("waiting"s);
+  }
+
+  void response(TMSTAResponse::DataMsg const& t_msg) override {
+    if (t_msg.cmd_ == 91) { // assuming 91 is only used in this situation
+      this->vision_bases_.emplace_back(parse_as<float, 6>(t_msg.data_));
+    }
+  }
+
+  void handle_disconnect() override {
+    // if disconnected, reset these variables, we are not sure the robot will be at the same position next time
+    this->recorded_count = 0;
+    this->vision_bases.clear();
+  }
+};
+
+```
 
 ### Generate tm external script language
 
@@ -457,10 +525,10 @@ To run unit test, copy paste the following lines to the terminal:
 ```sh
 catkin build tmr_listener -DTMR_ENABLE_TESTING=ON
 catkin run_tests tmr_listener
-catkin build -v tmr_listener --catkin-make-args CTEST_OUTPUT_ON_FAILURE=1 test
+ctest --test-dir $(catkin locate -b tmr_listener) -E _ctest
 ```
 
-Notice the option `-v` , **this is needed** since tmr_listener will determine whether the test is success by verbose output (for normal unit test, this is not needed, but because we are testing code that can't even compile, the only thing we can depend on is the result output by the compiler).
+The first two command should be easy to understand, the third one is used to run compile time test, by checking if the program can be compiled or not. Test created via `catkin_add_gtest`, `catkin_add_gmock`, `add_rostest_gtest`, `add_rostest_gmock`, and `add_rostest` are also added to `ctest` with test name started with `_ctest`, and are thus excluded here.
 
 ## TODO
 
