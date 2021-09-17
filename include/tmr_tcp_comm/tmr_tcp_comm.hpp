@@ -2,7 +2,6 @@
 #define TMR_TCP_COMM_HPP_
 
 #include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 
@@ -20,6 +19,7 @@ class TMRobotTCP {
     boost::function<void()> disconnected_         = {};
   };
 
+  static boost::posix_time::milliseconds const WAIT_BEFORE_RECONNECT;
   static constexpr auto DEFAULT_IP_ADDRESS = "192.168.1.2";
 
   explicit TMRobotTCP(Callback t_cb, unsigned short const t_port, std::string t_ip_addr = DEFAULT_IP_ADDRESS) noexcept

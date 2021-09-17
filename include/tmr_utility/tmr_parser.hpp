@@ -69,8 +69,11 @@ static inline std::array<T, N> parse_as(std::string const& t_str_to_parse) {
   std::size_t i = 0;
   std::array<T, N> ret_val;
   auto const& type_map = detail::get_tm_type_parser();
-  qi::parse(t_str_to_parse.cbegin(), t_str_to_parse.cend(),
-            ('[' >> at_key<T>(type_map)[at(boost::phoenix::ref(ret_val), ref(i)++) = qi::_1] % ',' >> ']'));
+
+  auto const str_to_arr = qi::copy(at_key<T>(type_map)[at(boost::phoenix::ref(ret_val), ref(i)++) = qi::_1] % ',');
+  auto const squared_bracket_enclosed_arr = qi::copy('[' >> str_to_arr >> ']');
+  auto const curly_bracket_enclosed_arr   = qi::copy('{' >> str_to_arr >> '}');
+  qi::parse(t_str_to_parse.cbegin(), t_str_to_parse.cend(), squared_bracket_enclosed_arr | curly_bracket_enclosed_arr);
 
   if (N > i) {
     using namespace std::string_literals;

@@ -1,7 +1,5 @@
 #include "tmr_ext_script/detail/tmr_header_tag.hpp"
 
-#include <boost/fusion/include/boost_tuple.hpp>
-
 using boost::phoenix::at_c;
 using boost::phoenix::static_cast_;
 using boost::spirit::qi::_1;
