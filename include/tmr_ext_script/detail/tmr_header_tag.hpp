@@ -89,7 +89,7 @@ struct TMSCTTag {
    */
   static auto create_builder(ID const& t_id) noexcept {
     prototype::MessageBuilder<TMSCTTag> ret_val{};
-    ret_val.result_.content_.push_back(t_id.id_);
+    ret_val.result_.content_.emplace_back(t_id.id_.to_std_str());
     return ret_val;
   }
 

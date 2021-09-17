@@ -4,9 +4,12 @@
 #include "tmr_ext_script/tmr_motion_function.hpp"
 #include "tmr_ext_script/tmr_parameterized_object.hpp"
 
-TEST(ChecksumTest, ChecksumStringMatch) {
-  using namespace tmr_listener;
+using namespace tmr_listener;
+using namespace motion_function;
+using namespace prototype;
+using namespace std::string_literals;
 
+TEST(ChecksumTest, ChecksumStringMatch) {
   EXPECT_EQ(calculate_checksum("$TMSTA,10,01,08,true,"), "6D");
   EXPECT_EQ(calculate_checksum("$TMSTA,5,01,15,"), "6F");
   EXPECT_EQ(calculate_checksum("$TMSCT,5,10,OK,"), "6D");
@@ -52,8 +55,6 @@ TEST(ChecksumTest, ChecksumStringMatch) {
   }
 
 TEST(VariableTest, BinaryOperator) {
-  using namespace tmr_listener;
-
   Variable<int> other_int{"other_int"};
   Variable<int> int_var{"int_var"};
   Variable<float> float_var{"float_var"};
@@ -80,8 +81,6 @@ TEST(VariableTest, BinaryOperator) {
 }
 
 TEST(VariableTest, UnaryOperator) {
-  using namespace tmr_listener;
-
   Variable<int> int_var{"int_var"};
   Variable<bool> bool_var{"bool_var"};
 
@@ -123,8 +122,6 @@ TEST(VariableTest, UnaryOperator) {
 }
 
 TEST(ExpressionTest, BinaryOperator) {
-  using namespace tmr_listener;
-
   Variable<int> int_var{"int_var"};
   Variable<int> other_int{"other_int"};
   Variable<float> float_var{"float_var"};
@@ -178,10 +175,6 @@ TEST(ExpressionTest, BinaryOperator) {
 }
 
 TEST(TMMsgGen, CommandAsExpression) {
-  using namespace tmr_listener;
-  using namespace motion_function;
-  using namespace std::string_literals;
-
   // the point here is to make sure the type of expression for the motion function is correct
   auto const change_base_command = ChangeBase("RobotBase"s);
   static_assert(std::is_same<decltype(change_base_command.as_expression()), Expression<bool>>::value, "Type not match");
@@ -192,12 +185,20 @@ TEST(TMMsgGen, CommandAsExpression) {
   EXPECT_EQ(wait_queue_tag.as_expression().to_str(), "WaitQueueTag(1)"s);
 }
 
-TEST(TMMsgGen, TMSCTStringMatch) {
-  using namespace tmr_listener;
-  using namespace motion_function;
-  using namespace prototype;
-  using namespace std::string_literals;
+TEST(TMMsgGen, InvalidIDWillThrowAtRuntime) {
+  EXPECT_FALSE(ID::rule_satisfied("Su%NeNe7"));
+  EXPECT_FALSE(ID::rule_satisfied("Super_NeNe7"));
+  EXPECT_FALSE(ID::rule_satisfied("SuperNeNe_"));
 
+  EXPECT_THROW(ID{"Su%NeNe7"}, std::invalid_argument);
+  EXPECT_THROW(ID{"Super_NeNe7"}, std::invalid_argument);
+  EXPECT_THROW(ID{"SuperNeNe_"}, std::invalid_argument);
+  EXPECT_THROW(ID{"Su%NeNe7"s}, std::invalid_argument);
+  EXPECT_THROW(ID{"Super_NeNe7"s}, std::invalid_argument);
+  EXPECT_THROW(ID{"SuperNeNe_"s}, std::invalid_argument);
+}
+
+TEST(TMMsgGen, TMSCTStringMatch) {
   {
     auto const command = TMSCT << ID{"1"} << ChangeBase("RobotBase"s) << End();
     EXPECT_EQ(command->to_str(), "$TMSCT,25,1,ChangeBase(\"RobotBase\"),*08\r\n");
@@ -245,11 +246,6 @@ TEST(TMMsgGen, TMSCTStringMatch) {
 }
 
 TEST(TMMsgGen, TMSTAMsgStringMatch) {
-  using namespace tmr_listener;
-  using namespace motion_function;
-  using namespace prototype;
-  using namespace std::string_literals;
-
   {
     auto const command = TMSTA << InExtScriptCtlMode() << End();
     EXPECT_EQ(command->to_str(), "$TMSTA,2,00,*41\r\n");
@@ -262,9 +258,6 @@ TEST(TMMsgGen, TMSTAMsgStringMatch) {
 }
 
 TEST(TMMsgGen, TMSVRMsgStringMatch) {
-  using namespace tmr_listener;
-  using namespace std::string_literals;
-
   {
     auto const read_req = generate_read_req("TCP_Mass"s);
     EXPECT_EQ(read_req.item_, R"("TCP_Mass")"s);
