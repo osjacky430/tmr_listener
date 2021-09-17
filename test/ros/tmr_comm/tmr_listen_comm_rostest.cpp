@@ -35,7 +35,7 @@ TEST_F(ListenNodeServerTest, RecievedCPERRNotInListenNodeWillResetCurrentHandler
   ASSERT_TRUE(not response.empty());
 
   this->fake_server.send_error(ErrorCode::NotInListenNode);
-  this->fake_server.response_ok_msg(TMSCT_ID("ExpectNotCalled"));  // expecting no response from client
+  this->fake_server.response_ok_msg(ID{"expect_not_called"});  // expecting no response from client
 }
 
 TEST_F(ListenNodeServerTest, ScriptExitCalledIfNoHandlerReturnAccept) {
@@ -47,7 +47,7 @@ TEST_F(ListenNodeServerTest, ScriptExitCalledIfNoHandlerReturnAccept) {
   EXPECT_THAT(response, HasSubstr("ScriptExit()"));
 
   // at this point current_task_handler_ should be reset, sending any msg to client will have no response
-  this->fake_server.response_ok_msg(TMSCT_ID("ExpectNotCalled"));  // expecting no response from client
+  this->fake_server.response_ok_msg(ID{"expect_not_called"});  // expecting no response from client
 }
 
 TEST_F(ListenNodeServerTest, SendTMSTADataMsgWillPublishData) {

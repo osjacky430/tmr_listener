@@ -100,7 +100,7 @@ Build options for `tmr_listener`:
 -   `-DTM_ETHERNET_SLAVE_XML`: see section [Exported Data Table XML](#exported-data-table-xml) for more detail
 -   `-DENABLE_CACHE`: enable [`ccache`](https://ccache.dev/) to speed up compilation, default to `ON`, but will only warn if `ccache` is not found
 
-3.  run tmr_listener:
+1.  run tmr_listener:
 
 ```sh
 roslaunch tmr_listener tmr_listener.launch  # for listen node
@@ -288,7 +288,7 @@ This function should be easy to understand, user must make sure that all variabl
 ```cpp
 // This example analyzes the quality of vision job by executing it repeatedly at fixed pose.
 // The listen node executes vision job named "some_vision", then exit script, and expected the
-// result to be sent via TMSTA 90-99, e.g.
+// result is sent via TMSTA 90-99, e.g.
 //      
 //      dummy_var = ListenSend("192.168.1.186", 91, GetString(Base["some_vision"].Value, 10)).
 //
@@ -326,7 +326,6 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
       auto ret_val = TMSCT << ID{"random"s};
       if (++this->recorded_count_ > MAX_RECORDING) {
         this->recorded_count_ = 0;
-        this->statistical_analysis();
         return ret_val << ScriptExit::WithPriority{ScriptExit::Result::ScriptFail}; // fail on purpose, in order to stop the project
       }
 
@@ -337,8 +336,8 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
   }
 
   void response(TMSTAResponse::DataMsg const& t_msg) override {
-    if (t_msg.cmd_ == 91) { // assuming 91 is only used in this situation, and the content of data only contains "{...}"
-      this->vision_bases_.emplace_back(tmr_listener::parse_as<float, 6>(t_msg.data_));
+    if (t_msg.cmd_ == 91) { // assuming 91 is only used in this situation
+      this->vision_bases_.emplace_back(parse_as<float, 6>(t_msg.data_));
     }
   }
 
@@ -347,8 +346,6 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
     this->recorded_count = 0;
     this->vision_bases.clear();
   }
-
-  void statistical_analysis() noexcept; // implemented in source file
 };
 
 ```
@@ -363,13 +360,11 @@ With `tmr_listener` , user can generate listen node command relatively easy, by 
 using namespace tmr_listener; // for TMSCT and ID, End
 using namespace tmr_listener::motion_function; // for QueueTag
 
-auto const cmd = TMSCT << ID{"WhatEverYouLike"} << QueueTag(1, 1) << End();
-// this generates "TMSCT,XX,WhatEverYouLike,QueueTag(1,1),*XX", XX means handled by tmr_listener
+auto const cmd = TMSCT << ID{"Whatever_you_like"} << QueueTag(1, 1) << End();
+// this generates "TMSCT,XX,Whatever_you_like,QueueTag(1,1),*XX", XX means handled by tmr_listener
 ```
 
-(*note: if you are initializing `ID` with string literal, prefer macro `TMSCT_ID` over brace initialization of `ID`, since `TMSCT_ID` will check if the ID requirement is satisfied at compile time rather than runtime, so the example above will become `TMSCT_ID("WhatEverYouLike")` instead of `ID{WhatEverYouLike}`*)
-
-Instead of typing: `"$TMSCT,XX,WhatEverYouLike,QueueTag(1, 1),XX\r\n"` . A typo, e.g., `TMSCT` to `TMSTA` , or `QueueTag(1,1)` to `QueuTag(1, 1)` , or wrong length, or checksum error, you name it (while reading this line, you might not notice that a `*` is missing in the checksum part, gotcha!), may ruin one's day.
+Instead of typing: `"$TMSCT, XX, Whatever_you_like, QueueTag(1, 1), XX\r\n"` . A typo, e.g., `TMSCT` to `TMSTA` , or `QueueTag(1,1)` to `QueuTag(1, 1)` , or wrong length, or checksum error, you name it (while reading this line, you might not notice that a `*` is missing in the checksum part, gotcha!), may ruin one's day.
 
 The generation of external script message is composed of three parts: `Header` , `Command` , and `End` signal. See reference manual for all the `Header` and its corresponding motion function / subcmd. For the last part, end signal, `End()` and `ScriptExit()` is used, command cannot be appended after `End()` and `ScriptExit()` :
 
@@ -529,7 +524,7 @@ To run unit test, copy paste the following lines to the terminal:
 
 ```sh
 catkin build tmr_listener -DTMR_ENABLE_TESTING=ON
-catkin run_tests tmr_listener -j1 # -j1 is needed because we are using same port (i.e. 5890 and 5891) repeatedly
+catkin run_tests tmr_listener
 ctest --test-dir $(catkin locate -b tmr_listener) -E _ctest
 ```
 
@@ -542,12 +537,11 @@ The first two command should be easy to understand, the third one is used to run
     -   Consider the case where user would like to run these two in one executable?
 -   Parser object
     -   Maybe I should adapt ros msg object as spirit parse data storage class
+    -   Fix that crappy parser, to many static variables, learn how to write spirit parser properly
 -   ROS interface
     -   More services
         -   load plugin dynamically
 -   TM external script language 
-    -   Compile time string check to prevent naming error, e.g. Variable{"su%NeNe7"}
-    -   request disconnect from plugins?
     -   Command as expression, so that `bool res = Vision_IsJobAvailable("job1")` is valid declaration
     -   Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
     -   consider function accepting types that can be implicitly converted to the desired type

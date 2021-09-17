@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 
-#include "tmr_utility/tmr_constexpr_string.hpp"
 #include "tmr_utility/tmr_parser.hpp"
 #include "version.hpp"
 
@@ -60,45 +59,9 @@ struct End {};
 /**
  * @brief Utility class for tag dispatch
  */
-class ID {
-  static constexpr bool rule_satisfied(char const* const t_str, std::size_t N) noexcept {
-    for (std::size_t i = 0; i < N - 1; ++i) {  // NOLINT, constexpr algorithm is not here in c++14
-      if (not is_alnum(t_str[i])) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
- public:
-  detail::ConstString id_;
-
-  template <std::size_t N>
-  static constexpr bool rule_satisfied(char const (&t_str)[N]) noexcept {
-    return rule_satisfied(t_str, N);
-  }
-
-  template <std::size_t N>
-  explicit constexpr ID(char const (&t_str)[N]) : id_{t_str} {
-    if (not rule_satisfied(t_str)) {
-      throw std::invalid_argument("Bad name, can only be alphabets or numerics");
-    }
-  }
-
-  explicit ID(std::string t_input) : id_{std::move(t_input)} {
-    if (not rule_satisfied(id_.name_, id_.size())) {
-      throw std::invalid_argument("Bad name, can only be alphabets or numerics");
-    }
-  }
+struct ID {
+  std::string id_;
 };
-
-#define TMSCT_ID(name)                                                                      \
-  []() {                                                                                    \
-    static_assert(ID::rule_satisfied(name), "Bad name, can only be alphabets or numerics"); \
-    constexpr ID ret_val{name};                                                             \
-    return ret_val;                                                                         \
-  }()
 
 }  // namespace tmr_listener
 

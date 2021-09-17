@@ -18,7 +18,7 @@ SET_EXPECTATION(0, t_first_mock) {
   EXPECT_CALL(t_first_mock, generate_cmd(MsgStatus_::NotYetRespond)).WillRepeatedly(Return(empty_command_list()));
 
   EXPECT_CALL(t_first_mock, response_msg(CPERRResponse{ErrorCode::NotInListenNode})).Times(Exactly(1));
-  EXPECT_CALL(t_first_mock, response_msg(TMSCTResponse{"ExpectNotCalled"s, true})).Times(Exactly(0));
+  EXPECT_CALL(t_first_mock, response_msg(TMSCTResponse{"expect_not_called"s, true})).Times(Exactly(0));
 }
 
 }  // namespace tmr_listener
