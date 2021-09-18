@@ -32,7 +32,7 @@ jobs:
           - sanitizer_options: TSAN
             RT_FLAG: detect_deadlocks=0:suppressions=/root/target_ws/src/$TARGET_REPO_NAME/tool/sanitizer/tsan.supp:exitcode=0
           - sanitizer_options: ASAN
-            RT_FLAG: detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:check_initialization_order=1:exitcode=0
+            RT_FLAG: detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:check_initialization_order=1:halt_on_error=1
           - sanitizer_options: UBSAN
             RT_FLAG: halt_on_error=1
     steps:

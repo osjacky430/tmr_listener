@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>tmr_listener</name>
-  <version>0.3.0</version>
+  <version>0.3.1</version>
   <description>The tmr_listener package</description>
 
   <maintainer email="jacky.tseng@gyro.com">Jacky Tseng</maintainer>
