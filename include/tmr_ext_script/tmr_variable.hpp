@@ -7,7 +7,6 @@
 #include "tmr_utility/tmr_mt_helper.hpp"
 #include "tmr_utility/tmr_stringifier.hpp"
 
-#include <boost/format.hpp>
 #include <boost/fusion/include/at_key.hpp>
 #include <stdexcept>
 #include <string>

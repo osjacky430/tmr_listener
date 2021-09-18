@@ -79,6 +79,11 @@ struct const_if {
   using type = std::conditional_t<Cond, std::add_const_t<T>, T>;
 };
 
+template <class T, std::size_t N>
+constexpr std::size_t size(const T (&)[N]) noexcept {
+  return N;
+}
+
 }  // namespace tmr_mt_helper
 
 namespace tmr_listener {

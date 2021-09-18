@@ -1,0 +1,54 @@
+name: sanitizer
+
+on: [push, pull_request]
+
+jobs:
+  run-sanitizer:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      NOT_TEST_BUILD: true
+      DOCKER_SANITIZER_REPORT_DIR: /root/target_ws/src/${{ github.event.repository.name }}/sanitizer_report
+      HOST_SANITIZER_REPORT_DIR: ${{ github.workspace }}/shared
+      ADDITIONAL_DEBS: "ros-${{ matrix.ROS_DISTRO }}-rosbash software-properties-common wget apt-transport-https"
+      AFTER_INIT: # download and install latest cmake
+        'wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg2 --dearmor - |
+        tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null &&
+        apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" &&
+        apt -y update && apt -y install cmake'
+      AFTER_BUILD_TARGET_WORKSPACE:
+        "mkdir -p $SANITIZER_REPORT_DIR && cd /root/target_ws &&
+        ${{ matrix.sanitizer_options }}_OPTIONS=log_path=$SANITIZER_REPORT_DIR/${{ matrix.sanitizer_options }}-$ROS_DISTRO.log:${{ matrix.RT_FLAG }} catkin run_tests ${{ github.event.repository.name }} -j1 &&
+        mv $SANITIZER_REPORT_DIR/ /shared"
+    strategy:
+      matrix:
+        ROS_DISTRO: [kinetic, melodic]
+        sanitizer_options: [TSAN, ASAN, UBSAN]
+        include:
+          - ROS_DISTRO: melodic
+            ROS_REPO: main
+
+          - sanitizer_options: TSAN
+            RT_FLAG: detect_deadlocks=0:suppressions=/root/target_ws/src/$TARGET_REPO_NAME/tool/sanitizer/tsan.supp:exitcode=0
+          - sanitizer_options: ASAN
+            RT_FLAG: detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:check_initialization_order=1:exitcode=0
+          - sanitizer_options: UBSAN
+            RT_FLAG: halt_on_error=1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ matrix.ROS_DISTRO }}-${{ matrix.ROS_REPO }}-${{ matrix.sanitizer_options }}
+      - run: mkdir ${{ env.HOST_SANITIZER_REPORT_DIR }}
+      - uses: ros-industrial/industrial_ci@master
+        env:
+          ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
+          CMAKE_ARGS: "-DENABLE_${{ matrix.sanitizer_options }}=ON -DTMR_ENABLE_TESTING=ON"
+          DOCKER_RUN_OPTS: "-e SANITIZER_REPORT_DIR=${{ env.DOCKER_SANITIZER_REPORT_DIR }} -v ${{ env.HOST_SANITIZER_REPORT_DIR }}:/shared"
+      - run: sudo chmod -R a+r ${{ env.HOST_SANITIZER_REPORT_DIR }}/sanitizer_report # kinda hack
+      - uses: actions/upload-artifact@v2
+        with:
+          name: sanitizer-report
+          path: ${{ env.HOST_SANITIZER_REPORT_DIR }}
