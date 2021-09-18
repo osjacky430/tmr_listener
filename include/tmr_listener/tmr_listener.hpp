@@ -57,7 +57,7 @@ class ScriptExitHandler final : public ListenerHandle {
  protected:
   MessagePtr generate_cmd(MessageStatus /*unused*/) noexcept override {
     using namespace motion_function;
-    return TMSCT << ID{"TMRobotListener_DefaultHandler"} << ScriptExit();
+    return TMSCT << ID{"TMRobotListenerDefaultHandler"} << ScriptExit();
   }
 
   Decision start_task(std::string const & /*unused*/) noexcept override { return Decision::Ignore; }
