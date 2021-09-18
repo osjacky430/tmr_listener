@@ -1,6 +1,8 @@
 #include "fake_server.hpp"
 
+#include <boost/format.hpp>
 #include <boost/next_prior.hpp>
+#include <cstdio>
 
 using namespace std::string_literals;
 
@@ -61,13 +63,13 @@ namespace fake_impl {
 using Content = Expression<std::string>;
 
 std::string ListenNodeServer::enter_listen_node(std::string t_str, wait_response_t /*t_tag*/) {
-  auto const enter_node_msg = TMSCT << ID{"0"} << Content{std::move(t_str)} << End();
+  auto const enter_node_msg = TMSCT << ID{"0"s} << Content{std::move(t_str)} << End();
   this->comm_.blocking_write(enter_node_msg->to_str());
   return this->comm_.blocking_read();
 }
 
 void ListenNodeServer::enter_listen_node(std::string t_str) {
-  auto const enter_node_msg = TMSCT << ID{"0"} << Content{std::move(t_str)} << End();
+  auto const enter_node_msg = TMSCT << ID{"0"s} << Content{std::move(t_str)} << End();
   this->comm_.blocking_write(enter_node_msg->to_str());
 }
 
@@ -76,7 +78,7 @@ void ListenNodeServer::enter_listen_node(std::string t_str) {
  * @todo Implement abnormal line for t_err = true case, if I find it useful for unit test
  */
 void ListenNodeServer::response_ok_msg(tmr_listener::ID const& t_id) {
-  auto const response = TMSCT << t_id << Content{"OK"} << End();
+  auto const response = TMSCT << t_id << Content{"OK"s} << End();
   this->comm_.blocking_write(response->to_str());
 }
 
@@ -85,17 +87,17 @@ void ListenNodeServer::response_ok_msg(tmr_listener::ID const& t_id) {
  */
 void ListenNodeServer::send_tmsta_data_msg(int const t_channel, std::string const& t_val) {
   auto const data     = std::to_string(t_channel) + ',' + t_val;
-  auto const result   = "$TMSTA," + std::to_string(data.size()) + ',' + data + ',';
-  auto const to_write = result + "*" + calculate_checksum(result) + "\r\n";
+  auto const result   = "$TMSTA,"s + std::to_string(data.size()) + ',' + data + ',';
+  auto const to_write = result + '*' + calculate_checksum(result) + "\r\n"s;
   this->comm_.blocking_write(to_write);
 }
 
 void ListenNodeServer::send_error(tmr_listener::ErrorCode const t_err) {
-  using namespace std::string_literals;
   using u_t = std::underlying_type_t<tmr_listener::ErrorCode>;
 
-  auto const msg = (boost::format("$CPERR,2,%02X,") % static_cast<u_t>(t_err)).str();
-  this->comm_.blocking_write(msg + '*' + tmr_listener::calculate_checksum(msg) + "\r\n"s);
+  char msg[] = "$CPERR,2,XX,";
+  snprintf(msg, tmr_mt_helper::size(msg), "$CPERR,2,%02X,", static_cast<u_t>(t_err));
+  this->comm_.blocking_write(std::string{msg} + '*' + calculate_checksum(msg) + "\r\n"s);
 }
 
 }  // namespace fake_impl

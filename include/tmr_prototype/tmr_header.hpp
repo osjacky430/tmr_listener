@@ -1,13 +1,14 @@
 #ifndef TMR_HEADER_HPP_
 #define TMR_HEADER_HPP_
 
-#include <boost/format.hpp>
 #include <boost/make_shared.hpp>
+#include <cstdio>
 
 #include <numeric>
 #include <string>
 #include <vector>
 
+#include "tmr_utility/tmr_mt_helper.hpp"
 #include "tmr_utility/tmr_parser.hpp"
 #include "version.hpp"
 
@@ -22,7 +23,9 @@ namespace tmr_listener {
  * @note  The input string should contain "$"
  */
 inline auto calculate_checksum(std::string const& t_data) {
-  return (boost::format("%02X") % std::accumulate(std::next(t_data.begin()), t_data.end(), 0, std::bit_xor<>{})).str();
+  char str[] = "XX";
+  snprintf(str, tmr_mt_helper::size(str), "%02X", accumulate(next(t_data.begin()), t_data.end(), 0, std::bit_xor<>{}));
+  return std::string{str};  // null terminated string is not what I want
 }
 
 /**
