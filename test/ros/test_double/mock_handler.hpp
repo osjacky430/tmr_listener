@@ -30,7 +30,7 @@ struct HandlerMock : public ListenerHandle {
   MOCK_METHOD1(response_msg, void(TMSTAResponse::DataMsg const &));
   MOCK_METHOD1(response_msg, void(TMSCTResponse const &));
   MOCK_METHOD1(response_msg, void(CPERRResponse const &));
-  MOCK_METHOD1(response_msg, void());
+  MOCK_METHOD0(response_msg, void());
 #endif
 };
 

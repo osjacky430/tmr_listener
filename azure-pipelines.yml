@@ -1,0 +1,21 @@
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: ms-iot/rosonwindows_ci
+      endpoint: osjacky430
+
+jobs:
+- template: build.yml@templates  # Template reference
+  parameters:
+    rosdistro: noetic
+    metapackage: desktop
+    platforms:
+      - windows
+    pre_build:
+      - script: |
+          pushd src
+          git clone https://github.com/google/googletest
+        displayName: Checkout googletest (Windows)
+        condition: eq(variables['Agent.OS'], 'Windows_NT')
+        workingDirectory: '$(Build.StagingDirectory)'

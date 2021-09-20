@@ -9,8 +9,12 @@ import signal
 import rostest
 import rospy
 import time
-import SocketServer
 import unittest
+
+try:
+    import SocketServer  # python 2.7
+except ImportError:
+    import socketserver as SocketServer  # python 3.8
 
 DEFAULT_TIMEOUT_SIGINT = 15.0
 DEFAULT_TIMEOUT_SIGTERM = 2.0
@@ -28,7 +32,7 @@ class EthernetSlaveShutdownTest(unittest.TestCase):
 
     def setUp(self):
         self.process = Popen(
-            ['rosrun', 'tmr_listener', 'tmr_eth_slave_node', '--ip=127.0.0.1']
+            ['rosrun', 'tmr_listener', 'tmr_eth_slave_node', '--ip=127.0.0.1'], shell=True
         )
 
         self.server = SocketServer.TCPServer(

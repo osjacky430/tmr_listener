@@ -62,9 +62,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
+add_compile_definitions($<$<BOOL:WIN32>:GTEST_LINKED_AS_SHARED_LIBRARY>)
 find_package(catkin REQUIRED COMPONENTS roscpp message_generation pluginlib)
 
 # some of the components are used by catkin internally, but I don't want to pull in all
