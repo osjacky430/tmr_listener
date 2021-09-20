@@ -26,17 +26,17 @@ string(REPLACE "." ";" __TMR_TMRFLOW_VERSION_COMPONENT ${__TMR_TMFLOW_VERSION})
 set(${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION ${__TMR_TMFLOW_VERSION})
 list(GET __TMR_TMRFLOW_VERSION_COMPONENT 0 ${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAJOR)
 list(GET __TMR_TMRFLOW_VERSION_COMPONENT 1 ${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MINOR)
-configure_file(${CMAKE_SOURCE_DIR}/include/version.hpp.in ${CMAKE_SOURCE_DIR}/include/version.hpp @ONLY)
+configure_file(${PROJECT_SOURCE_DIR}/include/version.hpp.in ${PROJECT_SOURCE_DIR}/include/version.hpp @ONLY)
 
 #############################################################
 #       Generate custom ethernet message if specified       #
 #############################################################
-if (DEFINED TM_ETHERNET_SLAVE_XML OR EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/msg/TMREthernet.msg)
+if (DEFINED TM_ETHERNET_SLAVE_XML OR EXISTS ${PROJECT_SOURCE_DIR}/msg/TMREthernet.msg)
   set(TM_ETHERNET_MSG TMREthernet.msg)
 
   if (DEFINED TM_ETHERNET_SLAVE_XML)
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
-                            --msg-dir=${CMAKE_CURRENT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
+    execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
+                            --msg-dir=${PROJECT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
   endif ()
 
   if (result)
@@ -53,7 +53,7 @@ if (POLICY CMP0069)
   cmake_policy(SET CMP0069 NEW)
 endif ()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(CCache)
 include(StandardProjectSetting)
 include(CatkinExtension)
@@ -195,7 +195,7 @@ set_project_warnings(project_warnings)
 add_library(catkin_lib INTERFACE)
 target_link_libraries(catkin_lib INTERFACE ${catkin_LIBRARIES})
 target_include_directories(catkin_lib SYSTEM INTERFACE ${catkin_INCLUDE_DIRS})
-target_include_directories(catkin_lib INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(catkin_lib INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
 
