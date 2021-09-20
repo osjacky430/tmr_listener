@@ -1,6 +1,9 @@
 #ifndef TMR_CONSTEXPR_STRING_HPP_
 #define TMR_CONSTEXPR_STRING_HPP_
 
+#include <cstddef>  // std::size_t
+#include <string>
+
 namespace tmr_listener {
 namespace detail {
 
