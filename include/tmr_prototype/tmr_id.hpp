@@ -12,11 +12,17 @@ class SkipIDCheck;
 
 namespace detail {
 
-#if _MSC_VER and _MSC_VER >= 1921
+#if not defined(__GNUC__) and not defined(__clang__)
 constexpr SkipIDCheck operator""_id(char const* const, std::size_t);
 #else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#if defined(__clang__)
+#pragma GCC diagnostic ignored "-Wgnu-string-literal-operator-template"
+#endif
 template <typename CharT, CharT...>
 constexpr SkipIDCheck operator""_id();
+#pragma GCC diagnostic pop
 #endif
 
 constexpr bool satisfy_id_rule(char const* const, std::size_t const) noexcept;
@@ -30,11 +36,17 @@ class SkipIDCheck {
   SkipIDCheck() = default;
 
  public:
-#if _MSC_VER and _MSC_VER >= 1921
+#if not defined(__GNUC__) and not defined(__clang__)
   friend constexpr SkipIDCheck detail::operator""_id(char const* const, std::size_t);
 #else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#if defined(__clang__)
+#pragma GCC diagnostic ignored "-Wgnu-string-literal-operator-template"
+#endif
   template <typename CharT, CharT...>
   friend constexpr SkipIDCheck detail::operator""_id();
+#pragma GCC diagnostic pop
 #endif
 };
 
@@ -63,7 +75,7 @@ struct ID {
 
   template <std::size_t N>
   explicit ID(char const (&t_str)[N]) : ID(t_str, N) {}
-  explicit ID(std::string const& t_str) : ID(t_str.data(), t_str.size()) {}
+  explicit ID(std::string const& t_str) : ID(t_str.data(), t_str.size() + 1) {}
 
   template <std::size_t N>
   explicit ID(char const (&t_str)[N], SkipIDCheck /**/) noexcept : id_{t_str, N - 1} {}
@@ -101,7 +113,7 @@ constexpr bool satisfy_id_rule(char const* const t_str, std::size_t const t_size
  * @param t_size size of the string
  * @return SkipIDCheck
  */
-#if _MSC_VER and _MSC_VER >= 1921
+#if not defined(__GNUC__) and not defined(__clang__)
 constexpr SkipIDCheck operator""_id(char const* const t_str, std::size_t t_size) {
   if (not satisfy_id_rule(t_str, t_size)) {
     throw std::invalid_argument("Bad ID, should contain only alphabets or numeric");
@@ -109,11 +121,17 @@ constexpr SkipIDCheck operator""_id(char const* const t_str, std::size_t t_size)
   return SkipIDCheck{};
 }
 #else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#if defined(__clang__)
+#pragma GCC diagnostic ignored "-Wgnu-string-literal-operator-template"
+#endif
 template <typename CharT, CharT... str>
 constexpr SkipIDCheck operator""_id() {
   static_assert(satisfy_id_rule({str...}, sizeof...(str)), "Bad ID, should contain only alphabets or numeric");
   return SkipIDCheck{};
 }
+#pragma GCC diagnostic pop
 #endif
 
 }  // namespace detail

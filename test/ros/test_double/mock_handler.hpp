@@ -18,15 +18,19 @@ struct HandlerMock : public ListenerHandle {
   MOCK_METHOD(Decision, start_task, (std::string const &), (override));
   MOCK_METHOD(void, response_msg, (TMSTAResponse::Subcmd00 const &), (override));
   MOCK_METHOD(void, response_msg, (TMSTAResponse::Subcmd01 const &), (override));
+  MOCK_METHOD(void, response_msg, (TMSTAResponse::DataMsg const &), (override));
   MOCK_METHOD(void, response_msg, (TMSCTResponse const &), (override));
   MOCK_METHOD(void, response_msg, (CPERRResponse const &), (override));
+  MOCK_METHOD(void, response_msg, (), (override));
 #else
   MOCK_METHOD1(generate_cmd, MessagePtr(MessageStatus const));
   MOCK_METHOD1(start_task, Decision(std::string const &));
   MOCK_METHOD1(response_msg, void(TMSTAResponse::Subcmd00 const &));
   MOCK_METHOD1(response_msg, void(TMSTAResponse::Subcmd01 const &));
+  MOCK_METHOD1(response_msg, void(TMSTAResponse::DataMsg const &));
   MOCK_METHOD1(response_msg, void(TMSCTResponse const &));
   MOCK_METHOD1(response_msg, void(CPERRResponse const &));
+  MOCK_METHOD1(response_msg, void());
 #endif
 };
 
