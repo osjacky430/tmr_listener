@@ -7,8 +7,9 @@ function (_create_test)
 
   add_executable(${_TARGET_NAME} tmr_msg_gen_syntax_test.cpp)
   set_target_properties(${_TARGET_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
-  target_include_directories(${_TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+  target_include_directories(${_TARGET_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include)
   target_compile_definitions(${_TARGET_NAME} PRIVATE ${_TEST_NAME} TEST_EXPRESSION=${_EXPRESSION})
+  target_link_libraries(${_TARGET_NAME} PRIVATE Boost::boost project_warnings)
 
   include(CTest)
   add_test(NAME ${_TEST_NAME} COMMAND ${CMAKE_COMMAND} --build . --target ${_TARGET_NAME} --config $<CONFIGURATION>
@@ -22,8 +23,8 @@ endfunction ()
 function (test_ext_script_syntax)
 
   set(options SHOULD_PASS)
-  set(oneValueArgs TEST_CASE PASS_EXPR FAIL_EXPR ERR_MSG_REGEX)
-  set(multiValueArgs)
+  set(oneValueArgs TEST_CASE PASS_EXPR FAIL_EXPR)
+  set(multiValueArgs ERR_MSG_REGEX)
 
   cmake_parse_arguments("" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -34,12 +35,7 @@ function (test_ext_script_syntax)
   set(fail_case "FAIL_${test_name}")
   set(pass_target "pass_${target_name}")
   set(fail_target "fail_${target_name}")
-
-  if (NOT _ERR_MSG_REGEX)
-    set(err_regex "return expr;static_assert")
-  else ()
-    set(err_regex ${_ERR_MSG_REGEX})
-  endif ()
+  set(err_regex "return expr;static_assert|C2338;${_ERR_MSG_REGEX}")
 
   # cmake-format: off
   _create_test(TARGET_NAME ${pass_target} TEST_NAME ${pass_case} EXPRESSION ${_PASS_EXPR} SHOULD_PASS)

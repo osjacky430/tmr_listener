@@ -1,0 +1,71 @@
+name: windows_ros1
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: [windows-latest]
+    env:
+        CCACHE_DIR: ${{ github.workspace }}/.ccache
+    strategy:
+      fail-fast: false
+      matrix:
+        ROSDISTRO: [noetic]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        path: src/tmr_listener
+    - uses: actions/cache@v2
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-${{ matrix.ROSDISTRO }}
+    - name: Install
+      shell: cmd
+      run: |
+        choco upgrade git -y --no-progress
+        choco sources add -n=ros-win -s https://aka.ms/ros/public --priority 1
+        choco upgrade ros-%ROSDISTRO%-desktop_full -y --no-progress --execution-timeout=0
+        choco install cmake -y --no-progress
+        choco install ninja -y --no-progress
+        choco install ccache -y --no-progress
+
+        : The desktop_full deployment has a chocolatey deployment which is isolated to the ROS distro 
+        : (so they don't conflict with each other)
+        : If you need other dependencies, they should go after setup.bat in the following block in order
+        : to be injected into the isolated deployment.
+      env:
+        ROSDISTRO: ${{ matrix.ROSDISTRO }}
+    - name: Build
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64
+        call "C:\opt\ros\%ROSDISTRO%\x64\setup.bat"
+
+        : Additional dependencies after setup.bat.
+        : For other ROS repos, remove the : and add the clone commands
+        pushd src
+        git clone https://github.com/google/googletest
+        popd
+
+        : For other chocolatey packages, remove the : and add the choco packages
+
+        : For vcpkgs, remove the : and add the vcpkg dependencies.
+        : vcpkg install <package>
+
+        catkin_make -DTMR_ENABLE_TESTING=ON
+      env:
+        ROSDISTRO: ${{ matrix.ROSDISTRO }}
+    - name: Run Test
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64
+        call "C:\opt\ros\%ROSDISTRO%\x64\setup.bat"
+        call "${{ github.workspace }}\devel\setup.bat"
+
+        catkin_make run_tests -j1
+
+        pushd build
+        ctest -E _ctest
+        popd build
+      env:
+        ROSDISTRO: ${{ matrix.ROSDISTRO }}

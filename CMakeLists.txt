@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(tmr_listener VERSION 0.3.1)
+project(tmr_listener VERSION 0.4.0)
 
 #####################################################################
 #     Check if all plugins are built under same TMFlow version      #
@@ -62,18 +62,25 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_compile_definitions($<$<BOOL:WIN32>:GTEST_LINKED_AS_SHARED_LIBRARY>)
+if (MSVC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.29)
+  # This is a temporary solution to suppress warnings 3rd party library in MSVC
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /external:W0")
+  set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "/external:I ")
+endif ()
+
 find_package(catkin REQUIRED COMPONENTS roscpp message_generation pluginlib)
+
+if (WIN32)
+  # This workspace did not take precedence over ros root workspace, which results in wrong googletest dll being loaded.
+  # And since I can't find a clean way to manipulate googletest build process (unless I embedded it into my project?),
+  # it is impossible for me to determine where those artifacts will be after they were built.
+  catkin_add_env_hooks(set_path SHELLS bat DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tool/env-hook)
+endif ()
 
 # some of the components are used by catkin internally, but I don't want to pull in all
 # catkin dependencies to a target just for one or two components, plus it makes no sense.
 # Therefore, these components are found explicitly.
 find_package(Boost REQUIRED COMPONENTS system)
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##

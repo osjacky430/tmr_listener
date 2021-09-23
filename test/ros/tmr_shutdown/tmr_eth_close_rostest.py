@@ -32,7 +32,7 @@ class EthernetSlaveShutdownTest(unittest.TestCase):
 
     def setUp(self):
         self.process = Popen(
-            ['rosrun', 'tmr_listener', 'tmr_eth_slave_node', '--ip=127.0.0.1'], shell=True
+            ['rosrun', 'tmr_listener', 'tmr_eth_slave_node', '--ip=127.0.0.1']
         )
 
         self.server = SocketServer.TCPServer(

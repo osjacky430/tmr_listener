@@ -25,7 +25,7 @@ class RequestHandler(SocketServer.BaseRequestHandler):
 class ListenerNodeShutdownTest(unittest.TestCase):
     def setUp(self):
         self.process = Popen(
-            ['rosrun', 'tmr_listener', 'tmr_listener_node', '--ip=127.0.0.1'], shell=True)
+            ['rosrun', 'tmr_listener', 'tmr_listener_node', '--ip=127.0.0.1'])
         self.server = SocketServer.TCPServer(
             ('127.0.0.1', 5890), RequestHandler, bind_and_activate=False)
         self.server.allow_reuse_address = True

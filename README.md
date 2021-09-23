@@ -1,6 +1,6 @@
 # TM Robot Listener <!-- omit in toc -->
 
-[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml/badge.svg?branch=master)](https://github.com/osjacky430/tmr_listener/actions/workflows/industrial_ci_action.yml) [![sanitizer](https://github.com/osjacky430/tmr_listener/actions/workflows/sanitizer.yml/badge.svg)](https://github.com/osjacky430/tmr_listener/actions/workflows/sanitizer.yml) [![Build Status](https://app.travis-ci.com/osjacky430/tmr_listener.svg?branch=master)](https://app.travis-ci.com/osjacky430/tmr_listener) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/master/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Coverage) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener)
+[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/ubuntu_ros1.yml/badge.svg?branch=master)](https://github.com/osjacky430/tmr_listener/actions/workflows/ubuntu_ros1.yml) [![sanitizer](https://github.com/osjacky430/tmr_listener/actions/workflows/sanitizer.yml/badge.svg)](https://github.com/osjacky430/tmr_listener/actions/workflows/sanitizer.yml) [![windows_ros1](https://github.com/osjacky430/tmr_listener/actions/workflows/windows_ros1.yml/badge.svg)](https://github.com/osjacky430/tmr_listener/actions/workflows/windows_ros1.yml) [![Build Status](https://app.travis-ci.com/osjacky430/tmr_listener.svg?branch=master)](https://app.travis-ci.com/osjacky430/tmr_listener) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/master/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Coverage) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener)
 
 A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave by providing easy to use, hard to misuse interface, and still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
 
@@ -42,7 +42,7 @@ However, the implementation of [the official ros package](https://github.com/Tec
 
 2.  Command can't be stacked for TMSCT since some of them are implemented as individual services, you would never want to stack command using service `send_script`, unless you are fine with this:
 
-    ```c++
+    ```cpp
     std::string const cmd = "float[ targetP1= {0,0,90,0,90,0}\r\n"  // wrong here, missing right bracket
                             "PTP(”JPP”,targetP,10,200,0,false)\r\n"   // wrong here, I accidentally enter the wrong name
                             "QueueTag(1)\r" // wrong here, no line feed
@@ -55,7 +55,7 @@ However, the implementation of [the official ros package](https://github.com/Tec
 
 4.  No compile time check, i.e. it is extremely easy for user to make such mistake:
 
-    ```c++
+    ```cpp
     std::string cmd = "PTP(\"JPP\",0,0,90,0,90,0,200,0,false)"; // wrong here, I accidentally remove 8-th parameter, 35
     // enjoy your happy debug time
     ```
@@ -89,7 +89,10 @@ git clone https://github.com/osjacky430/tmr_listener # for github user
 2.  build the package:
 
 ```sh
+# use catkin build:
 catkin build tmr_listener (Additional build options)
+# or catkin_make: (which is the only way to build ROS1 package on windows)
+catkin_make
 ```
 
 Build options for `tmr_listener`:
@@ -352,9 +355,13 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 
 ### Generate tm external script language
 
-TM external message is complicated for end user to generate, and can easily screw things up. Therefore, `tmr_listener` provides some handy ways to generate them. `tmr_listener` creates several global `Header` instances, i.e., `TMSCT` , `TMSTA` , `TMSVR` , and `CPERR` . Also, for all motion functions and their corresponding overload functions, tmr_listener creates a `FunctionSet` instance for them. By doing so, we can avoid syntax error or typo, since the interface acts as if you are writing c++ code, typo simply indicates compile error.
+TM external message is complicated for end user to use, not only because there are some undocumented or unclear behavior, but also because there are a lot of rules to keep in mind. As a result, it is extremely easy to screw things up. `tmr_listener` knows your pain, and it strives to simplify the process of message generation by making the code fail as early as possible.
 
-With `tmr_listener` , user can generate listen node command relatively easy, by fluent interface:
+The generation of external script message is composed of three parts: `Header` , `Command` , and `End` signal. See [reference manual](https://www.tm-robot.com/en/wpdmdownload/expression-editor-manual_sw1-82/) for all the `Header` and `Command` (functions) that can be used.
+
+First of all, `tmr_listener` creates four global `Header` instances, i.e., `TMSCT` , `TMSTA` , `TMSVR` , and `CPERR`. These headers are used as the starting of the message generation / parsing. Secondly, for all functions (motion functions, math functions, etc.) and their corresponding overload functions, tmr_listener creates a `FunctionSet` instance for them. By doing so, we can avoid syntax error or typo, since the interface acts as if you were writing c++ code, typo simply indicates compile error.
+
+With `tmr_listener`, command generation becomes pretty intuitive, by fluent interface:
 
 ```cpp
 using namespace tmr_listener; // for TMSCT and ID, End
@@ -366,7 +373,9 @@ auto const cmd = TMSCT << ID{"Whatever_you_like"} << QueueTag(1, 1) << End();
 
 Instead of typing: `"$TMSCT, XX, Whatever_you_like, QueueTag(1, 1), XX\r\n"` . A typo, e.g., `TMSCT` to `TMSTA` , or `QueueTag(1,1)` to `QueuTag(1, 1)` , or wrong length, or checksum error, you name it (while reading this line, you might not notice that a `*` is missing in the checksum part, gotcha!), may ruin one's day.
 
-The generation of external script message is composed of three parts: `Header` , `Command` , and `End` signal. See reference manual for all the `Header` and its corresponding motion function / subcmd. For the last part, end signal, `End()` and `ScriptExit()` is used, command cannot be appended after `End()` and `ScriptExit()` :
+Note: There is one more mistake in the example, that is, the name of the ID is invalid! In order to deal with this problem, it is recommended to use macro `TMR_ID` if ID is initialized with string literal, e.g, use `TMR_ID("SomeString")` instead of `ID{"SomeString"}`, initialization via TMR_ID check validity of the string literal at compile time, i.e., `TMR_ID("Whatever_you_like")` will not compile, whereas `ID{"Whatever_you_like"}` will throw `std::invalid_argument` at runtime.
+
+As for the last part, end signal, `End()` and `ScriptExit()` is used, command cannot be appended after `End()` and `ScriptExit()` :
 
 ```cpp
 TMSCT << ID{"1"} << QueueTag(1, 1) << End() << QueueTag(1, 1); // compile error (no known conversion)
@@ -522,10 +531,22 @@ This command will generate `TMREthernet.msg` under `msg` directory, to recieve t
 
 To run unit test, copy paste the following lines to the terminal:
 
+### Linux
+
 ```sh
 catkin build tmr_listener -DTMR_ENABLE_TESTING=ON
 catkin run_tests tmr_listener
 ctest --test-dir $(catkin locate -b tmr_listener) -E _ctest
+```
+
+### Windows
+
+Before running unit test, **you must clone `googletest` to the workspace**, despite that LKG build did provide both gmock and gtest. (catkin can't find gmock since the directory layout doesn't satisfy the assumption it made, even if the directory is manually specified, tests still fail to compile because of some unresolved references) (2021/09/23).
+
+``` sh
+catkin_make -DTMR_ENABLE_TESTING=ON
+catkin_make run_tests -j1
+ctest --test-dir <dir to catkin_ws/build> -E _ctest
 ```
 
 The first two command should be easy to understand, the third one is used to run compile time test, by checking if the program can be compiled or not. Test created via `catkin_add_gtest`, `catkin_add_gmock`, `add_rostest_gtest`, `add_rostest_gmock`, and `add_rostest` are also added to `ctest` with test name started with `_ctest`, and are thus excluded here.
@@ -551,11 +572,11 @@ The first two command should be easy to understand, the third one is used to run
 
 ## Contact
 
-Jacky Tseng (master branch, WIP/TMSVR, WIP/server_mock) - jacky.tseng@gyro.com.tw
+Jacky Tseng (master branch, WIP/compile_time_id_check, feature/msvc-build) - jacky.tseng@gyro.com.tw
 
 ## Reference
 
-1.  [TM expression editor and listen node reference manual](https://assets.omron.com/m/1d1932319ce3e3b3/original/TM-Expression-Editor-Manual.pdf)
+1.  [TM expression editor and listen node reference manual](https://www.tm-robot.com/en/wpdmdownload/expression-editor-manual_sw1-82/)
 2.  [pluginlib tutorial](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin)
 3.  [the performance benefits of final classes](https://devblogs.microsoft.com/cppblog/the-performance-benefits-of-final-classes/)
 4.  [Professional CMake - A practical guide](https://crascit.com/professional-cmake/)
