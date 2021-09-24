@@ -1,6 +1,5 @@
 #include "fake_server.hpp"
 
-#include <boost/format.hpp>
 #include <boost/next_prior.hpp>
 #include <cstdio>
 
