@@ -4,9 +4,11 @@
 #include "tmr_ext_script/tmr_motion_function.hpp"
 #include "tmr_ext_script/tmr_parameterized_object.hpp"
 
-TEST(ChecksumTest, ChecksumStringMatch) {
-  using namespace tmr_listener;
+using namespace tmr_listener;
+using namespace motion_function;
+using namespace std::string_literals;
 
+TEST(ChecksumTest, ChecksumStringMatch) {
   EXPECT_EQ(calculate_checksum("$TMSTA,10,01,08,true,"), "6D");
   EXPECT_EQ(calculate_checksum("$TMSTA,5,01,15,"), "6F");
   EXPECT_EQ(calculate_checksum("$TMSCT,5,10,OK,"), "6D");
@@ -52,8 +54,6 @@ TEST(ChecksumTest, ChecksumStringMatch) {
   }
 
 TEST(VariableTest, BinaryOperator) {
-  using namespace tmr_listener;
-
   Variable<int> other_int{"other_int"};
   Variable<int> int_var{"int_var"};
   Variable<float> float_var{"float_var"};
@@ -80,8 +80,6 @@ TEST(VariableTest, BinaryOperator) {
 }
 
 TEST(VariableTest, UnaryOperator) {
-  using namespace tmr_listener;
-
   Variable<int> int_var{"int_var"};
   Variable<bool> bool_var{"bool_var"};
 
@@ -123,8 +121,6 @@ TEST(VariableTest, UnaryOperator) {
 }
 
 TEST(ExpressionTest, BinaryOperator) {
-  using namespace tmr_listener;
-
   Variable<int> int_var{"int_var"};
   Variable<int> other_int{"other_int"};
   Variable<float> float_var{"float_var"};
@@ -177,11 +173,20 @@ TEST(ExpressionTest, BinaryOperator) {
   }
 }
 
-TEST(TMMsgGen, CommandAsExpression) {
-  using namespace tmr_listener;
-  using namespace motion_function;
-  using namespace std::string_literals;
+TEST(TMMsgGen, InvalidIDWillThrow) {
+  EXPECT_THROW(ID{"whatever_"}, std::invalid_argument);
+  EXPECT_THROW(ID{"whatever_"s}, std::invalid_argument);
 
+  EXPECT_THROW(ID{"su%NeNe7"}, std::invalid_argument);
+  EXPECT_THROW(ID{"su%NeNe7"s}, std::invalid_argument);
+
+  EXPECT_THROW(ID{"%"}, std::invalid_argument);
+  EXPECT_THROW(ID{"%"s}, std::invalid_argument);
+
+  EXPECT_THROW(ID{""s}, std::invalid_argument);
+}
+
+TEST(TMMsgGen, CommandAsExpression) {
   // the point here is to make sure the type of expression for the motion function is correct
   auto const change_base_command = ChangeBase("RobotBase"s);
   static_assert(std::is_same<decltype(change_base_command.as_expression()), Expression<bool>>::value, "Type not match");

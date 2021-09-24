@@ -4,6 +4,6 @@
 
     <arg name="ip_arg" value="$(eval '--ip 127.0.0.1' if arg('mock_tmr') else '--ip ' + arg('ip'))"/>
     <node pkg="tmr_listener" type="tmr_listener_node" name="tmr_listener" output="screen" args="$(arg ip_arg)">
-        <rosparam param="listener_handles">["tm_error_handler::TMErrorHandler"]</rosparam>
+        <rosparam param="listener_handles">["tmr_listener_plugins::VisionStatCollector"]</rosparam>
     </node>
 </launch>

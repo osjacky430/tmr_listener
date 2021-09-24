@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(tmr_listener VERSION 0.3.1)
+project(tmr_listener VERSION 0.4.0)
 
 #####################################################################
 #     Check if all plugins are built under same TMFlow version      #
@@ -26,17 +26,17 @@ string(REPLACE "." ";" __TMR_TMRFLOW_VERSION_COMPONENT ${__TMR_TMFLOW_VERSION})
 set(${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION ${__TMR_TMFLOW_VERSION})
 list(GET __TMR_TMRFLOW_VERSION_COMPONENT 0 ${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAJOR)
 list(GET __TMR_TMRFLOW_VERSION_COMPONENT 1 ${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MINOR)
-configure_file(${CMAKE_SOURCE_DIR}/include/version.hpp.in ${CMAKE_SOURCE_DIR}/include/version.hpp @ONLY)
+configure_file(${PROJECT_SOURCE_DIR}/include/version.hpp.in ${PROJECT_SOURCE_DIR}/include/version.hpp @ONLY)
 
 #############################################################
 #       Generate custom ethernet message if specified       #
 #############################################################
-if (DEFINED TM_ETHERNET_SLAVE_XML OR EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/msg/TMREthernet.msg)
+if (DEFINED TM_ETHERNET_SLAVE_XML OR EXISTS ${PROJECT_SOURCE_DIR}/msg/TMREthernet.msg)
   set(TM_ETHERNET_MSG TMREthernet.msg)
 
   if (DEFINED TM_ETHERNET_SLAVE_XML)
-    execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
-                            --msg-dir=${CMAKE_CURRENT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
+    execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/parse_tm_ethernet_xml.py --xml-dir=${TM_ETHERNET_SLAVE_XML}
+                            --msg-dir=${PROJECT_SOURCE_DIR}/msg/${TM_ETHERNET_MSG} RESULT_VARIABLE result)
   endif ()
 
   if (result)
@@ -53,7 +53,7 @@ if (POLICY CMP0069)
   cmake_policy(SET CMP0069 NEW)
 endif ()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(CCache)
 include(StandardProjectSetting)
 include(CatkinExtension)
@@ -62,20 +62,25 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
+if (MSVC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.29)
+  # This is a temporary solution to suppress warnings 3rd party library in MSVC
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /external:W0")
+  set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "/external:I ")
+endif ()
+
 find_package(catkin REQUIRED COMPONENTS roscpp message_generation pluginlib)
+
+if (WIN32)
+  # This workspace did not take precedence over ros root workspace, which results in wrong googletest dll being loaded.
+  # And since I can't find a clean way to manipulate googletest build process (unless I embedded it into my project?),
+  # it is impossible for me to determine where those artifacts will be after they were built.
+  catkin_add_env_hooks(set_path SHELLS bat DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tool/env-hook)
+endif ()
 
 # some of the components are used by catkin internally, but I don't want to pull in all
 # catkin dependencies to a target just for one or two components, plus it makes no sense.
 # Therefore, these components are found explicitly.
 find_package(Boost REQUIRED COMPONENTS system)
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -195,7 +200,7 @@ set_project_warnings(project_warnings)
 add_library(catkin_lib INTERFACE)
 target_link_libraries(catkin_lib INTERFACE ${catkin_LIBRARIES})
 target_include_directories(catkin_lib SYSTEM INTERFACE ${catkin_INCLUDE_DIRS})
-target_include_directories(catkin_lib INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(catkin_lib INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
 

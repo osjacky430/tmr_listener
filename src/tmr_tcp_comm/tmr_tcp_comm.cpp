@@ -110,7 +110,7 @@ void TMRobotTCP::stop() noexcept {
     boost::system::error_code ignore_error_code;
     this->listener_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_error_code);
     this->listener_.close(ignore_error_code);
-    boost::asio::deadline_timer(this->listener_.get_io_service(), WAIT_BEFORE_RECONNECT).wait();
+    boost::asio::deadline_timer(this->io_service_, WAIT_BEFORE_RECONNECT).wait();
   });
 }
 
