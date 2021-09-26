@@ -174,16 +174,16 @@ TEST(ExpressionTest, BinaryOperator) {
 }
 
 TEST(TMMsgGen, InvalidIDWillThrow) {
-  EXPECT_THROW(ID{"whatever_"}, std::invalid_argument);
-  EXPECT_THROW(ID{"whatever_"s}, std::invalid_argument);
+  EXPECT_THROW(check_id("whatever_"), std::invalid_argument);
+  EXPECT_THROW(check_id("whatever_"s), std::invalid_argument);
 
-  EXPECT_THROW(ID{"su%NeNe7"}, std::invalid_argument);
-  EXPECT_THROW(ID{"su%NeNe7"s}, std::invalid_argument);
+  EXPECT_THROW(check_id("su%NeNe7"), std::invalid_argument);
+  EXPECT_THROW(check_id("su%NeNe7"s), std::invalid_argument);
 
-  EXPECT_THROW(ID{"%"}, std::invalid_argument);
-  EXPECT_THROW(ID{"%"s}, std::invalid_argument);
+  EXPECT_THROW(check_id("%"), std::invalid_argument);
+  EXPECT_THROW(check_id("%"s), std::invalid_argument);
 
-  EXPECT_THROW(ID{""s}, std::invalid_argument);
+  EXPECT_THROW(check_id(""s), std::invalid_argument);
 }
 
 TEST(TMMsgGen, CommandAsExpression) {
@@ -204,7 +204,7 @@ TEST(TMMsgGen, TMSCTStringMatch) {
   using namespace std::string_literals;
 
   {
-    auto const command = TMSCT << ID{"1"} << ChangeBase("RobotBase"s) << End();
+    auto const command = TMSCT << TMR_ID("1") << ChangeBase("RobotBase"s) << End();
     EXPECT_EQ(command->to_str(), "$TMSCT,25,1,ChangeBase(\"RobotBase\"),*08\r\n");
   }
 
@@ -217,7 +217,7 @@ TEST(TMMsgGen, TMSCTStringMatch) {
     Variable<std::array<float, 6>> targetP1{"targetP1"};
     Variable<std::array<float, 6>> targetP2{"targetP2"};
 
-    auto const command = TMSCT << ID{"2"} << declare(targetP1, std::array<float, 6>{205, -35, 125, 0, 90, 0})
+    auto const command = TMSCT << TMR_ID("2") << declare(targetP1, std::array<float, 6>{205, -35, 125, 0, 90, 0})
                                << PTP("JPP"s, targetP1, 10, 200, 0, false) << QueueTag(1)
                                << declare(targetP2, std::array<float, 6>{90, -35, 125, 0, 90, 0})
                                << PTP("JPP"s, targetP2, 10, 200, 10, false) << QueueTag(2) << End();
@@ -234,7 +234,7 @@ TEST(TMMsgGen, TMSCTStringMatch) {
     Variable<std::array<float, 6>> targetP1{"targetP1"};
     Variable<std::array<float, 6>> targetP2{"targetP2"};
 
-    auto command = TMSCT << ID{"2"} << declare(targetP1, std::array<float, 6>{205, -35, 125, 0, 90, 0});
+    auto command = TMSCT << TMR_ID("2") << declare(targetP1, std::array<float, 6>{205, -35, 125, 0, 90, 0});
     command << PTP("JPP"s, targetP1, 10, 200, 0, false) << QueueTag(1);
     command << declare(targetP2, std::array<float, 6>{90, -35, 125, 0, 90, 0});
     command << PTP("JPP"s, targetP2, 10, 200, 10, false) << QueueTag(2);
@@ -275,7 +275,7 @@ TEST(TMMsgGen, TMSVRMsgStringMatch) {
     EXPECT_EQ(read_req.item_, R"("TCP_Mass")"s);
     EXPECT_EQ(read_req.to_str(), R"({"Item":"TCP_Mass"})"s);
 
-    auto const to_read = TMSVR << ID{"Q3"} << read_req << End();
+    auto const to_read = TMSVR << TMR_ID("Q3") << read_req << End();
     EXPECT_EQ(to_read->to_str(),
               "$TMSVR,27,Q3,13,"
               R"([{"Item":"TCP_Mass"}])"
@@ -288,7 +288,7 @@ TEST(TMMsgGen, TMSVRMsgStringMatch) {
 
     auto const write_req_1 = generate_write_req("Ctrl_DO1"s, "0");
     auto const write_req_2 = generate_write_req("g_ss", R"(["Hello","TM","Robot"])");
-    auto const to_write    = TMSVR << ID{"T9"} << write_req << write_req_1 << write_req_2 << End();
+    auto const to_write    = TMSVR << TMR_ID("T9") << write_req << write_req_1 << write_req_2 << End();
     EXPECT_EQ(to_write->to_str(), R"($TMSVR,113,T9,3,[{"Item":"Ctrl_DO0","Value":1},{"Item":"Ctrl_DO1","Value":0},)"
                                   R"({"Item":"g_ss","Value":["Hello","TM","Robot"]}],*7C)"
                                   "\r\n"s);
