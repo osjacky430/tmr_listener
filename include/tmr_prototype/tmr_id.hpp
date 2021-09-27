@@ -91,12 +91,12 @@ struct IDChecker<char const* const> {
  *    TMSCT << TMR_ID("123") << ... << End(); // (1) create ID with IILF helper macro
  *
  *    constexpr auto id_checker = "123"_id;
- *    TMSCT << id_checker << ... << End() // (2) Initialize ID with IDChecker implicitly
+ *    TMSCT << id_checker << ... << End() // (2) Initialize ID implicitly with IDChecker
  *
  *    // runtime check
- *    TMSCT << "123"_id << ... << End();  // (3) Initialize ID with IDChecker implicitly
- *    TMSCT << ID{"123"} << ... << End(); // (4) Initialize ID with IDChecker implicitly
- *    TMSCT << ID{std::to_string(some_int)} << ... << End(); //  (5) Initialize ID with IDChecker implicitly
+ *    TMSCT << "123"_id << ... << End();  // (3) Initialize ID implicitly with IDChecker
+ *    TMSCT << ID{"123"} << ... << End(); // (4) Initialize ID with IDChecker implicitly constructed
+ *    TMSCT << ID{std::to_string(some_int)} << ... << End(); // (5) Initialize ID with IDChecker implicitly constructed
  *
  *    TMSCT << ID{check_id("123")} << ... << End(); // (6) Initialize ID with IDChecker using check_id helper function
  *
@@ -126,6 +126,15 @@ constexpr auto check_id(T const& t_str) {
 /**
  * @brief A helper macro to enforce compile time ID validity check, this is just IILF.
  *        Lambda is captured by reference so that constexpr array can be used in this case
+ *
+ * @code{.cpp}
+ *
+ *    auto const id = TMR_ID("123");
+ *
+ *    constexpr char id_name[] = "123";
+ *    auto const id = TMR_ID(id_name);
+ *
+ * @endcode
  */
 #define TMR_ID(name)                         \
   [&]() {                                    \

@@ -5,7 +5,7 @@ test_ext_script_syntax(TEST_CASE "ID_NAME_MUST_BE_ALNUM"
                        FAIL_EXPR "TMSCT << TMR_ID(\"su%%NeNe7\") << End()"
                        PASS_EXPR "TMSCT << TMR_ID(\"superNeNe7\") << End()"
                        ERR_MSG_REGEX "error C2131"  # MSVC error (expression did not evaluate to a constant)
-                                     "error: expression ‘<throw-expression>’ is not a constant expression"  # GCC error
+                                     "error: expression ‘<throw-expression>’ is not a constant[\-| ]expression"  # GCC error
                       )
 
 test_ext_script_syntax(TEST_CASE "CMD_MUST_END"
