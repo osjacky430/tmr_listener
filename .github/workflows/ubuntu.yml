@@ -1,4 +1,4 @@
-name: CI
+name: ubuntu
 
 on: [push, pull_request]
 
@@ -11,7 +11,7 @@ jobs:
       IMMEDIATE_TEST_OUTPUT: true
       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       ADDITIONAL_DEBS: "ros-$ROS_DISTRO-rosbash curl git"
-      AFTER_RUN_TARGET_TEST: "ctest --test-dir $(catkin locate -b $TARGET_REPO_NAME) -E _ctest --output-on-failure" # exclude all test registered using catkin cmake function
+      AFTER_RUN_TARGET_TEST: "cd /root/target_ws/build/$TARGET_REPO_NAME && ctest -E _ctest --output-on-failure" # exclude all test registered using catkin cmake function
     strategy:
       matrix:
         ROS: [kinetic, melodic]

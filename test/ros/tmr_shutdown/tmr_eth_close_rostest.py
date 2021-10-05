@@ -9,8 +9,12 @@ import signal
 import rostest
 import rospy
 import time
-import SocketServer
 import unittest
+
+try:
+    import SocketServer  # python 2.7
+except ImportError:
+    import socketserver as SocketServer  # python 3.8
 
 DEFAULT_TIMEOUT_SIGINT = 15.0
 DEFAULT_TIMEOUT_SIGTERM = 2.0
