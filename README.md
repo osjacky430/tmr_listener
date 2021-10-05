@@ -566,5 +566,6 @@ Jacky Tseng (master branch, WIP/TMSVR, WIP/server_mock) - jacky.tseng@gyro.com.t
 
 -   [Memory leak issue due to plugin lib](https://github.com/ros/class_loader/issues/131)
 -   [undefined behavior in boost::format](https://svn.boost.org/trac10/ticket/11632)
+-   [undefined behavior in boost::xpressive](https://github.com/boostorg/xpressive/issues/14)
 -   [gcc ubsan + asan log_path bug](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94328)
 -   [asan comes with lsan](https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer)
