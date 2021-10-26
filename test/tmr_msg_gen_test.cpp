@@ -176,26 +176,27 @@ TEST(ExpressionTest, BinaryOperator) {
 TEST(TMMsgGen, IDValidityCheck) {
   EXPECT_FALSE(satisfy_id_rule("whatever_"));
   EXPECT_FALSE(satisfy_id_rule("whatever_"s));
-  EXPECT_THROW("whatever_"_id, std::invalid_argument);
 
   EXPECT_FALSE(satisfy_id_rule("_whatever"));
   EXPECT_FALSE(satisfy_id_rule("_whatever"s));
-  EXPECT_THROW("_whatever"_id, std::invalid_argument);
 
   EXPECT_FALSE(satisfy_id_rule(""));
   EXPECT_FALSE(satisfy_id_rule(""s));
-  EXPECT_THROW(""_id, std::invalid_argument);
 
   EXPECT_FALSE(satisfy_id_rule("_"));
   EXPECT_FALSE(satisfy_id_rule("_"s));
-  EXPECT_THROW("_"_id, std::invalid_argument);
 
   EXPECT_TRUE(satisfy_id_rule("whatever"));
   EXPECT_TRUE(satisfy_id_rule("whatever"s));
-  EXPECT_NO_THROW("whatever"_id);
 
-  { [[gnu::unused]] auto const msg = TMSCT << TMR_ID("Whatever") << End(); }
-  { [[gnu::unused]] constexpr auto msg = "whatever"_id; }
+#if not(defined(__GNUC__) and __GNUC__ < 6)
+  EXPECT_THROW("whatever_"_id, std::invalid_argument);
+  EXPECT_THROW("_whatever"_id, std::invalid_argument);
+
+  EXPECT_THROW(""_id, std::invalid_argument);
+  EXPECT_THROW("_"_id, std::invalid_argument);
+  EXPECT_NO_THROW("whatever"_id);
+#endif
 }
 
 TEST(TMMsgGen, CommandAsExpression) {
