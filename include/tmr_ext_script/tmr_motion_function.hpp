@@ -491,9 +491,7 @@ TMR_SUBCMD(QueueTagDone, 01, SIGNATURE(int));
  */
 inline auto empty_command_list() noexcept { return boost::make_shared<prototype::Message<void>>(); }
 
-inline auto dummy_command_list(std::string t_dummy_cmd_id) {
-  return TMSCT << ID{check_id(std::move(t_dummy_cmd_id))} << End();
-}
+inline auto dummy_command_list(std::string t_dummy_cmd_id) { return TMSCT << ID{std::move(t_dummy_cmd_id)} << End(); }
 
 }  // namespace tmr_listener
 

@@ -110,11 +110,12 @@ class Variable {  // NOLINT
   }
 };
 
-#if defined(__clang__)
+#if defined(__clang__) or defined(__GNUC__)
 // Disable warning since I want to let variable arithmetic in TM behave as if normal C++ variable. We are deducing the
 // result of arithmetic of two possible different type therefore we will let compiler do the work.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
 TM_DEFINE_OPERATORS(Expression)

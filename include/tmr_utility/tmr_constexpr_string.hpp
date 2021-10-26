@@ -17,6 +17,8 @@ struct ConstString {
     static_assert(N > 0, "Cannot construct empty string");
   }
 
+  constexpr ConstString(char const* const t_str, std::size_t const t_size) noexcept : name_{t_str}, size_{t_size} {}
+
   std::string to_std_str() const noexcept { return std::string{this->name_}; }
 
   constexpr auto size() const noexcept { return this->size_; }
