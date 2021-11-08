@@ -9,7 +9,7 @@
 // forward declaration
 namespace tmr_listener {
 
-struct IDView;
+class IDView;
 
 #if not(defined(__GNUC__) and __GNUC__ < 6)
 constexpr IDView operator""_id(char const* const t_str, std::size_t t_size);
