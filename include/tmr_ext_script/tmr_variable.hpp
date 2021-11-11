@@ -157,10 +157,6 @@ template <typename S, typename T, typename U, typename V>
 template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_array<T>::value, bool> = true>
 [[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, T const& t_val) {
   // static_assert(); U must be one of the following: T, or underlying type of U that is convertible to T
-  if (not boost::xpressive::regex_match(t_var.to_str(), detail::var_name_pattern())) {
-    throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
-  }
-
   using namespace boost::fusion;
   using namespace std::string_literals;
   constexpr auto type    = detail::get_type_decl_str<typename T::value_type>();
@@ -181,10 +177,6 @@ template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_arr
 template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std_array<T>::value, bool> = true>
 [[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, T const& t_val) {
   // static_assert();
-  if (not boost::xpressive::regex_match(t_var.to_str(), detail::var_name_pattern())) {
-    throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
-  }
-
   using namespace boost::fusion;
   constexpr auto type    = detail::get_type_decl_str<T>();
   auto const declaration = type.to_std_str() + ' ' + t_var.to_str() + '=' + value_to_string<T>{}(t_val);
@@ -204,10 +196,6 @@ template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std
 template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_array<T>::value, bool> = true>
 [[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, Variable<T> const& t_val) {
   // static_assert();
-  if (not boost::xpressive::regex_match(t_var.to_str(), detail::var_name_pattern())) {
-    throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
-  }
-
   using namespace std::string_literals;
   constexpr auto type    = detail::get_type_decl_str<typename T::value_type>();
   auto const declaration = type.to_std_str() + "[] "s + t_var.to_str() + '=' + t_val.to_str();
@@ -227,10 +215,6 @@ template <typename T, /*typename U,*/ std::enable_if_t<tmr_mt_helper::is_std_arr
 template <typename T, /*typename U,*/ std::enable_if_t<not tmr_mt_helper::is_std_array<T>::value, bool> = true>
 [[gnu::warn_unused_result]] inline auto declare(Variable<T> const& t_var, Variable<T> const& t_val) {
   // static_assert();
-  if (not boost::xpressive::regex_match(t_var.to_str(), detail::var_name_pattern())) {
-    throw std::invalid_argument{"bad variable name: " + t_var.to_str()};
-  }
-
   constexpr auto type    = detail::get_type_decl_str<T>();
   auto const declaration = type.to_std_str() + ' ' + t_var.to_str() + '=' + t_val.to_str();
   return Expression<T>{declaration};

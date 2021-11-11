@@ -52,6 +52,10 @@ test_ext_script_syntax(TEST_CASE "TMSTA_ONLY_1_CMD_PER_SCRIPT"
                        FAIL_EXPR "TMSTA << QueueTagDone(1) << QueueTagDone(1) << End()"
                        PASS_EXPR "TMSTA << QueueTagDone(1) << End()")
 
+# test_ext_script_syntax(TEST_CASE "ID_NAME_MUST_BE_ALNUM"
+#                        FAIL_EXPR "TMSCT << TMR_ID(\"su%%NeNe7\") << End()"
+#                        PASS_EXPR "TMSCT << TMR_ID(\"superNeNe7\") << End()"
+#                        ERR_MSG_REGEX "error C2131") # MSVC error (expression did not evaluate to a constant)
 # cmake-format: on
 
 catkin_add_gtest(tmr_msg_gen tmr_msg_gen_test.cpp)

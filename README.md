@@ -551,6 +551,16 @@ catkin_make run_tests -j1
 cd <catkin_ws/build> && ctest -E _ctest
 ```
 
+### Windows
+
+Before running unit test, **you must clone `googletest` to the workspace**, despite that LKG build did provide both gmock and gtest. (catkin can't find gmock since the directory layout doesn't satisfy the assumption it made, even if the directory is manually specified, tests still fail to compile because of some unresolved references) (2021/09/23).
+
+``` sh
+catkin_make -DTMR_ENABLE_TESTING=ON
+catkin_make run_tests -j1
+ctest --test-dir <dir to catkin_ws/build> -E _ctest
+```
+
 The first two command should be easy to understand, the third one is used to run compile time test, by checking if the program can be compiled or not. Test created via `catkin_add_gtest`, `catkin_add_gmock`, `add_rostest_gtest`, `add_rostest_gmock`, and `add_rostest` are also added to `ctest` with test name started with `_ctest`, and are thus excluded here.
 
 ## TODO
@@ -572,7 +582,7 @@ The first two command should be easy to understand, the third one is used to run
 
 ## Contact
 
-Jacky Tseng (master branch, WIP/compile_time_id_check) - jacky.tseng@gyro.com.tw
+Jacky Tseng - jacky.tseng@gyro.com.tw
 
 ## Reference
 
