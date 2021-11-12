@@ -1,6 +1,6 @@
 # TM Robot Listener <!-- omit in toc -->
 
-[![CI](https://github.com/osjacky430/tmr_listener/actions/workflows/ubuntu.yml/badge.svg?branch=master)](https://github.com/osjacky430/tmr_listener/actions/workflows/ubuntu.yml) [![sanitizer](https://github.com/osjacky430/tmr_listener/actions/workflows/sanitizer.yml/badge.svg)](https://github.com/osjacky430/tmr_listener/actions/workflows/sanitizer.yml) [![windows](https://github.com/osjacky430/tmr_listener/actions/workflows/windows.yml/badge.svg)](https://github.com/osjacky430/tmr_listener/actions/workflows/windows.yml) [![Build Status](https://app.travis-ci.com/osjacky430/tmr_listener.svg?branch=master)](https://app.travis-ci.com/osjacky430/tmr_listener) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/master/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Coverage) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener)
+[![ubuntu](https://github.com/osjacky430/tmr_listener/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/osjacky430/tmr_listener/actions/workflows/ubuntu.yml) [![sanitizer](https://github.com/osjacky430/tmr_listener/actions/workflows/sanitizer.yml/badge.svg)](https://github.com/osjacky430/tmr_listener/actions/workflows/sanitizer.yml) [![windows](https://github.com/osjacky430/tmr_listener/actions/workflows/windows.yml/badge.svg)](https://github.com/osjacky430/tmr_listener/actions/workflows/windows.yml) [![Build Status](https://app.travis-ci.com/osjacky430/tmr_listener.svg?branch=master)](https://app.travis-ci.com/osjacky430/tmr_listener) [![codecov](https://codecov.io/gh/osjacky430/tmr_listener/branch/master/graph/badge.svg?token=WVAY02N0WD)](https://codecov.io/gh/osjacky430/tmr_listener) [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/96a45c63f83d43eb8e5a178594b0d8f2)](https://www.codacy.com/gh/osjacky430/tmr_listener/dashboard?utm_source=github.com&utm_medium=referral&utm_content=osjacky430/tmr_listener&utm_campaign=Badge_Coverage) [![CodeFactor](https://www.codefactor.io/repository/github/osjacky430/tmr_listener/badge)](https://www.codefactor.io/repository/github/osjacky430/tmr_listener)
 
 A package that handles TM robot listen node and TM Ethernet Slave functionality. This project strives to reduce the amount of knowledge needed in order to use listen node and ethernet slave by providing easy to use, hard to misuse interface, and still remains maximum flexibility at the same time. As the result, library users only need to create the plugins in order to use listen node. Meanwhile, ethernet slave functionality is reduced to single service, and two published topics.
 
@@ -68,6 +68,7 @@ To overcome the drawbacks mentioned above while offering more functionality, we 
 
 -   [ROS Kinetic Kame](http://wiki.ros.org/kinetic) under [Ubuntu 16.04.6 LTS (Xenial Xerus)](http://releases.ubuntu.com/16.04/)
 -   [ROS Melodic Morenia](http://wiki.ros.org/melodic) under [Ubuntu 18.04.5 LTS (Bionic Beaver)](https://releases.ubuntu.com/18.04.5/)
+-   [ROS Noetic Ninjemys](http://wiki.ros.org/noetic) under [Windows 10](http://wiki.ros.org/Installation/Windows)
 
 ## Getting Started
 
@@ -290,8 +291,8 @@ This function should be easy to understand, user must make sure that all variabl
 
 ```cpp
 // This example analyzes the quality of vision job by executing it repeatedly at fixed pose.
-// The listen node executes vision job named "some_vision", then exit script, and expected the
-// result is sent via TMSTA 90-99, e.g.
+// The listen node executes vision job named "some_vision", then exit script, and expects the
+// result to be sent via TMSTA 90-99, e.g.
 //      
 //      dummy_var = ListenSend("192.168.1.186", 91, GetString(Base["some_vision"].Value, 10)).
 //
@@ -536,7 +537,18 @@ To run unit test, copy paste the following lines to the terminal:
 ```sh
 catkin build tmr_listener -DTMR_ENABLE_TESTING=ON
 catkin run_tests tmr_listener
-ctest --test-dir $(catkin locate -b tmr_listener) -E _ctest
+ctest --test-dir $(catkin locate -b tmr_listener) -E _ctest # --test-dir is available since CMake 3.20, for older version, just `cd` to the one with test sets and run ctest
+```
+
+### Windows
+
+Before running unit test, **you must clone `googletest` to the workspace**, despite that LKG build did provide both gmock and gtest. (catkin can't find gmock since the directory layout doesn't satisfy the assumption it made, even if the directory is manually specified, tests still fail to compile because of some unresolved references) (2021/09/23).
+
+``` sh
+catkin_make -DTMR_ENABLE_TESTING=ON
+catkin_make run_tests -j1
+
+cd <catkin_ws/build> && ctest -E _ctest
 ```
 
 ### Windows
@@ -558,12 +570,10 @@ The first two command should be easy to understand, the third one is used to run
     -   Consider the case where user would like to run these two in one executable?
 -   Parser object
     -   Maybe I should adapt ros msg object as spirit parse data storage class
-    -   Fix that crappy parser, to many static variables, learn how to write spirit parser properly
 -   ROS interface
     -   More services
         -   load plugin dynamically
 -   TM external script language 
-    -   Command as expression, so that `bool res = Vision_IsJobAvailable("job1")` is valid declaration
     -   Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
     -   consider function accepting types that can be implicitly converted to the desired type
     -   TM functions, and project variables

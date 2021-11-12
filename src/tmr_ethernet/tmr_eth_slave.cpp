@@ -74,6 +74,9 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
 
   try {
     auto const cmd = [&t_req, is_read]() {
+      if (not satisfy_id_rule(t_req.id)) {
+        throw std::invalid_argument("Bad ID name, can only be alphabets or numerics");
+      }
       auto ret_cmd = TMSVR << ID{t_req.id};
       if (is_read) {
         std::for_each(t_req.item_list.begin(), t_req.item_list.end(),

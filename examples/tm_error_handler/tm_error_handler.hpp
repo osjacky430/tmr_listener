@@ -86,12 +86,12 @@ class TMErrorHandler final : public tmr_listener::ListenerHandle {
       switch (this->state_) {
         case HandlerState::ChangePayload:
           // variable used without "declare" is considered to be project variable
-          return TMSCT << ID{"ChangePayloadAndVarListener"} << declare(this->payload_, 0.0f)
+          return TMSCT << TMR_ID("ChangePayloadAndVarListener") << declare(this->payload_, 0.0f)
                        << ChangeLoad(this->payload_) << (this->var_listener = 30001) << End();
         case HandlerState::MoveToHome: {
           auto const slot_num = (std::abs(this->running_mission_) / 100) % 10;
 
-          auto cmd = TMSCT << ID{"MoveToHome"};
+          auto cmd = TMSCT << TMR_ID("MoveToHome");
           if (slot_num == 1 or slot_num == 2) {
             cmd << declare(targetP1, Point["P328"].Value) << Line("CPP"s, targetP1, 50, 500, 100, true) << QueueTag(1)
                 << declare(targetP2, std::array<float, 6>{90, -35, 125, 0, 90, 0})  // Point["Safety_front"]
@@ -109,9 +109,9 @@ class TMErrorHandler final : public tmr_listener::ListenerHandle {
         case HandlerState::Waiting:
           return dummy_command_list("Waiting");
         case HandlerState::Finish:
-          return TMSCT << ID{"Finish"} << ScriptExit();
+          return TMSCT << TMR_ID("Finish") << ScriptExit();
         case HandlerState::Error:
-          return TMSCT << ID{"Error"} << ScriptExit();
+          return TMSCT << TMR_ID("Error") << ScriptExit();
       }
     }
 

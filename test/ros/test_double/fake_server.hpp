@@ -5,8 +5,6 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
 
-#include <iostream>
-
 #include "tmr_ext_script/tmr_motion_function.hpp"
 
 namespace tmr_listener {

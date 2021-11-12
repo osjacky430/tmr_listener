@@ -80,8 +80,23 @@ struct const_if {
 };
 
 template <class T, std::size_t N>
-constexpr std::size_t size(const T (&)[N]) noexcept {
+constexpr std::size_t size(T const (&)[N]) noexcept {
   return N;
+}
+
+template <typename T>
+constexpr auto size(T const& t_obj) -> decltype(t_obj.size()) {
+  return t_obj.size();
+}
+
+template <typename T, std::size_t N>
+constexpr decltype(auto) data(T const (&t_obj)[N]) {
+  return t_obj;
+}
+
+template <typename T>
+constexpr auto data(T const& t_obj) -> decltype(t_obj.data()) {
+  return t_obj.data();
 }
 
 }  // namespace tmr_mt_helper

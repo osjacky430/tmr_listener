@@ -93,19 +93,26 @@ struct TMSCTTag {
     return ret_val;
   }
 
+  static auto create_builder(IDView const& t_id) noexcept { return create_builder(t_id()); }
+
+  template <char... str>
+  static auto create_builder(IDCharSequence<str...> const t_id) noexcept {
+    return create_builder(t_id());
+  }
+
   /**
    * @brief This function simply reject all other type for create_builder by static_assert
    *
    * @tparam T  Type identified by operator<< of the prototype class
    *
    * @note The function above is NOT a specialization of this function, these two, despite having same name, are totally
-   *       different thing, and not related. However, they both participate overload resolution, and the less templated
+   *       different things, and not related. However, they both participate overload resolution, and the less templated
    *       function (normal function) has precedence over templated function. Thus create_builder(ID{"1"}) will call the
-   *       function above instead of this. (Also, note that function can't be overloaded based on return type)
+   *       function above instead of this. (Also, note that function can't be overloaded base on the return type)
    */
   template <typename T>
   static auto create_builder(T /*unused*/) noexcept {
-    static_assert(std::is_same<T, ID>::value, "TMSCT must have ID, and must be the first.");
+    static_assert(not std::is_same<T, T>::value, "TMSCT must have ID, and must be the first.");
   }
 
   /**

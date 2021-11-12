@@ -1,6 +1,5 @@
 #include "fake_server.hpp"
 
-#include <boost/format.hpp>
 #include <boost/next_prior.hpp>
 #include <cstdio>
 
@@ -63,13 +62,13 @@ namespace fake_impl {
 using Content = Expression<std::string>;
 
 std::string ListenNodeServer::enter_listen_node(std::string t_str, wait_response_t /*t_tag*/) {
-  auto const enter_node_msg = TMSCT << ID{"0"s} << Content{std::move(t_str)} << End();
+  auto const enter_node_msg = TMSCT << TMR_ID("0") << Content{std::move(t_str)} << End();
   this->comm_.blocking_write(enter_node_msg->to_str());
   return this->comm_.blocking_read();
 }
 
 void ListenNodeServer::enter_listen_node(std::string t_str) {
-  auto const enter_node_msg = TMSCT << ID{"0"s} << Content{std::move(t_str)} << End();
+  auto const enter_node_msg = TMSCT << TMR_ID("0") << Content{std::move(t_str)} << End();
   this->comm_.blocking_write(enter_node_msg->to_str());
 }
 

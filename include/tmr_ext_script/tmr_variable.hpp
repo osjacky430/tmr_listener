@@ -42,8 +42,6 @@ struct Expression {
   std::string to_str() const noexcept { return this->value; }
 };
 
-TM_DEFINE_OPERATORS(Expression)
-
 /**
  * @brief The class represents the concept of named variable in TM external script language, for more information, refer
  *        to tm_expression_editor_and_listen_node_reference_manual_en
@@ -61,8 +59,8 @@ class Variable {  // NOLINT
   using underlying_t = T;
 
   Variable() = delete;  // nobody should default construct a Variable instance, doing so is meaningless
-  // explicit constexpr Variable(ConstString);
-  explicit Variable(std::string t_name) noexcept : name_(std::move(t_name)) {}  // copy and move idiom
+  explicit Variable(Variable const& t_var) noexcept : name_{t_var.name_} {}
+  explicit Variable(std::string t_name) noexcept : name_(std::move(t_name)) {}
 
   std::string to_str() const noexcept { return this->name_; }
 
@@ -112,7 +110,22 @@ class Variable {  // NOLINT
   }
 };
 
+#if defined(__clang__) or defined(__GNUC__)
+// Disable warning since I want to let variable arithmetic in TM behave as if normal C++ variable. We are deducing the
+// result of arithmetic of two possible different type therefore we will let compiler do the work.
+#pragma GCC diagnostic push
+#if defined(__clang__)
+#pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+TM_DEFINE_OPERATORS(Expression)
 TM_DEFINE_OPERATORS(Variable)
+
+#if defined(__clang__) or defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 template <typename S, typename T, typename U, typename V>
 [[gnu::warn_unused_result]] inline auto ternary_expr(T const& t_expr, U const& t_left, V const& t_right) noexcept {

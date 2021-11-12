@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "tmr_prototype/tmr_id.hpp"
 #include "tmr_utility/tmr_mt_helper.hpp"
 #include "tmr_utility/tmr_parser.hpp"
 #include "version.hpp"
@@ -58,13 +59,6 @@ struct StopAndClearBuffer {
  * @brief Utility class for tag dispatch
  */
 struct End {};
-
-/**
- * @brief Utility class for tag dispatch
- */
-struct ID {
-  std::string id_;
-};
 
 }  // namespace tmr_listener
 

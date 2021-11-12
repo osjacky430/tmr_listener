@@ -1,6 +1,9 @@
 #ifndef TMR_CONSTEXPR_STRING_HPP_
 #define TMR_CONSTEXPR_STRING_HPP_
 
+#include <cstddef>  // std::size_t
+#include <string>
+
 namespace tmr_listener {
 namespace detail {
 
@@ -14,6 +17,8 @@ struct ConstString {
     static_assert(N > 0, "Cannot construct empty string");
   }
 
+  constexpr ConstString(char const* const t_str, std::size_t const t_size) noexcept : name_{t_str}, size_{t_size} {}
+
   std::string to_std_str() const noexcept { return std::string{this->name_}; }
 
   constexpr auto size() const noexcept { return this->size_; }
@@ -25,6 +30,19 @@ struct ConstString {
 };
 
 }  // namespace detail
+}  // namespace tmr_listener
+
+/**
+ * @brief Some constexpr ASCII manipulation impl for compile time string check
+ */
+namespace tmr_listener {
+
+constexpr bool is_digit(char t_c) noexcept { return '0' <= t_c and t_c <= '9'; }
+constexpr bool is_lower(char t_c) noexcept { return 'a' <= t_c and t_c <= 'z'; }
+constexpr bool is_upper(char t_c) noexcept { return 'A' <= t_c and t_c <= 'Z'; }
+constexpr bool is_alpha(char t_c) noexcept { return is_lower(t_c) or is_upper(t_c); }
+constexpr bool is_alnum(char t_c) noexcept { return is_alpha(t_c) or is_digit(t_c); }
+
 }  // namespace tmr_listener
 
 #endif
