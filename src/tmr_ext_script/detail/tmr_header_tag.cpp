@@ -1,5 +1,8 @@
 #include "tmr_ext_script/detail/tmr_header_tag.hpp"
 
+namespace tmr_listener {
+namespace detail {
+
 using boost::phoenix::at_c;
 using boost::phoenix::static_cast_;
 using boost::spirit::qi::_1;
@@ -10,9 +13,6 @@ using boost::spirit::qi::int_;
 using boost::spirit::qi::int_parser;
 using boost::spirit::qi::lexeme;
 using boost::spirit::qi::symbols;
-
-namespace tmr_listener {
-namespace detail {
 
 // @todo id rule doesn't belong to here
 static ParseRule<TMSCTEnterNodeMsg>& tmsct_enter_node_msg_rule() noexcept {

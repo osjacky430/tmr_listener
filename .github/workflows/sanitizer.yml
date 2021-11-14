@@ -12,7 +12,7 @@ jobs:
       DOCKER_SANITIZER_REPORT_DIR: /root/target_ws/src/${{ github.event.repository.name }}/sanitizer_report
       HOST_SANITIZER_REPORT_DIR: ${{ github.workspace }}/shared
       ADDITIONAL_DEBS: "ros-${{ matrix.ROS_DISTRO }}-rosbash software-properties-common wget apt-transport-https"
-      AFTER_INIT: # download and install latest cmake
+      INSTALL_CMAKE: # download and install latest cmake
         'wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg2 --dearmor - |
         tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null &&
         apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" &&
@@ -25,6 +25,7 @@ jobs:
       matrix:
         ROS_DISTRO: [kinetic, melodic]
         sanitizer_options: [TSAN, ASAN, UBSAN]
+        compiler: [g++, clang++]
         include:
           - ROS_DISTRO: melodic
             ROS_REPO: main
@@ -35,6 +36,20 @@ jobs:
             RT_FLAG: detect_invalid_pointer_pairs=1:detect_stack_use_after_return=1:check_initialization_order=1:halt_on_error=1
           - sanitizer_options: UBSAN
             RT_FLAG: halt_on_error=1
+          - compiler: clang++
+            ROS_DISTRO: melodic
+            INSTALL_COMPILER: '&&
+              bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" &&
+              export CLANG_DIR=/usr/lib/$(ls /usr/lib | grep llvm | head -1) &&
+              sudo cp -a $CLANG_DIR/bin/* /usr/local/bin/ &&
+              sudo cp -a $CLANG_DIR/lib/clang/ /usr/local/lib/'
+          - compiler: clang++
+            ROS_DISTRO: kinetic
+            INSTALL_COMPILER: '&&
+              bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" _ 12 &&
+              export CLANG_DIR=/usr/lib/$(ls /usr/lib | grep llvm | head -1) &&
+              sudo cp -a $CLANG_DIR/bin/* /usr/local/bin/ &&
+              sudo cp -a $CLANG_DIR/lib/clang/ /usr/local/lib/'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -45,7 +60,8 @@ jobs:
       - uses: ros-industrial/industrial_ci@master
         env:
           ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
-          CMAKE_ARGS: "-DENABLE_${{ matrix.sanitizer_options }}=ON -DTMR_ENABLE_TESTING=ON"
+          AFTER_INIT: "${{ env.INSTALL_CMAKE }} ${{ matrix.INSTALL_COMPILER }}"
+          CMAKE_ARGS: "-DENABLE_${{ matrix.sanitizer_options }}=ON -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DTMR_ENABLE_TESTING=ON"
           DOCKER_RUN_OPTS: "-e SANITIZER_REPORT_DIR=${{ env.DOCKER_SANITIZER_REPORT_DIR }} -v ${{ env.HOST_SANITIZER_REPORT_DIR }}:/shared"
       - run: sudo chmod -R a+r ${{ env.HOST_SANITIZER_REPORT_DIR }}/sanitizer_report # kinda hack
       - uses: actions/upload-artifact@v2

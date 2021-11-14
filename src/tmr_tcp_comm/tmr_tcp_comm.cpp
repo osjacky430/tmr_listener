@@ -1,3 +1,4 @@
+#include <boost/asio/high_resolution_timer.hpp>
 #include <boost/range/adaptors.hpp>
 #include <ros/ros.h>
 
@@ -102,15 +103,15 @@ void TMRobotTCP::reconnect() {
   }
 }
 
-boost::posix_time::milliseconds const TMRobotTCP::WAIT_BEFORE_RECONNECT{100};
+void TMRobotTCP::stop() {
+  using namespace std::chrono_literals;
 
-void TMRobotTCP::stop() noexcept {
   this->io_service_.dispatch([this]() {
     this->is_connected_.store(false);
     boost::system::error_code ignore_error_code;
     this->listener_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_error_code);
     this->listener_.close(ignore_error_code);
-    boost::asio::deadline_timer(this->io_service_, WAIT_BEFORE_RECONNECT).wait();
+    boost::asio::high_resolution_timer(this->io_service_, 100ms).wait();
   });
 }
 

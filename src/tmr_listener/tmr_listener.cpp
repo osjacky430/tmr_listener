@@ -11,9 +11,13 @@
 
 namespace {
 
+#if ROSCONSOLE_MIN_SEVERITY != ROSCONSOLE_SEVERITY_NONE
+
 inline auto strip_crlf(std::string const &t_input) noexcept {
   return t_input.size() < 2 ? t_input : std::string{t_input.begin(), t_input.end() - 2};
 }
+
+#endif
 
 }  // namespace
 
@@ -30,13 +34,15 @@ class TMRobotListener::PacketVisitor : public boost::static_visitor<> {
   TMRPluginManagerBase const *const plugin_manager_;
   ros::Publisher sub_cmd_pub_;
 
+  static constexpr auto PUBLISHER_QUEUE_SIZE = 5;
+
  public:
-  explicit PacketVisitor(TMRobotListener *const t_tmr_listener, ros::Publisher const &t_pub)
+  explicit PacketVisitor(TMRobotListener *const t_tmr_listener, ros::NodeHandle t_nh)
     : boost::static_visitor<>(),
       tcp_comm_{&t_tmr_listener->tcp_comm_},
       current_task_handler_{t_tmr_listener->current_task_handler_},
       plugin_manager_{t_tmr_listener->plugin_manager_.get()},
-      sub_cmd_pub_{t_pub} {}
+      sub_cmd_pub_{t_nh.advertise<SubCmdDataMsg>("subcmd_90_99", PUBLISHER_QUEUE_SIZE)} {}
 
   template <typename T>
   struct skip {
@@ -151,20 +157,19 @@ TMRobotListener::TMRListenDataParser TMRobotListener::parsing_rule() noexcept {
   return parser;
 }
 
-/**
- * @todo throw if not fully matched
- */
 TMRobotListener::ListenData TMRobotListener::parse(std::string t_input) {
   using namespace boost::spirit::qi;
   using boost::spirit::ascii::space;
 
   ListenData ret_val;
-  bool const res = phrase_parse(t_input.begin(), t_input.end(), parsing_rule(), space, ret_val);
+  [[gnu::unused]] bool const res = phrase_parse(t_input.begin(), t_input.end(), parsing_rule(), space, ret_val);
+  assert(res);  // res will be true like 99.999999% of time, if not, either the parsing rule is bad, or input is
+                // corrupted, which should be checked before enter this function (@todo implement the check)
 
   return ret_val;
 }
 
-TMRobotListener::TMRobotListener(std::string t_ip_addr, ros::NodeHandle t_nh,
+TMRobotListener::TMRobotListener(std::string t_ip_addr, ros::NodeHandle const &t_nh,
                                  TMRPluginManagerBasePtr t_plugin_manager) noexcept
   : tcp_comm_{TMRobotTCP::Callback{
                 [this](auto &&t_ph) { this->receive_tm_msg_callback(std::forward<decltype(t_ph)>(t_ph)); },
@@ -172,7 +177,7 @@ TMRobotListener::TMRobotListener(std::string t_ip_addr, ros::NodeHandle t_nh,
                 [this]() { this->disconnected_callback(); }},
               LISTENER_PORT, std::move(t_ip_addr)},
     plugin_manager_{std::move(t_plugin_manager)},
-    visitor_{std::make_unique<PacketVisitor>(this, t_nh.advertise<SubCmdDataMsg>("subcmd_90_99", 5))} {}
+    visitor_{std::make_unique<PacketVisitor>(this, t_nh)} {}
 
 TMRobotListener::~TMRobotListener() = default;
 

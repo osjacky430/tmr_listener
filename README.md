@@ -114,7 +114,7 @@ roslaucnh tmr_listener tmr_eth_slave.launch # for ethernet slave
 -   Required Arguments:
     -   ip: set this arg to your desire ip
 -   Optional Arguments:
-    -   mock_tmr (default "false"): enable this to create tm robot server mock at local host
+    -   mock_tmr (default "false"): this is equivalent to launching tmr_listener with `ip:=127.0.0.1`
 
 ## TM robot listener
 
@@ -179,14 +179,20 @@ The default plugin manager used by the library loads plugins via DLL. Therefore,
 First and foremost, this package requires c++14, simply add the line(s) in `CMakeLists.txt` :
 
 ```cmake
-# add this...
+# Three option to compile project with c++14
+# (1) add this...
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# OR this (not recommended, ROS tutorial is not a good reference for writing CMakelist)
+# (2) OR this (not recommended, ROS tutorial is not a good reference for writing CMakelist)
 # In general, prefer to avoid the directory property commands, see reference (4)
 add_compile_options(-std=c++14)
+
+# (3) or for more finer configuration
+add_library(project_cpp_ver INTERFACE)
+target_compile_options(project_cpp_ver INTERFACE cxx_std_14)
+# then link this library to other target, just as you did normally
 
 # and remember to find these packages
 find_package(catkin REQUIRED COMPONENTS roscpp pluginlib tmr_listener)
@@ -369,12 +375,12 @@ using namespace tmr_listener; // for TMSCT and ID, End
 using namespace tmr_listener::motion_function; // for QueueTag
 
 auto const cmd = TMSCT << ID{"Whatever_you_like"} << QueueTag(1, 1) << End();
-// this generates "TMSCT,XX,Whatever_you_like,QueueTag(1,1),*XX", XX means handled by tmr_listener
+// this generates "TMSCT,XX,Whatever_you_like,QueueTag(1,1),XX", XX means handled by tmr_listener
 ```
 
 Instead of typing: `"$TMSCT, XX, Whatever_you_like, QueueTag(1, 1), XX\r\n"` . A typo, e.g., `TMSCT` to `TMSTA` , or `QueueTag(1,1)` to `QueuTag(1, 1)` , or wrong length, or checksum error, you name it (while reading this line, you might not notice that a `*` is missing in the checksum part, gotcha!), may ruin one's day.
 
-Note: There is one more mistake in the example, that is, the name of the ID is invalid! In order to deal with this problem, it is recommended to use macro `TMR_ID` if ID is initialized with string literal, e.g, use `TMR_ID("SomeString")` instead of `ID{"SomeString"}`, initialization via TMR_ID check validity of the string literal at compile time, i.e., `TMR_ID("Whatever_you_like")` will not compile, whereas `ID{"Whatever_you_like"}` will throw `std::invalid_argument` at runtime.
+Note: There is one more mistake in the example, that is, the name of the ID is invalid! In order to deal with this problem, it is recommended to use macro `TMR_ID` or UDL `_id` if ID is initialized with string literal, e.g, use `TMR_ID("SomeString")` or `"SomeString"_id` instead of `ID{"SomeString"}`, initialization via `TMR_ID` check validity of the string literal at compile time, i.e., `TMR_ID("Whatever_you_like")` will not compile, and `"SomeString"_id` will not compile if evaluated at compile time (e.g. `constexpr auto my_id = "SomeString"_id;`), and will throw if evaluated at runtime, whereas `ID{"Whatever_you_like"}` will not do any runtime check so that users don't need to pay for the overhead of the runtime check **user need to make are sure the ID is valid by themselves, otherwise TM will reply with CPERR 04**.
 
 As for the last part, end signal, `End()` and `ScriptExit()` is used, command cannot be appended after `End()` and `ScriptExit()` :
 
@@ -405,21 +411,32 @@ To verify whether your handler works or not, first, make sure `tmr_listener` is 
 rospack plugins --attrib=plugin tmr_listener # this command should list your plugin if you configure it correctly
 ```
 
-Secondly, add the handler to the tmr_listener.launch: (@todo: think of a better way to add plugin):
+Secondly, make sure rosparam `/tmr_listener/listener_handles` contains the array of plugins you wanted to load:
+
+```sh
+rosparam get /tmr_listener/listener_handles # expected result example: ['tmr_listener_plugins::CoordinateManager']
+```
+
+To do so, one can either set `/tmr_listener/listener_handles` via `rosparam set /tmr_listener/listener_plugin "[...]"`, or create a launch file that load rosparam from yaml file, and include `tmr_listener.launch`:
 
 ```xml
 <launch>
-    <arg name="ip"/>
-    <node pkg="tmr_listener" type="tmr_listener_node" name="tmr_listener" output="screen" args="--ip $(arg ip)">
-        <rosparam param="listener_handles">["tm_error_handler::TMErrorHandler", ...]</rosparam>
-    </node>
+  <arg name="robot_ip" default="" doc="set this arg to your desire ip"/>
+
+  <rosparam command="load" ns="tmr_listener" file="$(find tmr_listener_plugins)/param/plugin_to_load.yml"/>
+  <include file="$(find tmr_listener)/launch/tmr_listener.launch">
+    <arg name="ip" value="$(arg robot_ip)"/>
+  </include>
 </launch>
 ```
 
 Lastly, to make sure your handler generate the message at the right time, launch tmr_listener using local ip: (@todo: need more convinient way!)
 
 ```sh
-roslaunch tmr_listener tmr_listener.launch ip:=127.0.0.1
+roslaunch tmr_listener tmr_listener.launch ip:=127.0.0.1 
+
+# or your own launch file that includes tmr_listener.launch (take the launch file above as an example)
+roslaucnh tmr_listener_plugins tmr_listener_plugin.launch robot_ip:=127.0.0.1
 ```
 
 The command above create a socket at `127.0.0.1:5890` , where `5890` is the port of the TM listen node. Next, we are going to create a fake endpoint to simulate TM robot, open another window and enter the following command:

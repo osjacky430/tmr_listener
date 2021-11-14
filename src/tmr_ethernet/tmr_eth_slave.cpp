@@ -98,8 +98,9 @@ bool TMRobotEthSlave::send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSla
   }
 
   boost::unique_lock<boost::mutex> lock{this->rx_buffer_mutex_};
-  auto const tm_responded = [this]() { return this->responded_; };
-  while (not this->response_signal_.timed_wait(lock, boost::posix_time::microsec(100), tm_responded)) {
+  auto const tm_responded       = [this]() { return this->responded_; };
+  constexpr auto CHECK_INTERVAL = 100;
+  while (not this->response_signal_.wait_for(lock, boost::chrono::milliseconds(CHECK_INTERVAL), tm_responded)) {
     if (not ros::ok() or ros::isShuttingDown()) {
       return false;
     }

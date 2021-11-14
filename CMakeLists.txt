@@ -198,6 +198,8 @@ add_library(project_warnings INTERFACE)
 set_project_warnings(project_warnings)
 
 add_library(catkin_lib INTERFACE)
+option(DISABLE_LOGGING "Compile out all ros console logging, this option is intended for static analyzers and sanitizers" FALSE)
+target_compile_definitions(catkin_lib INTERFACE $<$<BOOL:${DISABLE_LOGGING}>:ROSCONSOLE_MIN_SEVERITY=ROSCONSOLE_SEVERITY_NONE>)
 target_link_libraries(catkin_lib INTERFACE ${catkin_LIBRARIES})
 target_include_directories(catkin_lib SYSTEM INTERFACE ${catkin_INCLUDE_DIRS})
 target_include_directories(catkin_lib INTERFACE ${PROJECT_SOURCE_DIR}/include)

@@ -6,6 +6,8 @@
 #include "tmr_ethernet/detail/tmr_header_tag.hpp"
 #include "tmr_ethernet/tmr_eth_rw.hpp"
 
+namespace tmr_listener {
+
 using boost::phoenix::static_cast_;
 using boost::spirit::as_string;
 using boost::spirit::ascii::space;
@@ -13,8 +15,6 @@ using boost::spirit::qi::_val;
 using boost::spirit::qi::char_;
 using boost::spirit::qi::int_;
 using boost::spirit::qi::lit;
-
-namespace tmr_listener {
 
 ParseRule<TMSVRJsonData>& TMSVRJsonData::parsing_rule() noexcept {
   static ParseRule<std::string> const name_rule = as_string[+(char_ - space - ',')];
@@ -29,6 +29,11 @@ ParseRule<TMSVRJsonData>& TMSVRJsonData::parsing_rule() noexcept {
 namespace tmr_listener {
 namespace detail {
 
+/**
+ * @details The parsing rule only separate data content from id, mode and checksum, I am trying to delay parsing real
+ *          content as much as possilbe. Doing so may (haven't think thoroughly, though) provide more granularity over
+ *          the control flow.
+ */
 ParseRule<TMSVRTag::DataFrame>& TMSVRTag::DataFrame::parsing_rule() noexcept {
   static ParseRule<std::string> const id_rule = +(char_ - ",");
   static ParseRule<Mode> const mode_rule      = int_[_val = static_cast_<Mode>(boost::spirit::qi::_1)];
@@ -45,7 +50,10 @@ TMSVRTag::DataFrame::Data TMSVRTag::DataFrame::parse_raw_content(std::string t_r
   static ParseRule<JsonArray> const data_rule = '[' >> *(TMSVRJsonData::parsing_rule() >> *lit(',')) >> ']';
 
   Data ret_val;
-  bool const full_match = phrase_parse(t_raw_content.begin(), t_raw_content.end(), data_rule, space, ret_val);
+  [[gnu::unused]] bool full_match = phrase_parse(t_raw_content.begin(), t_raw_content.end(), data_rule, space, ret_val);
+  assert(full_match);  // full_match will be true like 99.999999% of time, if not, either the parsing rule is bad, or
+                       // the input is corrupted, which should be checked before enter this function (@todo implement
+                       // the check)
 
   return ret_val;
 }

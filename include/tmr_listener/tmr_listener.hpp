@@ -122,7 +122,7 @@ class TMRobotListener {
    * @param t_plugin_manager  The ListenerHandle plugin manager, default uses plugin lib to load plugins
    */
   explicit TMRobotListener(
-    std::string t_ip_addr, ros::NodeHandle t_nh = ros::NodeHandle{"~"},
+    std::string t_ip_addr, ros::NodeHandle const &t_nh = ros::NodeHandle{"~"},
     TMRPluginManagerBasePtr t_plugin_manager = boost::make_shared<RTLibPluginManager>()) noexcept;
 
   /**

@@ -284,7 +284,10 @@ struct Header {
     using boost::spirit::ascii::space;
 
     Packet ret_val;
-    bool const full_match = phrase_parse(t_input.begin(), t_input.end(), Packet::parsing_rule(), space, ret_val);
+    [[gnu::unused]] bool res = phrase_parse(t_input.begin(), t_input.end(), Packet::parsing_rule(), space, ret_val);
+    assert(res);  // res will be true like 99.999999% of time, if not, either the parsing rule is bad, or
+                  // the input is corrupted, which should be checked before enter this function (@todo implement
+                  // the check)
 
     return ret_val;
   }

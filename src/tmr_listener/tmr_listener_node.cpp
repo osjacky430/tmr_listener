@@ -4,7 +4,7 @@
 #include "../src/tmr_cmd_line_option.hpp"
 #include "tmr_listener/tmr_listener.hpp"
 
-int main(int argc, char **argv) {
+inline void run_program(int argc, char **argv) {
   ros::init(argc, argv, "tmr_listener");
   ros::NodeHandle nh{"/tmr_listener"};
 
@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 
   if (opt_map.count("help") != 0) {
     std::cout << common_opt << '\n';
-    return EXIT_SUCCESS;
+    return;
   }
 
   auto const ip = opt_map["ip"].as<std::string>();
@@ -24,6 +24,15 @@ int main(int argc, char **argv) {
 
   tmr_listener::TMRobotListener listener_node{ip};
   listener_node.start();
+}
+
+int main(int argc, char **argv) {
+  try {
+    run_program(argc, argv);
+  } catch (std::exception &e) {
+    ROS_ERROR_STREAM("Error encountered: " << e.what());
+    return EXIT_FAILURE;
+  }
 
   return EXIT_SUCCESS;
 }
