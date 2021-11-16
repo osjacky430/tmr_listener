@@ -101,10 +101,8 @@ class TMRobotListener {
    *
    * @param t_input string to parse
    * @return ListenData
-   *
-   * @todo throw if not fully matched in the future
    */
-  static ListenData parse(std::string t_input);
+  static ListenData parse(std::string t_input) noexcept;
 
   /**
    * @brief This function returns the parsing rule of listen message
@@ -127,7 +125,7 @@ class TMRobotListener {
 
   /**
    * @brief This function is the entry point to the TCP/IP connection, it initiates the thread loop and runs io
-   * services in the background
+   *        services in the background
    */
   void start();
 
@@ -160,7 +158,7 @@ class TMRobotListener {
    * @note  This noexcept operator is only to remind me to determine whether parse() should throw or ignore not fully
    *        matched case
    */
-  void receive_tm_msg_callback(std::string const &t_input) noexcept(noexcept(parse(t_input)));
+  void receive_tm_msg_callback(std::string const &t_input) noexcept;
 
   /**
    * @brief This function gets called once the message to write to TM robot finished transfer

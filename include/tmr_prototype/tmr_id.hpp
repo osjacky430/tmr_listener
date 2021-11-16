@@ -1,6 +1,7 @@
 #ifndef TMR_ID_HPP_
 #define TMR_ID_HPP_
 
+#include "hedley.hpp"
 #include "tmr_utility/tmr_constexpr_string.hpp"
 #include "tmr_utility/tmr_mt_helper.hpp"
 
@@ -11,7 +12,7 @@ namespace tmr_listener {
 
 class IDView;
 
-#if not(defined(__GNUC__) and __GNUC__ < 6)
+#if not(defined(HEDLEY_GCC_VERSION) and HEDLEY_GCC_VERSION < HEDLEY_VERSION_ENCODE(6, 0, 0))
 constexpr IDView operator""_id(char const* const t_str, std::size_t t_size);
 #endif
 
@@ -80,7 +81,7 @@ struct ID {
 class IDView {
   detail::ConstString id_;
 
-#if not(defined(__GNUC__) and __GNUC__ < 6)
+#if not(defined(HEDLEY_GCC_VERSION) and HEDLEY_GCC_VERSION < HEDLEY_VERSION_ENCODE(6, 0, 0))
   friend constexpr IDView operator""_id(char const* const, std::size_t);
 #endif
 
@@ -149,7 +150,7 @@ namespace tmr_listener {
  * @param t_size number of characters in string (not null terminated unless specified, i.e. "whatever\0"_id)
  * @return IDChecker
  */
-#if not(defined(__GNUC__) and __GNUC__ < 6)
+#if not(defined(HEDLEY_GCC_VERSION) and HEDLEY_GCC_VERSION < HEDLEY_VERSION_ENCODE(6, 0, 0))
 constexpr IDView operator""_id(char const* const t_str, std::size_t t_size) {
   if (not detail::satisfy_id_rule(t_str, t_size + 1)) {
     throw std::invalid_argument("Bad ID, should contain only alphabets or numeric");

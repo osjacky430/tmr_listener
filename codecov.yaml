@@ -7,3 +7,5 @@ coverage:
         target: auto
         threshold: 5%
     patch: off
+ignore:
+  - "include/hedley.hpp"

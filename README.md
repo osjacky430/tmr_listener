@@ -380,7 +380,7 @@ auto const cmd = TMSCT << ID{"Whatever_you_like"} << QueueTag(1, 1) << End();
 
 Instead of typing: `"$TMSCT, XX, Whatever_you_like, QueueTag(1, 1), XX\r\n"` . A typo, e.g., `TMSCT` to `TMSTA` , or `QueueTag(1,1)` to `QueuTag(1, 1)` , or wrong length, or checksum error, you name it (while reading this line, you might not notice that a `*` is missing in the checksum part, gotcha!), may ruin one's day.
 
-Note: There is one more mistake in the example, that is, the name of the ID is invalid! In order to deal with this problem, it is recommended to use macro `TMR_ID` or UDL `_id` if ID is initialized with string literal, e.g, use `TMR_ID("SomeString")` or `"SomeString"_id` instead of `ID{"SomeString"}`, initialization via `TMR_ID` check validity of the string literal at compile time, i.e., `TMR_ID("Whatever_you_like")` will not compile, and `"SomeString"_id` will not compile if evaluated at compile time (e.g. `constexpr auto my_id = "SomeString"_id;`), and will throw if evaluated at runtime, whereas `ID{"Whatever_you_like"}` will not do any runtime check so that users don't need to pay for the overhead of the runtime check **user need to make are sure the ID is valid by themselves, otherwise TM will reply with CPERR 04**.
+Note: There is one more mistake in the example, that is, the name of the ID is invalid! In order to deal with this problem, it is recommended to use macro `TMR_ID` or UDL `_id` if ID is initialized with string literal, e.g, use `TMR_ID("SomeString")` or `"SomeString"_id` instead of `ID{"SomeString"}`, initialization via `TMR_ID` check validity of the string literal at compile time, i.e., `TMR_ID("Whatever_you_like")` will not compile, and `"SomeString"_id` will not compile if evaluated at compile time (e.g. `constexpr auto my_id = "SomeString"_id;`), and will throw if evaluated at runtime, whereas `ID{"Whatever_you_like"}` will not do any runtime check so that users don't need to pay for the overhead of it. **USER NEED TO MAKE SURE THE ID IS VALID ON THEIR OWN, OTHERWISE TM WILL REPLY WiTH CPERR 04**.
 
 As for the last part, end signal, `End()` and `ScriptExit()` is used, command cannot be appended after `End()` and `ScriptExit()` :
 
@@ -566,16 +566,6 @@ catkin_make -DTMR_ENABLE_TESTING=ON
 catkin_make run_tests -j1
 
 cd <catkin_ws/build> && ctest -E _ctest
-```
-
-### Windows
-
-Before running unit test, **you must clone `googletest` to the workspace**, despite that LKG build did provide both gmock and gtest. (catkin can't find gmock since the directory layout doesn't satisfy the assumption it made, even if the directory is manually specified, tests still fail to compile because of some unresolved references) (2021/09/23).
-
-``` sh
-catkin_make -DTMR_ENABLE_TESTING=ON
-catkin_make run_tests -j1
-ctest --test-dir <dir to catkin_ws/build> -E _ctest
 ```
 
 The first two command should be easy to understand, the third one is used to run compile time test, by checking if the program can be compiled or not. Test created via `catkin_add_gtest`, `catkin_add_gmock`, `add_rostest_gtest`, `add_rostest_gmock`, and `add_rostest` are also added to `ctest` with test name started with `_ctest`, and are thus excluded here.

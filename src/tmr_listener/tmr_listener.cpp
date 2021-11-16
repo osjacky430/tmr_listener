@@ -157,7 +157,7 @@ TMRobotListener::TMRListenDataParser TMRobotListener::parsing_rule() noexcept {
   return parser;
 }
 
-TMRobotListener::ListenData TMRobotListener::parse(std::string t_input) {
+TMRobotListener::ListenData TMRobotListener::parse(std::string t_input) noexcept {
   using namespace boost::spirit::qi;
   using boost::spirit::ascii::space;
 
@@ -184,7 +184,7 @@ TMRobotListener::~TMRobotListener() = default;
 /**
  * @todo  We don't need to parse the input in one step, maybe parse the input in mulitple step, see TMSVR parsing
  */
-void TMRobotListener::receive_tm_msg_callback(std::string const &t_input) noexcept(noexcept(parse(t_input))) {
+void TMRobotListener::receive_tm_msg_callback(std::string const &t_input) noexcept {
   ROS_INFO_STREAM("Received: " << ::strip_crlf(t_input));
 
   auto const &result = parse(t_input);
