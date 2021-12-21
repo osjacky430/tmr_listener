@@ -2,11 +2,13 @@
 #define TMR_TCP_COMM_HPP_
 
 #include <boost/asio.hpp>
+#include <boost/asio/high_resolution_timer.hpp>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 
 #include <atomic>
 #include <chrono>
+#include <memory>
 #include <string>
 
 namespace tmr_listener {
@@ -49,8 +51,6 @@ class TMRobotTCP {
    *        move t_value into output buffer.
    */
   void write(std::string t_value) {
-    using namespace boost::asio::placeholders;
-
     this->output_buffer_ = std::move(t_value);
     boost::asio::async_write(
       this->listener_, boost::asio::buffer(this->output_buffer_),
@@ -62,6 +62,7 @@ class TMRobotTCP {
   boost::asio::ip::address robot_address_;
   boost::asio::ip::tcp::endpoint tm_robot_;
   boost::asio::ip::tcp::socket listener_{io_service_};
+  boost::asio::high_resolution_timer conn_timeout_timer_{io_service_};
   boost::asio::streambuf input_buffer_;
   std::string output_buffer_;
 
@@ -69,6 +70,7 @@ class TMRobotTCP {
   std::atomic_bool is_connected_{false};
 
   static constexpr auto MESSAGE_END_BYTE = "\r\n"; /* !< TM script message ends with this 2 bytes, \r\n */
+  static const std::chrono::milliseconds CONNECTION_TIMEOUT;
 
   /**
    * @brief This function extract buffer data from boost asio streambuf and store the result to std::string
@@ -78,6 +80,13 @@ class TMRobotTCP {
    * @return extracted data
    */
   static std::string extract_buffer_data(boost::asio::streambuf &t_buffer, size_t t_byte_to_extract) noexcept;
+
+  /**
+   * @brief This function is called when connection is not success within the time CONNECTION_TIMEOUT
+   *
+   * @param t_err system error happened during connection, not important here, the error is silenced
+   */
+  void handle_connection_timeout(boost::system::error_code const &t_err);
 
   /**
    * @brief This function handles the connection and initiate the read process if the connection succeeded
@@ -107,7 +116,7 @@ class TMRobotTCP {
   /**
    * @brief This function handles reconnection when fail situation detected during read/write stage
    */
-  void reconnect();
+  void new_connection();
 
   std::string print_ip_port() const noexcept {
     return this->tm_robot_.address().to_string() + ':' + std::to_string(this->tm_robot_.port());

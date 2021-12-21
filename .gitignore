@@ -5,3 +5,8 @@ run_tests_pretty_output.py
 msg/TMREthernet.msg
 
 include/version.hpp
+
+.cache/
+build/
+CMakeUserPresets.json
+compile_commands.json

@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(tmr_listener VERSION 0.4.0)
+project(tmr_listener VERSION 0.5.0)
 
 #####################################################################
 #     Check if all plugins are built under same TMFlow version      #
 #####################################################################
-set(${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX 1.82)
+set(${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX 1.84)
 
 if (NOT DEFINED TMR_TMFLOW_VERSION)
   set(TMR_TMFLOW_VERSION ${${PROJECT_NAME}_TMFLOW_SUPPORT_VERSION_MAX} CACHE STRING "User-specified target TMFlow version" FORCE)

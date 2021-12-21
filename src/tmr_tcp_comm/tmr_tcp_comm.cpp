@@ -1,10 +1,10 @@
-#include <boost/asio/high_resolution_timer.hpp>
-#include <boost/range/adaptors.hpp>
 #include <ros/ros.h>
 
 #include "tmr_tcp_comm/tmr_tcp_comm.hpp"
 
 namespace tmr_listener {
+
+std::chrono::milliseconds const TMRobotTCP::CONNECTION_TIMEOUT = std::chrono::milliseconds(100);
 
 std::string TMRobotTCP::extract_buffer_data(boost::asio::streambuf &t_buffer, size_t const t_byte_to_extract) noexcept {
   if (t_byte_to_extract > 0) {
@@ -19,29 +19,36 @@ std::string TMRobotTCP::extract_buffer_data(boost::asio::streambuf &t_buffer, si
 }
 
 /**
- * @details This handler always tries to reconnect to the server, unless ROS is stopped.
- *
- *           After the connection is established, obtain first message when entering listener node, this message serves
- *           as a signal to tell which handler should handle the work
+ * @details Since TM robot starts TCP server when the project starts. If the program sends SYN before server starts, and
+ *          starts to wait for SYN-ACK, the server will do nothing because it doesn't receive any packet after it starts
+ *          , hence the slow connection establishment. Reconnection takes place when default timeout is reached, which
+ *          is unacceptable most of the time.
  */
-void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) {
-  if (not ros::ok()) {
+void TMRobotTCP::handle_connection_timeout(boost::system::error_code const &t_err) {
+  if (t_err or not ros::ok() or this->is_connected_) {  // NOLINT boost pre c++11 safe bool idiom
     return;
   }
 
-  if (t_err) {  // NOLINT boost pre c++11 safe bool idiom
-    ROS_ERROR_STREAM_THROTTLE_NAMED(1.0, "tm_socket_connection",
-                                    this->print_ip_port() << " Connection error, reason: "  //
-                                                          << t_err.message() << ", retrying...");
-    this->listener_.async_connect(this->tm_robot_, [this](auto t_error) { this->handle_connection(t_error); });
-  } else {
-    ROS_INFO_STREAM_NAMED("tm_socket_connection", this->print_ip_port()
-                                                    << " Connection success, waiting for server response");
+  ROS_ERROR_STREAM_THROTTLE_NAMED(300.0, "tm_socket_connection",
+                                  this->print_ip_port() << " Connection error, reason: Timeout, retrying...");
+  this->new_connection();
+}
 
-    this->is_connected_.store(true);
-    auto const callback = [this](auto t_error, auto t_tx_byte_num) { this->handle_read(t_error, t_tx_byte_num); };
-    boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE, callback);
+/**
+ * @details  After the connection is established, obtain first message when entering listener node, this message serves
+ *           as a signal to tell which handler should handle the work
+ */
+void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) {
+  if (not ros::ok() or t_err) {  // NOLINT boost pre c++11 safe bool idiom
+    return;
   }
+
+  ROS_INFO_STREAM_NAMED("tm_socket_connection", this->print_ip_port()
+                                                  << " Connection success, waiting for server response");
+
+  this->is_connected_.store(true);
+  auto const callback = [this](auto t_error, auto t_tx_byte_num) { this->handle_read(t_error, t_tx_byte_num); };
+  boost::asio::async_read_until(this->listener_, this->input_buffer_, MESSAGE_END_BYTE, callback);
 }
 
 /**
@@ -57,8 +64,6 @@ void TMRobotTCP::handle_connection(boost::system::error_code const &t_err) {
  * @note    TM robot will send OK message even after ScriptExit()
  */
 void TMRobotTCP::handle_read(boost::system::error_code const &t_err, size_t const t_byte_transfered) {
-  using namespace boost::asio::placeholders;
-
   if (not ros::ok()) {
     return;
   }
@@ -74,7 +79,7 @@ void TMRobotTCP::handle_read(boost::system::error_code const &t_err, size_t cons
     ROS_ERROR_STREAM_NAMED("tm_listener_node", this->print_ip_port() << " Read Error: " << t_err.message());
     ROS_ERROR_STREAM_NAMED("tm_socket_connection", this->print_ip_port() << " Read Error detected, reconnecting...");
 
-    this->reconnect();
+    this->new_connection();
   }
 }
 
@@ -91,32 +96,37 @@ void TMRobotTCP::handle_write(boost::system::error_code const &t_err, size_t con
     ROS_ERROR_STREAM_NAMED("tm_listener_node", this->print_ip_port() << " Write Error: " << t_err.message());
     ROS_ERROR_STREAM_NAMED("tm_socket_connection", this->print_ip_port() << " Write Error detected, reconnecting...");
 
-    this->reconnect();
+    this->new_connection();
   }
 }
 
-void TMRobotTCP::reconnect() {
+void TMRobotTCP::new_connection() {
   this->stop();
-  this->listener_.async_connect(this->tm_robot_, [this](auto t_err) { this->handle_connection(t_err); });
-  if (this->cb_.disconnected_) {  // NOLINT, pre c++11 safe bool idiom
-    this->cb_.disconnected_();
-  }
+  this->io_service_.dispatch([this]() {
+    this->listener_.async_connect(this->tm_robot_, [this](auto t_err) { this->handle_connection(t_err); });
+    this->conn_timeout_timer_.expires_from_now(CONNECTION_TIMEOUT);
+    this->conn_timeout_timer_.async_wait([this](auto t_err) { this->handle_connection_timeout(t_err); });
+  });
 }
 
 void TMRobotTCP::stop() {
-  using namespace std::chrono_literals;
-
   this->io_service_.dispatch([this]() {
-    this->is_connected_.store(false);
-    boost::system::error_code ignore_error_code;
-    this->listener_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_error_code);
-    this->listener_.close(ignore_error_code);
-    boost::asio::high_resolution_timer(this->io_service_, 100ms).wait();
+    if (this->is_connected_) {        // NOLINT, pre c++11 safe bool idiom
+      if (this->cb_.disconnected_) {  // NOLINT, pre c++11 safe bool idiom
+        this->cb_.disconnected_();
+      }
+
+      this->is_connected_.store(false);
+    }
+
+    boost::system::error_code ignored;
+    this->listener_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored);
+    this->listener_.close(ignored);
   });
 }
 
 void TMRobotTCP::start_tcp_comm() {
-  this->listener_.async_connect(this->tm_robot_, [this](auto t_err) { this->handle_connection(t_err); });
+  this->new_connection();
 
   try {
     this->io_service_.run();
