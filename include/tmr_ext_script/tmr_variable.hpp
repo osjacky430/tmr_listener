@@ -59,7 +59,7 @@ class Variable {  // NOLINT
   using underlying_t = T;
 
   Variable() = delete;  // nobody should default construct a Variable instance, doing so is meaningless
-  explicit Variable(Variable const& t_var) noexcept : name_{t_var.name_} {}
+  Variable(Variable const& t_var) noexcept : name_{t_var.name_} {}
   explicit Variable(std::string t_name) noexcept : name_(std::move(t_name)) {}
 
   std::string to_str() const noexcept { return this->name_; }

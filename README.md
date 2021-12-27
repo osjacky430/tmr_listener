@@ -34,9 +34,9 @@ A package that handles TM robot listen node and TM Ethernet Slave functionality.
 
 ## About the Project
 
-TM robot provides listen node in TMFlow where user can control the robot arm via sending TM external script when the control flow enters it. This node provides better scalability due to the fact that one can't copy TMFlow project from one robot arm to the other without doing furthur adjustment. 
+TM robot provides listen node in TMFlow where user can control the robot arm via sending TM external script when the control flow enters it. This node provides better scalability due to the fact that one can't copy TMFlow project from one robot arm to the other without doing furthur adjustment.
 
-However, the implementation of [the official ros package](https://github.com/TechmanRobotInc/tmr_ros1) has several drawbacks: 
+However, the implementation of [the official ros package](https://github.com/TechmanRobotInc/tmr_ros1) has several drawbacks:
 
 1.  End user can never know whether the control flow enters listen node or not without polling the service.
 
@@ -118,9 +118,9 @@ roslaucnh tmr_listener tmr_eth_slave.launch # for ethernet slave
 
 ## TM robot listener
 
-In order to use `tmr_listener` , the running TMFlow project must contain the listen node, and can be reached by the control flow. 
+In order to use `tmr_listener` , the running TMFlow project must contain the listen node, and can be reached by the control flow.
 
-The implementation of `tmr_listener` is composed of three parts: (1) TCP/IP comm (via `boost::asio` ) (2) plugin manager (via `pluginlib` ), and (3) message generation (self implementation) and parsing (via `boost::Spirit` ). 
+The implementation of `tmr_listener` is composed of three parts: (1) TCP/IP comm (via `boost::asio` ) (2) plugin manager (via `pluginlib` ), and (3) message generation (self implementation) and parsing (via `boost::Spirit` ).
 
 Normally, one would only need to implement plugin for specific task (see [creating your own listener handle](#Creating-your-own-listener-handle)). `tmr_listener` also allows user to implement their own plugin manager for finer configuration (see next section).
 
@@ -155,7 +155,7 @@ class RTLibPluginManager final : public TMRPluginManagerBase {
 
 Beware: `tmr_listener::TMRobotListener` will not handle any of the exception raised inside `find_task_handler(std::string const&) const`. Therefore, **it is forbidden to throw exception without catching it inside the function.** Exception will be thrown if detected nullptr returned.
 
-In order to use your own plugin manager implementation, pass it to the constructor of `tmr_listener:: TMRobotListener` : 
+In order to use your own plugin manager implementation, pass it to the constructor of `tmr_listener:: TMRobotListener` :
 
 ```cpp
 #include "tmr_listener/tmr_listener.hpp"
@@ -212,7 +212,9 @@ PLUGINLIB_EXPORT_CLASS(MyTMListenerHandleNamespace::MyTMListenerHandle, tmr_list
 
 ```
 
-For the rest of the setup, [see pluginlib tutorial (pretty outdated IMO)](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin). `tmr_listener::ListenerHandle` provides several functions that can/must be overriden:
+For the rest of the setup, see the [pluginlib tutorial](http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin). One thing worth mentioning is that, in `package.xml`, one needs to set `<depend>tmr_listener</depend> `, not `<build_depend>tmr_listener</build_depend>`, which is not mentioned in the tutorial.
+
+`tmr_listener::ListenerHandle` provides several functions that can/must be overriden:
 
 #### 1. tmr_listener::MessagePtr generate_cmd (tmr_listener::MessageStatus const t_prev_response)
 
@@ -254,7 +256,7 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
 
 #### 3. response_msg (...)
 
-The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need, those that are not overriden will be ignored. Currently available overloads: 
+The overload set `response_msg` allows user to respond to certain header packet, you only need to override those that you need, those that are not overriden will be ignored. Currently available overloads:
 
 ```cpp
 void response_msg(tmr_listener::TMSCTResponse const&);            //  get called when user send correct TMSCT command
@@ -299,12 +301,12 @@ This function should be easy to understand, user must make sure that all variabl
 // This example analyzes the quality of vision job by executing it repeatedly at fixed pose.
 // The listen node executes vision job named "some_vision", then exit script, and expects the
 // result to be sent via TMSTA 90-99, e.g.
-//      
+//
 //      dummy_var = ListenSend("192.168.1.186", 91, GetString(Base["some_vision"].Value, 10)).
 //
 // The project flow would look like this (note: we don't need listen node in order to execute
 // vision job, this is just an example):
-// 
+//
 //        ________                 _________          ______
 //       |        |               |         |        |      |
 //  ...  | Listen | ----------->  |   SET   | -----> | GOTO |
@@ -318,7 +320,7 @@ struct YourHandler final : public tmr_listener::ListenerHandle {
   std::vector<std::array<float, 6>> vision_bases_;
   std::size_t recorded_count_ = 0;
 
-  static constexpr std::size_t MAX_RECORDING = 150; 
+  static constexpr std::size_t MAX_RECORDING = 150;
 
   tmr_listener::Decision start_task(std::string const& t_data) override {
     auto const start_handle = t_data == "Listen1";
@@ -433,7 +435,7 @@ To do so, one can either set `/tmr_listener/listener_handles` via `rosparam set 
 Lastly, to make sure your handler generate the message at the right time, launch tmr_listener using local ip: (@todo: need more convinient way!)
 
 ```sh
-roslaunch tmr_listener tmr_listener.launch ip:=127.0.0.1 
+roslaunch tmr_listener tmr_listener.launch ip:=127.0.0.1
 
 # or your own launch file that includes tmr_listener.launch (take the launch file above as an example)
 roslaucnh tmr_listener_plugins tmr_listener_plugin.launch robot_ip:=127.0.0.1
@@ -479,7 +481,7 @@ void raw_data_cb(std_msgs::String::ConstPtr& t_msg) {
   // possible content of t_msg->data: [{"Item":"Robot_Link","Value":0}, {"Item":"Ctrl_DO1","Value":0},{"Item":"g_ss","Value":["Hello","TM","Robot"]}]
   // which is an array, first element: {"Item":"Robot_Link","Value":0}
   auto const json_obj = nlohmann::json::parse(t_msg->data);
-  
+
   // assuming the first element in the array is: {"Item": "Robot_Link","Value":0}
   auto const robot_link = json_obj[0]["Value"].get<int>();
 }
@@ -580,7 +582,7 @@ The first two command should be easy to understand, the third one is used to run
 -   ROS interface
     -   More services
         -   load plugin dynamically
--   TM external script language 
+-   TM external script language
     -   Type conversion operator, TM has some "unique" type conversion rules, which is totally BS to me
     -   consider function accepting types that can be implicitly converted to the desired type
     -   TM functions, and project variables

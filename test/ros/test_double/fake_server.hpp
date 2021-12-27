@@ -93,7 +93,7 @@ class ListenNodeServer {
    *
    * @todo Implement timeout, or take timeout variable away, just use it for tag dispatch
    */
-  std::string enter_listen_node(std::string t_str, wait_response_t t_tag);
+  [[gnu::warn_unused_result]] std::string enter_listen_node(std::string t_str, wait_response_t t_tag);
 
   /**
    * @brief This function writes enter-listen-node message to client, this function doesn't wait for client response

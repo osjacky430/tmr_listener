@@ -6,7 +6,6 @@
 
 #include "tmr_command.hpp"
 #include "tmr_fundamental_type.hpp"
-#include "tmr_fwd.hpp"
 #include "tmr_utility/tmr_constexpr_string.hpp"
 #include "tmr_utility/tmr_mt_helper.hpp"
 #include "tmr_utility/tmr_stringifier.hpp"
@@ -29,10 +28,8 @@ class Function {
    * @param t_args  The real argument passed to the function
    * @return string of the function call itself
    */
-  template <typename PrintPolicy>
-  auto operator()(PrintPolicy const& t_printer, std::string const& t_name,
-                  FundamentalType<ArgTypes> const&... t_args) const noexcept {
-    return t_printer(t_name, boost::algorithm::join(std::vector<std::string>{t_args.to_str()...}, ","));
+  auto operator()(FundamentalType<ArgTypes> const&... t_args) const noexcept {
+    return boost::algorithm::join(std::vector<std::string>{t_args.to_str()...}, ",");
   }
 };
 
@@ -78,18 +75,10 @@ struct FunctionSet {
     static_assert(not std::is_same<FindResult, EndType>::value, "Function signature not match");
 
     constexpr TargetFunctor function_call;
-    return Command<Tag, RetType>{function_call(PrintPolicy{}, this->name_.to_std_str(), t_arguments...)};
+    constexpr PrintPolicy printer;
+    return Command<Tag, RetType>{printer(this->name_.to_std_str(), function_call(t_arguments...))};
   }
 };
-
-/**
- * @brief useful typedef
- */
-template <typename RetType, typename... Functions>
-using TMSTCFuncSet = FunctionSet<tmr_listener::detail::TMSCTTag, MotionFnCallPrinter, RetType, Functions...>;
-
-template <typename... Functions>
-using TMSTAFuncSet = FunctionSet<tmr_listener::detail::TMSTATag, SubCmdCallPrinter, void, Functions...>;
 
 }  // namespace detail
 }  // namespace tmr_listener
@@ -111,6 +100,15 @@ struct SubCmdCallPrinter {
     return t_input.empty() ? t_name : t_name + ',' + t_input;
   }
 };
+
+/**
+ * @brief useful typedef
+ */
+template <typename RetType, typename... Functions>
+using TMSTCFuncSet = FunctionSet<tmr_listener::detail::TMSCTTag, MotionFnCallPrinter, RetType, Functions...>;
+
+template <typename... Functions>
+using TMSTAFuncSet = FunctionSet<tmr_listener::detail::TMSTATag, SubCmdCallPrinter, void, Functions...>;
 
 }  // namespace detail
 }  // namespace tmr_listener
