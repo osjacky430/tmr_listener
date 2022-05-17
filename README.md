@@ -137,6 +137,8 @@ class RTLibPluginManager final : public TMRPluginManagerBase {
  public:
   // these two functions must be overriden
   TMTaskHandlerArray_t get_all_plugins() const noexcept override { return this->all_plugins_; }
+
+  // note: you must call start_task_handling so that the desired handler changes its internal state when chosen
   TMTaskHandler find_task_handler(std::string const &t_input) const noexcept override {
     auto const predicate = [&t_input](auto const &t_handler) {
       return t_handler->start_task_handling(t_input) == Decision::Accept;

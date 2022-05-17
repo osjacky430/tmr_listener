@@ -142,18 +142,6 @@ generate_messages()
 #   cfg/DynReconf2.cfg
 # )
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(INCLUDE_DIRS include LIBRARIES tmr_listener CATKIN_DEPENDS roscpp message_runtime pluginlib #  DEPENDS system_lib
-)
-
 #############
 ## Install ##
 #############
@@ -216,3 +204,14 @@ if (TMR_ENABLE_TESTING)
       EXTRA_OPTIONS --xml-pretty --exclude-unreachable-branches --exclude-throw-branches)
   endif ()
 endif ()
+
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if your package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(INCLUDE_DIRS include LIBRARIES tmr_listener fake_server CATKIN_DEPENDS roscpp message_runtime pluginlib)
