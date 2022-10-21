@@ -23,8 +23,9 @@ class TMRobotTCP {
 
   static constexpr auto DEFAULT_IP_ADDRESS = "192.168.1.2";
 
-  explicit TMRobotTCP(Callback t_cb, unsigned short const t_port, std::string t_ip_addr = DEFAULT_IP_ADDRESS) noexcept
-    : robot_address_{boost::asio::ip::address::from_string(std::move(t_ip_addr))},
+  explicit TMRobotTCP(Callback t_cb, unsigned short const t_port,
+                      std::string const &t_ip_addr = DEFAULT_IP_ADDRESS) noexcept
+    : robot_address_{boost::asio::ip::address::from_string(t_ip_addr)},
       tm_robot_{robot_address_, t_port},
       cb_{std::move(t_cb)} {}
 

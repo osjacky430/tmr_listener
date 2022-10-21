@@ -1,14 +1,12 @@
 #ifndef FAKE_SERVER_HPP_
 #define FAKE_SERVER_HPP_
 
+#include "tmr_ext_script/tmr_motion_function.hpp"
 #include <boost/asio.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
 
-#include "tmr_ext_script/tmr_motion_function.hpp"
-
 namespace tmr_listener {
-namespace fake_impl {
 
 class TMRConnection : public boost::enable_shared_from_this<TMRConnection> {
   explicit TMRConnection(boost::asio::io_service& t_io_service) : socket_{t_io_service} {}
@@ -52,7 +50,7 @@ class TMRobotServerComm {
   explicit TMRobotServerComm(unsigned short const t_port) noexcept : server_{boost::asio::ip::tcp::v4(), t_port} {}
 
   /**
-   * @brief This function starts async accept connection request, it runs io_service in the background
+   * @brief This function blocks the flow until connection request accepted
    */
   void start() {
     this->acceptor_.open(this->server_.protocol());
@@ -96,7 +94,7 @@ class ListenNodeServer {
   [[gnu::warn_unused_result]] std::string enter_listen_node(std::string t_str, wait_response_t t_tag);
 
   /**
-   * @brief This function writes enter-listen-node message to client, this function doesn't wait for client response
+   * @brief This function writes enter-listen-node message to client, and doesn't wait for client response
    *
    * @param t_str Listen node message
    */
@@ -123,7 +121,6 @@ class ListenNodeServer {
   void stop() { this->comm_.stop(); }
 };
 
-}  // namespace fake_impl
 }  // namespace tmr_listener
 
 #endif

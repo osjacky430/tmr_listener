@@ -169,13 +169,13 @@ TMRobotListener::ListenData TMRobotListener::parse(std::string t_input) noexcept
   return ret_val;
 }
 
-TMRobotListener::TMRobotListener(std::string t_ip_addr, ros::NodeHandle const &t_nh,
+TMRobotListener::TMRobotListener(std::string const &t_ip_addr, ros::NodeHandle const &t_nh,
                                  TMRPluginManagerBasePtr t_plugin_manager) noexcept
   : tcp_comm_{TMRobotTCP::Callback{
                 [this](auto &&t_ph) { this->receive_tm_msg_callback(std::forward<decltype(t_ph)>(t_ph)); },
                 [this](auto &&t_ph) { this->finished_transfer_callback(std::forward<decltype(t_ph)>(t_ph)); },
                 [this]() { this->disconnected_callback(); }},
-              LISTENER_PORT, std::move(t_ip_addr)},
+              LISTENER_PORT, t_ip_addr},
     plugin_manager_{std::move(t_plugin_manager)},
     visitor_{std::make_unique<PacketVisitor>(this, t_nh)} {}
 

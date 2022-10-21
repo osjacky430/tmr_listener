@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(tmr_listener VERSION 0.5.0)
 
+# this only works if you do build the project, don't you dare commit before building it...
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/tool/env-hook/pre-commit ${CMAKE_SOURCE_DIR}/.git/hooks)
+
 #####################################################################
 #     Check if all plugins are built under same TMFlow version      #
 #####################################################################
@@ -63,7 +66,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (MSVC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.29)
-  # This is a temporary solution to suppress warnings 3rd party library in MSVC
+  # This is a temporary solution to suppress warnings from 3rd party library in MSVC
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /external:W0")
   set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "/external:I ")
 endif ()

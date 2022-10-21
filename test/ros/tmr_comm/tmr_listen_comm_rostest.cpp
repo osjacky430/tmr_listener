@@ -1,5 +1,5 @@
-#include "test_double/fake_server.hpp"
 #include "test_double/mock_handler.hpp"
+#include "tmr_fake_server/fake_server.hpp"
 #include "tmr_test_constant.hpp"
 
 #include <gtest/gtest.h>
@@ -8,7 +8,7 @@ using namespace ::testing;
 
 class ListenNodeServerTest : public Test {
  protected:
-  tmr_listener::fake_impl::ListenNodeServer fake_server;
+  tmr_listener::ListenNodeServer fake_server;
 
   ros::NodeHandle nh{"tmr_listener"};
   ros::Subscriber sub = [this]() {  // wait until subscriber did subscribe to sth
@@ -31,7 +31,7 @@ TEST_F(ListenNodeServerTest, RecievedCPERRNotInListenNodeWillResetCurrentHandler
   using namespace std::chrono_literals;
 
   // enter listen node, first command arrived
-  auto const response = this->fake_server.enter_listen_node(FIRST_TEST_NAME, fake_impl::WAIT_FOREVER);
+  auto const response = this->fake_server.enter_listen_node(FIRST_TEST_NAME, WAIT_FOREVER);
   ASSERT_TRUE(not response.empty());
 
   this->fake_server.send_error(ErrorCode::NotInListenNode);
@@ -43,7 +43,7 @@ TEST_F(ListenNodeServerTest, ScriptExitCalledIfNoHandlerReturnAccept) {
   using namespace std::chrono_literals;
 
   // enter listen node, first command arrived
-  auto const response = this->fake_server.enter_listen_node(SECOND_TEST_NAME, fake_impl::WAIT_FOREVER);
+  auto const response = this->fake_server.enter_listen_node(SECOND_TEST_NAME, WAIT_FOREVER);
   EXPECT_THAT(response, HasSubstr("ScriptExit()"));
 
   // at this point current_task_handler_ should be reset, sending any msg to client will have no response

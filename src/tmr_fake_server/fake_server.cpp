@@ -1,5 +1,4 @@
-#include "fake_server.hpp"
-
+#include "tmr_fake_server/fake_server.hpp"
 #include <boost/next_prior.hpp>
 #include <cstdio>
 
@@ -16,17 +15,17 @@ std::string extract_buffer_data(boost::asio::streambuf& t_buffer, std::size_t t_
     return result;
   }
 
-  return std::string{""};
+  return "";
 }
 
 }  // namespace
 
 namespace tmr_listener {
-namespace fake_impl {
 
 std::string TMRobotServerComm::blocking_read() {
+  static boost::regex const match_pattern{R"(,\*[0-9a-fA-F][0-9a-fA-F]\r\n)"};
   auto const byte_read = boost::asio::read_until(this->connection_->get_socket(),  //
-                                                 this->connection_->get_input_buffer(), "\r\n");
+                                                 this->connection_->get_input_buffer(), match_pattern);
   return ::extract_buffer_data(this->connection_->get_input_buffer(), byte_read);
 }
 
@@ -53,11 +52,9 @@ void TMRobotServerComm::stop() {
   this->io_service_.stop();
 }
 
-}  // namespace fake_impl
 }  // namespace tmr_listener
 
 namespace tmr_listener {
-namespace fake_impl {
 
 using Content = Expression<std::string>;
 
@@ -99,5 +96,4 @@ void ListenNodeServer::send_error(tmr_listener::ErrorCode const t_err) {
   this->comm_.blocking_write(std::string{msg} + '*' + calculate_checksum(msg) + "\r\n"s);
 }
 
-}  // namespace fake_impl
 }  // namespace tmr_listener

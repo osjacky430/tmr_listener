@@ -9,8 +9,8 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
   {
     constexpr auto response = "$TMSCT,9,4,ERROR;1,*02\r\n";
 
-    auto const parsed        = TMSCTHeader::parse(response);
-    auto const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
+    auto const parsed               = TMSCTHeader::parse(response);
+    auto const* const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_EQ(script_result->abnormal_lines_.size(), 1);
     EXPECT_EQ(script_result->abnormal_lines_.at(0), 1);
@@ -19,8 +19,8 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
   {
     constexpr auto response = "$TMSCT,4,1,OK,*5C\r\n";
 
-    auto const parsed        = TMSCTHeader::parse(response);
-    auto const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
+    auto const parsed               = TMSCTHeader::parse(response);
+    auto const* const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_TRUE(script_result->abnormal_lines_.empty());
   }
@@ -28,8 +28,8 @@ TEST(SpiritParse, TMSCTServerResponseTest) {
   {
     constexpr auto response = "$TMSCT,4,1,OK;1;2,*5C\r\n";
 
-    auto const parsed        = TMSCTHeader::parse(response);
-    auto const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
+    auto const parsed               = TMSCTHeader::parse(response);
+    auto const* const script_result = boost::get<TMSCTResponse>(&parsed.data_.resp_);
 
     ASSERT_TRUE(script_result != nullptr);
     EXPECT_EQ(script_result->abnormal_lines_.size(), 2);
@@ -45,8 +45,8 @@ TEST(SpiritParse, TMSTAResponseMatch) {
   {
     constexpr auto response = "$TMSTA,29,00,true,UltrasonicFail,-12131,*5B\r\n";
 
-    auto const parsed = TMSTAHeader::parse(response);
-    auto const cmd    = boost::get<TMSTAResponse::Subcmd00>(&parsed.data_.resp_);
+    auto const parsed     = TMSTAHeader::parse(response);
+    auto const* const cmd = boost::get<TMSTAResponse::Subcmd00>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
     EXPECT_TRUE(cmd->entered_);
@@ -56,7 +56,7 @@ TEST(SpiritParse, TMSTAResponseMatch) {
   {
     constexpr auto response = "$TMSTA,10,01,08,true,*6D\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<TMSTAResponse::Subcmd01>(&parsed.data_.resp_);
+    auto const* const cmd   = boost::get<TMSTAResponse::Subcmd01>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
     EXPECT_EQ(cmd->tag_number_, "08");
@@ -66,7 +66,7 @@ TEST(SpiritParse, TMSTAResponseMatch) {
   {
     constexpr auto response = "$TMSTA,14,90,Hello World,*73\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
+    auto const* const cmd   = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
     EXPECT_EQ(cmd->cmd_, 90);
@@ -76,7 +76,7 @@ TEST(SpiritParse, TMSTAResponseMatch) {
   {
     constexpr auto response = "$TMSTA,10,91,123.456,*7E\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
+    auto const* const cmd   = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
     EXPECT_EQ(cmd->cmd_, 91);
@@ -86,7 +86,7 @@ TEST(SpiritParse, TMSTAResponseMatch) {
   {
     constexpr auto response = "$TMSTA,67,90,{-248.7316,-154.6399,-130.5106,-0.04263335,-0.6727331,0.8938164},*52\r\n";
     auto const parsed       = TMSTAHeader::parse(response);
-    auto const cmd          = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
+    auto const* const cmd   = boost::get<TMSTAResponse::DataMsg>(&parsed.data_.resp_);
     ASSERT_TRUE(cmd != nullptr);
 
     EXPECT_EQ(cmd->cmd_, 90);

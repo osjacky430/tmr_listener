@@ -13,7 +13,7 @@ namespace tmr_listener {
 class IDView;
 
 #if not(defined(HEDLEY_GCC_VERSION) and HEDLEY_GCC_VERSION < HEDLEY_VERSION_ENCODE(6, 0, 0))
-constexpr IDView operator""_id(char const* const t_str, std::size_t t_size);
+constexpr IDView operator""_id(char const* t_str, std::size_t t_size);
 #endif
 
 namespace detail {
@@ -82,7 +82,7 @@ class IDView {
   detail::ConstString id_;
 
 #if not(defined(HEDLEY_GCC_VERSION) and HEDLEY_GCC_VERSION < HEDLEY_VERSION_ENCODE(6, 0, 0))
-  friend constexpr IDView operator""_id(char const* const, std::size_t);
+  friend constexpr IDView operator""_id(char const* /*t_str*/, std::size_t /*t_size*/);
 #endif
 
   constexpr explicit IDView(detail::ConstString const& t_str) noexcept : id_(t_str) {}

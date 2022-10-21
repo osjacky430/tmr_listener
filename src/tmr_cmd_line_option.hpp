@@ -14,8 +14,8 @@ inline auto common_option() noexcept {
   common.add_options()                           //
     ("help", "Show this help message and exit")  //
     ("ip", value<std::string>()->default_value(TMRobotTCP::DEFAULT_IP_ADDRESS),
-     "IP address of the TM robot, default 192.168.1.2")  //
-    ("verbose", "Print debug message");                  //
+     "IP address of the TM robot")       //
+    ("verbose", "Print debug message");  //
 
   return common;
 }

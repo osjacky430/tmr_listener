@@ -1,4 +1,4 @@
-#include "test_double/fake_server.hpp"
+#include "tmr_fake_server/fake_server.hpp"
 #include "tmr_listener/EthernetSlaveCmd.h"
 
 #include <boost/thread/scoped_thread.hpp>
@@ -12,9 +12,11 @@ using namespace tmr_listener;
 using namespace std::string_literals;
 
 class EthernetServerTest : public Test {
+ public:
+  TMRobotServerComm fake_server{ETHERNET_SERVER_PORT};
+
  protected:
   static constexpr auto ETHERNET_SERVER_PORT = 5891;
-  fake_impl::TMRobotServerComm fake_server{ETHERNET_SERVER_PORT};
 
   auto create_io_thread(std::string& t_resp, std::string const& t_to_client) {
     return boost::thread([&, this]() mutable {

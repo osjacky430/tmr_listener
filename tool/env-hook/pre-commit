@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo "running catkin unit test before git commit"
+
+catkin build tmr_listener -DTMR_ENABLE_TESTING=ON
+catkin run_tests tmr_listener -j1
