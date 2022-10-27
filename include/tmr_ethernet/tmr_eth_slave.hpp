@@ -44,7 +44,8 @@ class TMRobotEthSlave {
   bool send_tmsvr_cmd(EthernetSlaveCmdRequest& t_req, EthernetSlaveCmdResponse& t_resp);
 
  public:
-  explicit TMRobotEthSlave(std::string const& t_ip, ros::NodeHandle t_nh = ros::NodeHandle{"/tmr_eth_slave"}) noexcept
+  explicit TMRobotEthSlave(std::string const& t_ip,
+                           ros::NodeHandle const& t_nh = ros::NodeHandle{"/tmr_eth_slave"}) noexcept
     : comm_{TMRobotTCP::Callback{[this](auto&& t_ph) { this->parse_input_msg(std::forward<decltype(t_ph)>(t_ph)); }},
             ETHERNET_SLAVE_PORT, t_ip},
       private_nh_{t_nh} {}

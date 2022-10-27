@@ -44,13 +44,13 @@ ParseRule<TMSVRTag::DataFrame>& TMSVRTag::DataFrame::parsing_rule() noexcept {
   return rule;
 }
 
-TMSVRTag::DataFrame::Data TMSVRTag::DataFrame::parse_raw_content(std::string t_raw_content) {
+TMSVRTag::DataFrame::Data TMSVRTag::DataFrame::parse_raw_content(std::string t_raw) {
   using JsonArray = std::vector<TMSVRJsonData>;
 
   static ParseRule<JsonArray> const data_rule = '[' >> *(TMSVRJsonData::parsing_rule() >> *lit(',')) >> ']';
 
   Data ret_val;
-  [[gnu::unused]] bool full_match = phrase_parse(t_raw_content.begin(), t_raw_content.end(), data_rule, space, ret_val);
+  [[gnu::unused]] bool const full_match = phrase_parse(t_raw.begin(), t_raw.end(), data_rule, space, ret_val);
   assert(full_match);  // full_match will be true like 99.999999% of time, if not, either the parsing rule is bad, or
                        // the input is corrupted, which should be checked before enter this function (@todo implement
                        // the check)
@@ -75,8 +75,8 @@ void TMSVRTag::BuildRule::check(std::vector<std::string>& t_content_holder, TMSV
 }
 
 std::string TMSVRTag::assemble(std::vector<std::string> const& t_content) noexcept {
-  auto const id      = t_content.at(0);
-  auto const mode    = t_content.at(1);
+  auto const& id     = t_content.at(0);
+  auto const& mode   = t_content.at(1);
   auto const content = std::vector<std::string>{t_content.begin() + 2, t_content.end()};
   return id + ',' + mode + ",[" + boost::algorithm::join(content, ",") + ']';
 }

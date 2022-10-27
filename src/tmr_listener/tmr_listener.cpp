@@ -1,6 +1,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/thread/scoped_thread.hpp>
 #include <boost/variant.hpp>
+#include <ros/param.h>
 #include <ros/ros.h>
 
 #include <functional>
@@ -127,6 +128,7 @@ TMTaskHandlerArray_t RTLibPluginManager::load_plugins() {
 
   auto const plugin_transformer = [this](auto const &t_name) { return this->class_loader_.createInstance(t_name); };
   auto const plugin_names       = ros::param::param("/tmr_listener/listener_handles", std::vector<std::string>{});
+  ros::param::del("/tmr_listener/listener_handles");  // prevent previous result effect current run
   ROS_DEBUG_STREAM_NAMED("tmr_plugin_manager", "plugin num: " << plugin_names.size());
 
   auto const plugins = plugin_names | transformed(plugin_transformer);
@@ -152,8 +154,8 @@ TMTaskHandler RTLibPluginManager::find_task_handler(std::string const &t_input) 
  *        similar to other parsing rule
  */
 TMRobotListener::TMRListenDataParser TMRobotListener::parsing_rule() noexcept {
-  static TMRListenDataParser parser = TMSCTPacket::parsing_rule() | TMSTAPacket::parsing_rule() |  //
-                                      CPERRPacket::parsing_rule();
+  static TMRListenDataParser const parser = TMSCTPacket::parsing_rule() | TMSTAPacket::parsing_rule() |  //
+                                            CPERRPacket::parsing_rule();
   return parser;
 }
 
@@ -222,7 +224,7 @@ void TMRobotListener::start() {
   while (not ros::ok()) {
   }
 
-  boost::scoped_thread<> thread{boost::thread{[&comm = this->tcp_comm_] { comm.start_tcp_comm(); }}};
+  boost::scoped_thread<> const thread{boost::thread{[&comm = this->tcp_comm_] { comm.start_tcp_comm(); }}};
   ros::spin();
 
   this->tcp_comm_.stop();
