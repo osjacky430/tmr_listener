@@ -152,8 +152,8 @@ TMTaskHandler RTLibPluginManager::find_task_handler(std::string const &t_input) 
  *        similar to other parsing rule
  */
 TMRobotListener::TMRListenDataParser TMRobotListener::parsing_rule() noexcept {
-  static TMRListenDataParser parser = TMSCTPacket::parsing_rule() | TMSTAPacket::parsing_rule() |  //
-                                      CPERRPacket::parsing_rule();
+  static TMRListenDataParser const parser = TMSCTPacket::parsing_rule() | TMSTAPacket::parsing_rule() |  //
+                                            CPERRPacket::parsing_rule();
   return parser;
 }
 
@@ -222,7 +222,7 @@ void TMRobotListener::start() {
   while (not ros::ok()) {
   }
 
-  boost::scoped_thread<> thread{boost::thread{[&comm = this->tcp_comm_] { comm.start_tcp_comm(); }}};
+  boost::scoped_thread<> const thread{boost::thread{[&comm = this->tcp_comm_] { comm.start_tcp_comm(); }}};
   ros::spin();
 
   this->tcp_comm_.stop();

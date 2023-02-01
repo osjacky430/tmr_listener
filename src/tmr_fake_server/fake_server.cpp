@@ -79,7 +79,7 @@ void ListenNodeServer::response_ok_msg(tmr_listener::ID const& t_id) {
 }
 
 /**
- * @note used to test if the listener handler publish recieved message on recieving TMSTA Subcmd 90 - 99
+ * @note used to test if the listener handler publish Received message on recieving TMSTA Subcmd 90 - 99
  */
 void ListenNodeServer::send_tmsta_data_msg(int const t_channel, std::string const& t_val) {
   auto const data     = std::to_string(t_channel) + ',' + t_val;

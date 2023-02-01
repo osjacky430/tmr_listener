@@ -26,7 +26,7 @@ class ListenNodeServerTest : public Test {
   void callback(tmr_listener::SubCmdDataMsgConstPtr const& t_ptr) noexcept { this->received_data_msg = *t_ptr; }
 };
 
-TEST_F(ListenNodeServerTest, RecievedCPERRNotInListenNodeWillResetCurrentHandler) {
+TEST_F(ListenNodeServerTest, ReceivedCPERRNotInListenNodeWillResetCurrentHandler) {
   using namespace tmr_listener;
   using namespace std::chrono_literals;
 
