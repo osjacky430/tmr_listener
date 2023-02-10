@@ -1,6 +1,8 @@
 name: ubuntu
 
-on: [push, pull_request]
+on:
+  schedule:
+    - cron: "* * * * 1"
 
 jobs:
   industrial_ci:

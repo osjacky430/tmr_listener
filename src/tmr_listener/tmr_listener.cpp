@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <numeric>
+#include <stdexcept>
 
 #include "tmr_listener/tmr_listener.hpp"
 #include "tmr_utility/tmr_lambda_visitor.hpp"
@@ -126,7 +127,19 @@ TMTaskHandlerArray_t RTLibPluginManager::load_plugins() {
   using boost::adaptors::transformed;
 
   auto const plugin_transformer = [this](auto const &t_name) { return this->class_loader_.createInstance(t_name); };
-  auto const plugin_names       = ros::param::param("/tmr_listener/listener_handles", std::vector<std::string>{});
+  auto const plugin_names       = []() {
+    std::vector<std::string> ret_val;
+    if (ros::param::has("/tmr_listener/listener_handles") and
+        !ros::param::get("/tmr_listener/listener_handles", ret_val)) {
+      ROS_ERROR_STREAM(
+        "exist but invalid ros param /tmr_listener/listener_handles, make sure the input is array of string,"
+        "e.g. [\'plugin_1\', \'plugin_2\'], instead of \'[plugin_1, plugin_2]\' etc. Abort..");
+      throw std::invalid_argument("invalid ros param /tmr_listener/listener_handles. Abort..");
+    }
+
+    return ret_val;
+  }();
+
   ROS_DEBUG_STREAM_NAMED("tmr_plugin_manager", "plugin num: " << plugin_names.size());
 
   auto const plugins = plugin_names | transformed(plugin_transformer);

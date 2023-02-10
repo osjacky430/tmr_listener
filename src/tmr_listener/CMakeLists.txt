@@ -4,3 +4,6 @@ target_link_libraries(tmr_listener PUBLIC tmr_tcp_comm tmr_ext_script project_wa
 
 add_executable(tmr_listener_node tmr_listener_node.cpp)
 target_link_libraries(tmr_listener_node PUBLIC tmr_listener)
+
+install(TARGETS tmr_listener_node tmr_listener RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

@@ -4,9 +4,6 @@
 #include <ros/ros.h>
 
 inline void run_program(int argc, char** argv) {
-  ros::init(argc, argv, "tmr_eth_slave");
-  ros::NodeHandle nh{"/tmr_eth_slave"};
-
   using namespace boost::program_options;
   auto const common_opt = tmr_listener::common_option();
 
@@ -20,12 +17,15 @@ inline void run_program(int argc, char** argv) {
 
   auto const ip = opt_map["ip"].as<std::string>();
 
-  tmr_listener::TMRobotEthSlave eth{ip, nh};
+  tmr_listener::TMRobotEthSlave eth{ip};
   eth.start();
 }
 
 int main(int argc, char** argv) {
   try {
+    ros::init(argc, argv, "tmr_eth_slave");
+    ros::NodeHandle nh{"/tmr_eth_slave"};
+
     run_program(argc, argv);
   } catch (std::exception& e) {
     ROS_ERROR_STREAM("Error encountered: " << e.what());

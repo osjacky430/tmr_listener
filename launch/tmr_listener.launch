@@ -1,6 +1,6 @@
 <launch>
     <arg name="mock_tmr" default="false" doc="enable this to create tm robot server mock"/>
-    <arg name="ip" default="" doc="set this arg to your desire ip"/>
+    <arg name="ip" doc="set this arg to your desire ip"/>
 
     <arg name="ip_arg" value="$(eval '--ip 127.0.0.1' if arg('mock_tmr') else '--ip ' + arg('ip'))"/>
     <node pkg="tmr_listener" type="tmr_listener_node" name="tmr_listener" args="$(arg ip_arg)"/>
